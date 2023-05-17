@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.quickblox.android_ui_kit">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <application>
+        <activity
+            android:name="com.quickblox.android_ui_kit.presentation.screens.dialogs.DialogsActivity"
+            android:configChanges="keyboard|orientation|screenSize"
+            android:launchMode="singleTop" />
+
+        <activity
+            android:name=".presentation.screens.create.name.DialogNameActivity"
+            android:configChanges="keyboard|orientation|screenSize"
+            android:taskAffinity=".createDialogFLow" />
+
+        <activity
+            android:name=".presentation.screens.create.users.UsersActivity"
+            android:configChanges="keyboard|orientation|screenSize"
+            android:taskAffinity=".createDialogFLow" />
+
+        <activity
+            android:name=".presentation.screens.chat.individual.PrivateChatActivity"
+            android:configChanges="keyboard|orientation|screenSize"
+            android:taskAffinity=".chatFlow" />
+
+        <activity
+            android:name=".presentation.screens.chat.group.GroupChatActivity"
+            android:configChanges="keyboard|orientation|screenSize"
+            android:taskAffinity=".chatFlow" />
+
+        <activity
+            android:name=".presentation.screens.info.group.GroupChatInfoActivity"
+            android:configChanges="keyboard|orientation|screenSize"
+            android:taskAffinity=".chatFlow" />
+
+        <activity
+            android:name=".presentation.screens.info.individual.PrivateChatInfoActivity"
+            android:configChanges="keyboard|orientation|screenSize"
+            android:taskAffinity=".chatFlow" />
+
+        <activity
+            android:name=".presentation.screens.info.members.MembersActivity"
+            android:configChanges="keyboard|orientation|screenSize"
+            android:taskAffinity=".chatFlow" />
+
+        <activity
+            android:name=".presentation.screens.info.add.AddMembersActivity"
+            android:configChanges="keyboard|orientation|screenSize"
+            android:taskAffinity=".chatFlow" />
+
+        <activity
+            android:name=".presentation.screens.chat.full_image_screen.FullImageScreenActivity"
+            android:configChanges="keyboard|orientation|screenSize" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
+    </application>
+</manifest>
