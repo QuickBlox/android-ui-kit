@@ -1,0 +1,129 @@
+plugins {
+    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    id 'kotlin-kapt'
+    id 'jacoco'
+}
+
+ext {
+    qbSdkVersion = '4.1.1'
+}
+
+android {
+    compileSdk 33
+    def uiKitVersionCode = 1
+    def uiKitVersionName = "0.1.0"
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 33
+        versionCode uiKitVersionCode
+        versionName uiKitVersionName
+
+        multiDexEnabled true
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        debug {
+            buildConfigField "String", "VERSION_CODE", "\"$uiKitVersionCode\""
+            buildConfigField "String", "VERSION_NAME", "\"$uiKitVersionName\""
+            testCoverageEnabled true
+        }
+
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    buildFeatures {
+        viewBinding true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
+}
+
+dependencies {
+    // QuickBlox SDK
+    api "com.quickblox:quickblox-android-sdk-messages:$qbSdkVersion"
+    api "com.quickblox:quickblox-android-sdk-chat:$qbSdkVersion"
+    api "com.quickblox:quickblox-android-sdk-content:$qbSdkVersion"
+
+    implementation 'androidx.fragment:fragment-ktx:1.5.6'
+    implementation 'androidx.core:core-ktx:1.9.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.8.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.6.1'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1'
+    implementation 'android.arch.lifecycle:extensions:1.1.1'
+
+    // Glide
+    implementation 'com.github.bumptech.glide:glide:4.15.0'
+
+    // Coroutines and Kotlin Flow
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4"
+
+    // Tests
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    testImplementation "org.mockito.kotlin:mockito-kotlin:4.1.0"
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4'
+}
+
+kapt {
+    correctErrorTypes true
+}
+
+jacoco {
+    toolVersion = "0.8.8"
+}
+
+task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest']) {
+    def enabledXML = true
+    def enabledHTML = true
+    def enabledCSV = false
+
+    reports {
+        xml { enabled enabledXML }
+        html { enabled enabledHTML }
+        csv { enabled enabledCSV }
+    }
+
+    def sourceFile = "${project.projectDir}/src/main/java"
+    getSourceDirectories().setFrom(files([sourceFile]))
+
+    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*', 'presentation/**', 'data/dto/**', 'data/source/**']
+
+    def javaTree = fileTree(dir: "$project.buildDir/intermediates/javac/debug/classes", excludes: fileFilter)
+    def kotlinTree = fileTree(dir: "$project.buildDir/tmp/kotlin-classes/debug/com/quickblox/android_ui_kit", excludes: fileFilter)
+
+    getClassDirectories().setFrom([kotlinTree])
+
+    def executionData = "${buildDir}/outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec"
+    getExecutionData().setFrom(executionData)
+
+    doLast {
+        print("\n---------- CODE COVERAGE REPORT FILES ----------\n")
+
+        enabledHTML ? print("\nHTML_REPORT_FILE => file://${buildDir}/reports/jacoco/jacocoTestReport/html/index.html") : print("\n")
+        enabledXML ? print("\nXML_REPORT_FILE => file://${buildDir}/reports/jacoco/jacocoTestReport/jacocoTestReport.xml") : print("\n")
+        enabledCSV ? print("\nCSV_REPORT_FILE => file://${buildDir}/reports/jacoco/jacocoTestReport/jacocoTestReport.csv") : print("\n")
+
+        print("\n------------------------------------------------\n")
+    }
+}
