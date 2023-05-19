@@ -131,7 +131,7 @@ class UsersViewModel : BaseViewModel() {
 
     private fun getSelectedUserIdsForGroupDialog(): List<Int> {
         val userIds = arrayListOf<Int>()
-        selectedUsers.forEach { userEntity ->
+        for (userEntity in selectedUsers) {
             userEntity.getUserId()?.let {
                 userIds.add(it)
             }

@@ -106,8 +106,7 @@ open class DialogsFragment : BaseFragment() {
         binding = ContainerFragmentBinding.inflate(inflater, container, false)
 
         val views = collectViewsTemplateMethod(requireContext())
-
-        views.forEach { view ->
+        for (view in views){
             view?.let {
                 binding?.llParent?.addView(view)
             }

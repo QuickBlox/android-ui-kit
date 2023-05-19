@@ -33,8 +33,11 @@ abstract class BaseDialog(context: Context, private val title: String?, protecte
             binding.root.setBackgroundColor(it)
         }
 
-        collectViewsTemplateMethod().forEach { view ->
-            binding.llContainer.addView(view)
+        val views = collectViewsTemplateMethod()
+        for (view in views){
+            view?.let {
+                binding.llContainer.addView(view)
+            }
         }
     }
 

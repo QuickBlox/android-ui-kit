@@ -61,7 +61,7 @@ class RemoveUsersFromDialogUseCase(private val dialogEntity: DialogEntity, priva
             val loggedUserId = usersRepository.getLoggedUserId()
 
             run breakLoop@{
-                userIds.forEach { userId ->
+                for (userId in userIds) {
                     if (userId == loggedUserId) {
                         contains = true
                         return@breakLoop
@@ -100,7 +100,7 @@ class RemoveUsersFromDialogUseCase(private val dialogEntity: DialogEntity, priva
         var allUserNames = ""
 
         val users = usersRepository.getUsersFromRemote(userIds)
-        users.forEach { user ->
+        for (user in users) {
             val userName = getUserNameFrom(user)
             allUserNames += "$userName, "
         }

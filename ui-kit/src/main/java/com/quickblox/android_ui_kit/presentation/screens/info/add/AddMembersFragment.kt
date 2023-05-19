@@ -32,7 +32,7 @@ open class AddMembersFragment : BaseFragment() {
         val TAG: String = AddMembersFragment::class.java.simpleName
 
         fun newInstance(
-            dialogId: String? = null, screenSettings: AddMembersScreenSettings? = null
+            dialogId: String? = null, screenSettings: AddMembersScreenSettings? = null,
         ): AddMembersFragment {
             val membersFragment = AddMembersFragment()
             membersFragment.dialogId = dialogId
@@ -120,11 +120,12 @@ open class AddMembersFragment : BaseFragment() {
         subscribeToError()
 
         val views = collectViewsTemplateMethod(requireContext())
-        views.forEach { view ->
+        for (view in views) {
             view?.let {
                 binding?.llParent?.addView(view)
             }
         }
+
         return binding?.root
     }
 

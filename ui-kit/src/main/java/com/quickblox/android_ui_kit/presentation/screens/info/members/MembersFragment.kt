@@ -90,11 +90,12 @@ open class MembersFragment : BaseFragment() {
         subscribeToError()
 
         val views = collectViewsTemplateMethod(requireContext())
-        views.forEach { view ->
+        for (view in views){
             view?.let {
                 binding?.llParent?.addView(view)
             }
         }
+
         return binding?.root
     }
 

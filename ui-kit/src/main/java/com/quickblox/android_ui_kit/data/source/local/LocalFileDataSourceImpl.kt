@@ -21,7 +21,6 @@ import java.io.IOException
 import java.net.URLConnection
 import java.text.ParseException
 
-
 private const val DIVIDER = "#_divider_#"
 
 @ExcludeFromCoverage
@@ -179,8 +178,8 @@ class LocalFileDataSourceImpl(private val context: Context) : LocalFileDataSourc
 
     override fun clearAll() {
         val cacheDirectory = File(context.cacheDir.path)
-        val files = cacheDirectory.listFiles()
-        files?.forEach { file ->
+        val files = cacheDirectory.listFiles() ?: return
+        for (file in files) {
             val isNotDeleted: Boolean
             try {
                 isNotDeleted = !file.delete()

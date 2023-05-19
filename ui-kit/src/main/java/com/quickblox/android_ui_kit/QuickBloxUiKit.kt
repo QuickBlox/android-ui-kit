@@ -58,8 +58,4 @@ object QuickBloxUiKit {
     fun setTheme(uiKitTheme: UiKitTheme) {
         theme = uiKitTheme
     }
-
-    fun getVersion(): String {
-        return "${BuildConfig.VERSION_NAME}.${BuildConfig.VERSION_CODE}"
-    }
 }

@@ -244,11 +244,15 @@ object DialogMapper {
         return dto
     }
 
-    fun entitiesFrom(dto: LocalDialogsDTO): List<DialogEntity> {
+    fun entitiesFrom(localDTO: LocalDialogsDTO): List<DialogEntity> {
         val entities = arrayListOf<DialogEntity>()
-        dto.dialogs?.forEach {
-            val entity = toEntity(it)
-            entities.add(entity)
+
+        val dialogs = localDTO.dialogs
+        dialogs?.let {
+            for (dto in dialogs) {
+                val entity = toEntity(dto)
+                entities.add(entity)
+            }
         }
         return entities
     }

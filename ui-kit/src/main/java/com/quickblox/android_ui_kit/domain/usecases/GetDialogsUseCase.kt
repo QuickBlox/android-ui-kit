@@ -81,7 +81,8 @@ class GetDialogsUseCase : FlowUseCase<Result<DialogEntity>>() {
 
     private suspend fun getAllDialogsFromCache(): Flow<DialogEntity> {
         return channelFlow {
-            dialogRepository.getAllDialogsFromLocal().forEach { dialogEntity ->
+            val dialogEntities = dialogRepository.getAllDialogsFromLocal()
+            for (dialogEntity in dialogEntities) {
                 send(dialogEntity)
             }
         }
