@@ -72,7 +72,7 @@ object RemoteDialogDTOMapper {
 
     private fun dialogsDTOFrom(dialogs: ArrayList<QBChatDialog>, ownerId: Int?): ArrayList<RemoteDialogDTO> {
         val dialogsDTO = arrayListOf<RemoteDialogDTO>()
-        dialogs.forEach { dialog ->
+        for (dialog in dialogs) {
             val dto = dialogToDTO(dialog, ownerId)
             dialogsDTO.add(dto)
         }

@@ -152,7 +152,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
                 send(Result.failure(exceptionFactory.makeUnexpected(exception.message ?: defaultErrorMessage)))
             }
 
-            dialogs.forEach { qbChatDialog ->
+            for (qbChatDialog in dialogs) {
                 val isNotActiveScope = !coroutineContext.isActive
                 if (isNotActiveScope) {
                     return@channelFlow
@@ -364,7 +364,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
 
             val dtoUsers = arrayListOf<RemoteUserDTO>()
 
-            qbUsers.forEach { qbUser ->
+            for (qbUser in qbUsers) {
                 val userDTO = RemoteUserDTOMapper.toDTOFrom(qbUser)
                 userDTO.avatarUrl = loadUserAvatarUrl(userDTO.blobId)
 
@@ -387,8 +387,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
         val searchOperator = "in"
 
         var value = ""
-
-        userIds.forEach { userId ->
+        for (userId in userIds) {
             value += "$userId,"
         }
 
@@ -408,7 +407,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
             val users = pairResult.first
             val pagination = pairResult.second
 
-            users.forEach { user ->
+            for (user in users) {
                 try {
                     val userDTO = RemoteUserDTOMapper.toDTOFrom(user)
 
@@ -444,7 +443,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
 
     private fun createAddUsersRequestBuilder(userIds: Collection<Int>): QBDialogRequestBuilder {
         val requestBuilder = QBDialogRequestBuilder()
-        userIds.forEach { userId ->
+        for (userId in userIds) {
             requestBuilder.addRule("occupants_ids", "push_all", userId)
         }
 
@@ -471,7 +470,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
 
     private fun createRemoveUsersRequestBuilder(userIds: Collection<Int>): QBDialogRequestBuilder {
         val requestBuilder = QBDialogRequestBuilder()
-        userIds.forEach { userId ->
+        for (userId in userIds) {
             requestBuilder.addRule("occupants_ids", "pull_all", userId)
         }
 
@@ -479,7 +478,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
     }
 
     override fun getUsersByFilter(
-        paginationDTO: RemoteUserPaginationDTO, filterDto: RemoteUserFilterDTO
+        paginationDTO: RemoteUserPaginationDTO, filterDto: RemoteUserFilterDTO,
     ): Flow<Result<Pair<RemoteUserDTO, RemoteUserPaginationDTO>>> {
         return channelFlow {
             val requestBuilder = RemotePaginationDTOMapper.pagedRequestBuilderFrom(paginationDTO)
@@ -492,7 +491,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
             val pagination = pairResult.second
 
             run breakLoop@{
-                users.forEach { user ->
+                for (user in users) {
                     if (user.id == getLoggedUserId()) {
                         return@breakLoop
                     }
@@ -540,7 +539,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
     }
 
     private fun loadQBUsersByName(
-        pageRequestBuilder: QBPagedRequestBuilder, name: String?
+        pageRequestBuilder: QBPagedRequestBuilder, name: String?,
     ): Pair<List<QBUser>, RemoteUserPaginationDTO> {
         try {
             val performer = QBUsers.getUsersByFullName(name, pageRequestBuilder) as Query
@@ -575,7 +574,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
 
     override fun getAllMessages(
         messageDTO: RemoteMessageDTO,
-        paginationDTO: RemoteMessagePaginationDTO
+        paginationDTO: RemoteMessagePaginationDTO,
     ): Flow<Result<Pair<RemoteMessageDTO?, RemoteMessagePaginationDTO>>> {
         return channelFlow<Result<Pair<RemoteMessageDTO?, RemoteMessagePaginationDTO>>> {
             if (messageDTO.dialogId == null) {
@@ -597,8 +596,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
             if (messages.isEmpty()) {
                 send((Result.success(Pair(null, messagePaginationDTO))))
             }
-
-            messages.forEach { message ->
+            for (message in messages) {
                 try {
                     val loggedUserId = getLoggedUserId()
                     val resultMessageDTO = RemoteMessageDTOMapper.messageDTOFrom(message, loggedUserId)
@@ -614,7 +612,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
 
     private fun loadAllQBMessages(
         dialogId: String,
-        requestBuilder: QBRequestGetBuilder
+        requestBuilder: QBRequestGetBuilder,
     ): Pair<List<QBChatMessage>, Bundle> {
         val qbChatDialog = QBChatDialog()
         qbChatDialog.dialogId = dialogId
@@ -683,8 +681,8 @@ open class RemoteDataSourceImpl : RemoteDataSource {
                 val qbChat = getQBChatFromManager(dialogDTO)
                 qbChat.sendMessage(qbChatMessage)
             }
-
-            dialogDTO.participantIds?.forEach { recipientId ->
+            val participantIds = dialogDTO.participantIds ?: return
+            for (recipientId in participantIds) {
                 qbChatMessage.recipientId = recipientId
                 QBChatService.getInstance().systemMessagesManager.sendSystemMessage(qbChatMessage)
             }

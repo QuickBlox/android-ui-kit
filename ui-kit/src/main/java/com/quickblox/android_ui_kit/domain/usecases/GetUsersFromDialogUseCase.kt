@@ -25,7 +25,8 @@ class GetUsersFromDialogUseCase(private val dialogEntity: DialogEntity) : BaseUs
 
         withContext(Dispatchers.IO) {
             runCatching {
-                dialogEntity.getParticipantIds()?.forEach { userId ->
+                val participantIds = dialogEntity.getParticipantIds()!!
+                for (userId in participantIds){
                     val userEntity = userRepository.getUserFromRemote(userId)
                     users.add(userEntity)
                 }

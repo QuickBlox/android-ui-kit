@@ -61,7 +61,7 @@ class AddUsersToDialogUseCase(private val dialogEntity: DialogEntity, private va
             val loggedUserId = usersRepository.getLoggedUserId()
 
             run breakLoop@{
-                userIds.forEach { userId ->
+                for (userId in userIds) {
                     if (userId == loggedUserId) {
                         contains = true
                         return@breakLoop
@@ -100,7 +100,7 @@ class AddUsersToDialogUseCase(private val dialogEntity: DialogEntity, private va
         var allUserNames = ""
 
         val users = usersRepository.getUsersFromRemote(userIds)
-        users.forEach { user ->
+        for (user in users) {
             val userName = getUserNameFrom(user)
             allUserNames += "$userName, "
         }

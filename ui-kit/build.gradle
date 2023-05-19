@@ -3,16 +3,18 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-kapt'
     id 'jacoco'
+    id 'maven-publish'
 }
 
 ext {
     qbSdkVersion = '4.1.1'
+
+    uiKitVersionCode = 1
+    uiKitVersionName = "0.1.1"
 }
 
 android {
     compileSdk 33
-    def uiKitVersionCode = 1
-    def uiKitVersionName = "0.1.0"
 
     defaultConfig {
         minSdkVersion 21
@@ -28,11 +30,16 @@ android {
         debug {
             buildConfigField "String", "VERSION_CODE", "\"$uiKitVersionCode\""
             buildConfigField "String", "VERSION_NAME", "\"$uiKitVersionName\""
+
+            minifyEnabled false
             testCoverageEnabled true
         }
 
         release {
             minifyEnabled false
+            testCoverageEnabled false
+
+            consumerProguardFiles 'proguard-rules.pro'
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -91,6 +98,35 @@ kapt {
 
 jacoco {
     toolVersion = "0.8.8"
+}
+
+publishing {
+    publications {
+        release(MavenPublication) {
+            groupId = 'com.quickblox'
+            artifactId = 'android-ui-kit'
+            version = "$uiKitVersionName"
+
+            pom {
+                licenses {
+                    license {
+                        name = 'QuickBlox'
+                        url = 'https://quickblox.com'
+                    }
+                }
+            }
+
+            afterEvaluate {
+                from components.release
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            url = "$System.env.ANDROID_UI_KIT_RELEASES_REPO"
+        }
+    }
 }
 
 task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest']) {

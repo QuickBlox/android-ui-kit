@@ -39,7 +39,7 @@ open class DialogNameFragment : BaseFragment() {
         val TAG: String = DialogNameFragment::class.java.simpleName
 
         fun newInstance(
-            dialogEntity: DialogEntity? = null, screenSettings: DialogNameScreenSettings? = null
+            dialogEntity: DialogEntity? = null, screenSettings: DialogNameScreenSettings? = null,
         ): DialogNameFragment {
             val dialogNameFragment = DialogNameFragment()
             dialogNameFragment.screenSettings = screenSettings
@@ -118,7 +118,6 @@ open class DialogNameFragment : BaseFragment() {
         screenSettings?.getTheme()?.getMainBackgroundColor()?.let {
             binding?.root?.setBackgroundColor(it)
         }
-        val views = collectViewsTemplateMethod(requireContext())
 
         screenSettings?.getHeaderComponent()?.setTextRightButton(getString(R.string.next))
 
@@ -129,7 +128,8 @@ open class DialogNameFragment : BaseFragment() {
         subscribeToAvatarLoading()
         subscribeToError()
 
-        views.forEach { view ->
+        val views = collectViewsTemplateMethod(requireContext())
+        for (view in views) {
             view?.let {
                 binding?.llParent?.addView(view)
             }
@@ -254,14 +254,17 @@ open class DialogNameFragment : BaseFragment() {
             val contentText = getString(R.string.permission_alert_text)
             val positiveText = getString(R.string.yes)
             val negativeText = getString(R.string.no)
-            PositiveNegativeDialog.show(
-                requireContext(), contentText, positiveText, negativeText, screenSettings?.getTheme(),
+            PositiveNegativeDialog.show(requireContext(),
+                contentText,
+                positiveText,
+                negativeText,
+                screenSettings?.getTheme(),
                 positiveListener = {
                     requestCameraPermission()
-                }, negativeListener = {
+                },
+                negativeListener = {
                     showToast(getString(R.string.permission_denied))
-                }
-            )
+                })
         } else {
             requestCameraPermission()
         }

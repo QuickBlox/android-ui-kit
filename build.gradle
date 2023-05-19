@@ -6,7 +6,3 @@ plugins {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
-
-ext {
-    qbSdkVersion = '4.0.0'
-}
