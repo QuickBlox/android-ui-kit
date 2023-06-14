@@ -12,6 +12,7 @@ import com.quickblox.android_ui_kit.data.dto.remote.dialog.RemoteDialogDTO
 import com.quickblox.android_ui_kit.data.dto.remote.file.RemoteFileDTO
 import com.quickblox.android_ui_kit.data.dto.remote.message.RemoteMessageDTO
 import com.quickblox.android_ui_kit.data.dto.remote.message.RemoteMessagePaginationDTO
+import com.quickblox.android_ui_kit.data.dto.remote.typing.RemoteTypingDTO
 import com.quickblox.android_ui_kit.data.dto.remote.user.RemoteUserDTO
 import com.quickblox.android_ui_kit.data.dto.remote.user.RemoteUserFilterDTO
 import com.quickblox.android_ui_kit.data.dto.remote.user.RemoteUserPaginationDTO
@@ -19,6 +20,7 @@ import com.quickblox.android_ui_kit.data.source.exception.RemoteDataSourceExcept
 import com.quickblox.android_ui_kit.data.source.remote.listener.ChatMessageListener
 import com.quickblox.android_ui_kit.data.source.remote.listener.StatusMessageListener
 import com.quickblox.android_ui_kit.data.source.remote.listener.SystemMessageListener
+import com.quickblox.android_ui_kit.data.source.remote.listener.TypingListener
 import com.quickblox.android_ui_kit.data.source.remote.mapper.*
 import com.quickblox.android_ui_kit.data.source.remote.parser.EventMessageParser
 import com.quickblox.android_ui_kit.domain.exception.repository.MappingException
@@ -51,10 +53,6 @@ import org.jivesoftware.smack.SmackException.NotConnectedException
 import org.jivesoftware.smack.XMPPConnection
 import org.jivesoftware.smack.XMPPException
 import org.jivesoftware.smack.filter.MessageTypeFilter
-import org.jivesoftware.smack.packet.Message
-import org.jivesoftware.smackx.chatstates.ChatState
-import org.jivesoftware.smackx.chatstates.ChatStateManager
-import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension
 import org.jivesoftware.smackx.muc.DiscussionHistory
 import java.io.IOException
 
@@ -70,6 +68,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
     private val connectionFlow: MutableStateFlow<Boolean> = MutableStateFlow(false)
     private val dialogsEventFlow: MutableSharedFlow<RemoteDialogDTO?> = MutableSharedFlow(0, extraBufferCapacity = 1)
     private val messagesEventFlow: MutableSharedFlow<RemoteMessageDTO?> = MutableSharedFlow(0, extraBufferCapacity = 1)
+    private val typingEventFlow: MutableSharedFlow<RemoteTypingDTO?> = MutableSharedFlow(0, extraBufferCapacity = 1)
 
     private val statusMessageListener = StatusMessageListener(messagesEventFlow)
     private val chatMessageListener = ChatMessageListener(messagesEventFlow, dialogsEventFlow)
@@ -576,7 +575,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
         messageDTO: RemoteMessageDTO,
         paginationDTO: RemoteMessagePaginationDTO,
     ): Flow<Result<Pair<RemoteMessageDTO?, RemoteMessagePaginationDTO>>> {
-        return channelFlow<Result<Pair<RemoteMessageDTO?, RemoteMessagePaginationDTO>>> {
+        return channelFlow {
             if (messageDTO.dialogId == null) {
                 throw exceptionFactory.makeIncorrectData("The remoteMessageDTO contains null value for \"dialogId\" field")
             }
@@ -627,6 +626,36 @@ open class RemoteDataSourceImpl : RemoteDataSource {
             throw exceptionFactory.makeBy(exception.httpStatusCode, exception.message.toString())
         } catch (exception: RuntimeException) {
             throw exceptionFactory.makeRestrictedAccess(exception.message.toString())
+        }
+    }
+
+    override fun startTyping(dialogDTO: RemoteDialogDTO) {
+        try {
+            val qbChat = getQBChatFromManager(dialogDTO)
+            qbChat.sendIsTypingNotification()
+        } catch (exception: NotConnectedException) {
+            throw exceptionFactory.makeConnectionFailed(exception.message.toString())
+        } catch (exception: IllegalStateException) {
+            throw exceptionFactory.makeUnexpected(exception.message.toString())
+        } catch (exception: MappingException) {
+            throw exceptionFactory.makeIncorrectData(exception.message.toString())
+        } catch (exception: RuntimeException) {
+            throw exceptionFactory.makeIncorrectData(exception.message.toString())
+        }
+    }
+
+    override fun stopTyping(dialogDTO: RemoteDialogDTO) {
+        try {
+            val qbChat = getQBChatFromManager(dialogDTO)
+            qbChat.sendStopTypingNotification()
+        } catch (exception: NotConnectedException) {
+            throw exceptionFactory.makeConnectionFailed(exception.message.toString())
+        } catch (exception: IllegalStateException) {
+            throw exceptionFactory.makeUnexpected(exception.message.toString())
+        } catch (exception: MappingException) {
+            throw exceptionFactory.makeIncorrectData(exception.message.toString())
+        } catch (exception: RuntimeException) {
+            throw exceptionFactory.makeIncorrectData(exception.message.toString())
         }
     }
 
@@ -930,30 +959,17 @@ open class RemoteDataSourceImpl : RemoteDataSource {
     private inner class XMPPConnectionListener : AbstractConnectionListener() {
         override fun connected(connection: XMPPConnection?) {
             connection?.let {
-                addTypingListener(connection)
+                addTypingListeners(connection)
             }
+
             CoroutineScope(Dispatchers.IO).launch {
                 connectionFlow.emit(true)
             }
         }
 
-        private fun addTypingListener(connection: XMPPConnection) {
-            // TODO: need to check
-            val filter = MessageTypeFilter.CHAT
-            connection.addSyncStanzaListener({ packet ->
-                val message: Message = packet as Message
-                val chatStateExtension = message.getExtension(ChatStateManager.NAMESPACE) as ChatStateExtension?
-                if (chatStateExtension != null) {
-                    val name = chatStateExtension.elementName
-                    val state = ChatState.valueOf(name)
-                    val userId = JIDHelper.INSTANCE.parseUserId(message.from)
-                    if (state === ChatState.paused) {
-                        //stop typing
-                    } else if (state === ChatState.composing) {
-                        //start typing
-                    }
-                }
-            }, filter)
+        private fun addTypingListeners(connection: XMPPConnection) {
+            connection.addSyncStanzaListener(TypingListener(typingEventFlow, "PRIVATE"), MessageTypeFilter.CHAT)
+            connection.addSyncStanzaListener(TypingListener(typingEventFlow, "GROUP"), MessageTypeFilter.GROUPCHAT)
         }
 
         override fun connectionClosed() {
@@ -983,5 +999,9 @@ open class RemoteDataSourceImpl : RemoteDataSource {
 
     override fun subscribeMessagesEvent(): Flow<RemoteMessageDTO?> {
         return messagesEventFlow
+    }
+
+    override fun subscribeTypingEvent(): Flow<RemoteTypingDTO?> {
+        return typingEventFlow
     }
 }

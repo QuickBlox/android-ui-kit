@@ -8,8 +8,8 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity.Types.GROUP
-import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
+import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 
 class DialogsAdapter : RecyclerView.Adapter<DialogViewHolder>() {
     private var theme: UiKitTheme = LightUIKitTheme()

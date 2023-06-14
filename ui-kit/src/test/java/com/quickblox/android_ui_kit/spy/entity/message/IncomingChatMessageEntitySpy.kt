@@ -19,6 +19,10 @@ open class IncomingChatMessageEntitySpy : IncomingChatMessageEntityStub() {
     private var content: String? = System.currentTimeMillis().toString()
     private var time: Long? = System.currentTimeMillis()
 
+    private var loggedUserId: Int? = null
+    private var readIds: Collection<Int>? = null
+    private var deliveredIds: Collection<Int>? = null
+
     override fun geMessageId(): String? {
         return messageId
     }
@@ -37,6 +41,26 @@ open class IncomingChatMessageEntitySpy : IncomingChatMessageEntityStub() {
 
     override fun setDialogId(dialogId: String?) {
         this.dialogId = dialogId
+    }
+
+    override fun isNotDelivered(): Boolean {
+        return deliveredIds?.contains(loggedUserId) == true
+    }
+
+    override fun setLoggedUserId(id: Int?) {
+        loggedUserId = id
+    }
+
+    override fun setReadIds(ids: Collection<Int>?) {
+        readIds = ids
+    }
+
+    override fun setDeliveredIds(ids: Collection<Int>?) {
+        deliveredIds = ids
+    }
+
+    override fun isNotRead(): Boolean {
+        return readIds?.contains(loggedUserId) == true
     }
 
     override fun getSenderId(): Int? {

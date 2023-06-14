@@ -20,7 +20,4 @@ interface ChatMessageEntity : MessageEntity {
 
     fun getMediaContent(): MediaContentEntity?
     fun setMediaContent(mediaContent: MediaContentEntity?)
-
-    fun getSenderId(): Int?
-    fun setSenderId(id: Int?)
 }

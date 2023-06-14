@@ -43,7 +43,8 @@ class LeaveDialogUseCase(private val dialogEntity: DialogEntity) : BaseUseCase<U
         }
     }
 
-    private fun sendEvent(dialog: DialogEntity) {
+    @VisibleForTesting
+    fun sendEvent(dialog: DialogEntity) {
         val loggedUserName = getLoggedUserName()
         val messageText = createMessageText(loggedUserName)
         val event = createEvent(messageText, dialog.getDialogId()!!)
@@ -65,12 +66,17 @@ class LeaveDialogUseCase(private val dialogEntity: DialogEntity) : BaseUseCase<U
     @VisibleForTesting
     fun getUserNameFrom(user: UserEntity): String {
         var userName = ""
-        if (user.getName()?.isNotBlank() == true) {
-            userName = user.getName() ?: ""
+
+        val isNameExist = user.getName()?.isNotBlank() == true
+        if (isNameExist) {
+            userName = user.getName()!!
         }
-        if (userName.isBlank()) {
-            userName = user.getLogin() ?: ""
+
+        val isLoginExist = user.getLogin()?.isNotBlank() == true
+        if (userName.isBlank() && isLoginExist) {
+            userName = user.getLogin()!!
         }
+
         return userName
     }
 

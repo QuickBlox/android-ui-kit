@@ -9,8 +9,10 @@ import com.quickblox.android_ui_kit.BaseTest
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.entity.UserEntity
+import com.quickblox.android_ui_kit.domain.exception.DomainException
 import com.quickblox.android_ui_kit.domain.exception.repository.UsersRepositoryException
 import com.quickblox.android_ui_kit.domain.repository.UsersRepository
+import com.quickblox.android_ui_kit.spy.DependencySpy
 import com.quickblox.android_ui_kit.spy.repository.UsersRepositorySpy
 import com.quickblox.android_ui_kit.stub.DependencyStub
 import com.quickblox.android_ui_kit.stub.entity.DialogEntityStub
@@ -25,6 +27,13 @@ import org.junit.Test
 import java.util.concurrent.CountDownLatch
 
 class GetUsersFromDialogUseCaseTest : BaseTest() {
+    @Test(expected = DomainException::class)
+    @ExperimentalCoroutinesApi
+    fun createDialogWithoutUsers_execute_receivedException() = runTest {
+        QuickBloxUiKit.setDependency(DependencySpy())
+        GetUsersFromDialogUseCase(buildDialogEntity(arrayListOf())).execute()
+    }
+
     @Test
     @ExperimentalCoroutinesApi
     fun createDialogWithOneUser_execute_receivedOneUser() = runTest {

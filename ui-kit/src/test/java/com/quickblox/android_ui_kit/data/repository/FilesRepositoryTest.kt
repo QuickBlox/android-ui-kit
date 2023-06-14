@@ -11,13 +11,13 @@ import com.quickblox.android_ui_kit.data.source.local.LocalFileDataSourceExcepti
 import com.quickblox.android_ui_kit.data.source.remote.RemoteDataSourceExceptionFactoryImpl
 import com.quickblox.android_ui_kit.domain.exception.repository.FilesRepositoryException
 import com.quickblox.android_ui_kit.spy.entity.FileEntitySpy
+import com.quickblox.android_ui_kit.stub.entity.FileEntityStub
 import com.quickblox.android_ui_kit.stub.source.LocalFileDataSourceStub
 import com.quickblox.android_ui_kit.stub.source.RemoteDataSourceStub
-import com.quickblox.android_ui_kit.stub.entity.FileEntityStub
+import com.quickblox.android_ui_kit.utils.FileUtils
 import com.quickblox.core.exception.QBResponseException
 import org.junit.Assert.*
 import org.junit.Test
-import java.io.File
 
 class FilesRepositoryTest {
     private val localFileExceptionFactory = LocalFileDataSourceExceptionFactoryImpl()
@@ -88,22 +88,6 @@ class FilesRepositoryTest {
     }
 
     @Test
-    fun saveFileToRemote_NoException() {
-        val remoteDataSourceStub = object : RemoteDataSourceStub() {
-            override fun createFile(dto: RemoteFileDTO): RemoteFileDTO {
-                val dtoStub = RemoteFileDTO()
-                dtoStub.id = 123456
-                dtoStub.file = File("test")
-                return dtoStub
-            }
-        }
-        val fileRepository = FilesRepositoryImpl(remoteDataSourceStub, object : LocalFileDataSourceStub() {})
-        val entity = FileEntitySpy()
-        val dto = fileRepository.saveFileToRemote(entity)
-        assertNotNull(dto)
-    }
-
-    @Test
     fun saveFileToRemote_AlreadyExistException() {
         val remoteDataSourceStub = object : RemoteDataSourceStub() {
             override fun createFile(dto: RemoteFileDTO): RemoteFileDTO {
@@ -119,11 +103,13 @@ class FilesRepositoryTest {
             }
         }
         val fileRepository = FilesRepositoryImpl(remoteDataSourceStub, object : LocalFileDataSourceStub() {})
+
+        val entity = FileEntitySpy(FileUtils.buildFileWithMegaBytesLength(1))
         try {
-            val entity = FileEntitySpy()
             fileRepository.saveFileToRemote(entity)
             fail("expect: Exception, actual: No Exception")
         } catch (exception: FilesRepositoryException) {
+            entity.getFile()?.delete()
             assertEquals(FilesRepositoryException.Codes.RESTRICTED_ACCESS, exception.code)
         }
     }
@@ -136,11 +122,13 @@ class FilesRepositoryTest {
             }
         }
         val fileRepository = FilesRepositoryImpl(remoteDataSourceStub, object : LocalFileDataSourceStub() {})
+
+        val entity = FileEntitySpy()
         try {
-            val entity = FileEntitySpy()
             fileRepository.saveFileToRemote(entity)
             fail("expect: Exception, actual: No Exception")
         } catch (exception: FilesRepositoryException) {
+            entity.getFile()?.delete()
             assertEquals(FilesRepositoryException.Codes.INCORRECT_DATA, exception.code)
         }
     }
@@ -161,11 +149,13 @@ class FilesRepositoryTest {
             }
         }
         val fileRepository = FilesRepositoryImpl(remoteDataSourceStub, object : LocalFileDataSourceStub() {})
+
+        val entity = FileEntitySpy(FileUtils.buildFileWithMegaBytesLength(1))
         try {
-            val entity = FileEntitySpy()
             fileRepository.saveFileToRemote(entity)
             fail("expect: Exception, actual: No Exception")
         } catch (exception: FilesRepositoryException) {
+            entity.getFile()?.delete()
             assertEquals(FilesRepositoryException.Codes.CONNECTION_FAILED, exception.code)
         }
     }
@@ -237,21 +227,6 @@ class FilesRepositoryTest {
     }
 
     @Test
-    fun getFileFromRemote_NoException() {
-        val remoteDataSourceStub = object : RemoteDataSourceStub() {
-            override fun getFile(dto: RemoteFileDTO): RemoteFileDTO {
-                val dtoStub = RemoteFileDTO()
-                dtoStub.id = 123456
-                return dtoStub
-            }
-        }
-        val fileRepository = FilesRepositoryImpl(remoteDataSourceStub, object : LocalFileDataSourceStub() {})
-        val dto = fileRepository.getFileFromRemote("123456")
-
-        assertNotNull(dto)
-    }
-
-    @Test
     fun getFileFromRemote_IncorrectDataException() {
         val remoteDataSourceStub = object : RemoteDataSourceStub() {
             override fun getFile(dto: RemoteFileDTO): RemoteFileDTO {
@@ -308,24 +283,15 @@ class FilesRepositoryTest {
             }
         }
         val fileRepository = FilesRepositoryImpl(remoteDataSourceStub, object : LocalFileDataSourceStub() {})
+
+        val entity = FileEntitySpy(FileUtils.buildFileWithMegaBytesLength(1))
         try {
-            val entity = FileEntitySpy()
             fileRepository.saveFileToRemote(entity)
             fail("expect: Exception, actual: No Exception")
         } catch (exception: FilesRepositoryException) {
+            entity.getFile()?.delete()
             assertEquals(FilesRepositoryException.Codes.UNEXPECTED, exception.code)
         }
-    }
-
-    @Test
-    fun deleteFileFromLocal_NoException() {
-        val localFileDataSourceStub = object : LocalFileDataSourceStub() {
-            override fun deleteFile(dto: LocalFileDTO) {
-                // empty
-            }
-        }
-        val fileRepository = FilesRepositoryImpl(object : RemoteDataSourceStub() {}, localFileDataSourceStub)
-        fileRepository.deleteFileFromLocal("123456")
     }
 
     @Test
@@ -378,5 +344,54 @@ class FilesRepositoryTest {
         } catch (exception: FilesRepositoryException) {
             assertEquals(FilesRepositoryException.Codes.NOT_FOUND_ITEM, exception.code)
         }
+    }
+
+    @Test
+    fun saveFileToRemote_NoException() {
+        val createdFile = FileUtils.buildFileWithMegaBytesLength(1)
+
+        val remoteDataSourceStub = object : RemoteDataSourceStub() {
+            override fun createFile(dto: RemoteFileDTO): RemoteFileDTO {
+                val dtoStub = RemoteFileDTO()
+                dtoStub.id = 123456
+                dtoStub.file = createdFile
+                return dtoStub
+            }
+        }
+
+        val fileRepository = FilesRepositoryImpl(remoteDataSourceStub, object : LocalFileDataSourceStub() {})
+
+        val dto = fileRepository.saveFileToRemote(FileEntitySpy(createdFile))
+
+        createdFile.delete()
+
+        assertEquals(123456, dto.getId())
+        assertNotNull(dto.getFile())
+    }
+
+    @Test
+    fun getFileFromRemote_NoException() {
+        val remoteDataSourceStub = object : RemoteDataSourceStub() {
+            override fun getFile(dto: RemoteFileDTO): RemoteFileDTO {
+                val dtoStub = RemoteFileDTO()
+                dtoStub.id = 123456
+                return dtoStub
+            }
+        }
+        val fileRepository = FilesRepositoryImpl(remoteDataSourceStub, object : LocalFileDataSourceStub() {})
+        val dto = fileRepository.getFileFromRemote("123456")
+
+        assertNotNull(dto)
+    }
+
+    @Test
+    fun deleteFileFromLocal_NoException() {
+        val localFileDataSourceStub = object : LocalFileDataSourceStub() {
+            override fun deleteFile(dto: LocalFileDTO) {
+                // empty
+            }
+        }
+        val fileRepository = FilesRepositoryImpl(object : RemoteDataSourceStub() {}, localFileDataSourceStub)
+        fileRepository.deleteFileFromLocal("123456")
     }
 }

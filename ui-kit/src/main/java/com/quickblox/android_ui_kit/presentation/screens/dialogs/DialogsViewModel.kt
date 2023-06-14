@@ -26,12 +26,17 @@ import kotlinx.coroutines.launch
 
 class DialogsViewModel : BaseViewModel() {
     private val TAG: String = DialogsViewModel::class.java.simpleName
+
+    enum class DialogChangeType {
+        ADDED, UPDATED, UPDATED_RANGE, DELETED
+    }
+
     private var connectionRepository = QuickBloxUiKit.getDependency().getConnectionRepository()
 
     private var getDialogsJob: Job? = null
 
-    private val _updatedDialogs = MutableLiveData<Unit>()
-    val updatedDialogs: LiveData<Unit>
+    private val _updatedDialogs = MutableLiveData<Pair<DialogChangeType, Int>>()
+    val updatedDialogs: LiveData<Pair<DialogChangeType, Int>>
         get() = _updatedDialogs
 
     private val _syncing = MutableLiveData<Boolean>()
@@ -40,11 +45,11 @@ class DialogsViewModel : BaseViewModel() {
 
     val dialogs = arrayListOf<DialogEntity>()
 
-    private var subscribeDialogsEventUseCase = DialogsEventUseCase()
     private var getDialogsUseCase = GetDialogsUseCase()
 
     init {
         subscribeConnection()
+        subscribeToDialogsEvents()
     }
 
     fun createPrivateDialogEntity(): DialogEntity {
@@ -61,6 +66,7 @@ class DialogsViewModel : BaseViewModel() {
 
     fun getDialogs() {
         if (isNotConnected() || getDialogsJob?.isActive == true) {
+            _updatedDialogs.value = Pair(DialogChangeType.UPDATED_RANGE, dialogs.lastIndex)
             return
         }
 
@@ -68,15 +74,18 @@ class DialogsViewModel : BaseViewModel() {
         _syncing.value = true
         getDialogsJob = viewModelScope.launch {
             getDialogsUseCase.execute().onCompletion {
-                subscribeToDialogsEvents()
                 _syncing.value = false
             }.collect { result ->
                 if (result.isSuccess) {
-                    val dialog = result.getOrNull()
-                    dialog?.let {
-                        dialogs.remove(it)
-                        dialogs.add(it)
-                        _updatedDialogs.value = Unit
+                    result.getOrNull()?.let { dialog ->
+                        if (isNotExistDialog(dialog, dialogs)) {
+                            dialogs.add(dialog)
+                            _updatedDialogs.value = Pair(DialogChangeType.ADDED, dialogs.lastIndex)
+                        } else {
+                            val index = dialogs.indexOf(dialog)
+                            dialogs[index] = dialog
+                            _updatedDialogs.value = Pair(DialogChangeType.UPDATED, index)
+                        }
                     }
                 }
 
@@ -105,11 +114,16 @@ class DialogsViewModel : BaseViewModel() {
             try {
                 val foundDialogs = GetDialogsByNameUseCase(name).execute()
 
+                getDialogsJob?.cancel()
+
                 foundDialogs?.let {
                     dialogs.clear()
-                    dialogs.addAll(it)
+
+                    for (dialog in it) {
+                        dialogs.add(dialog)
+                        _updatedDialogs.postValue(Pair(DialogChangeType.ADDED, dialogs.lastIndex))
+                    }
                 }
-                _updatedDialogs.postValue(Unit)
             } catch (exception: DomainException) {
                 showError(exception.message)
             }
@@ -120,8 +134,13 @@ class DialogsViewModel : BaseViewModel() {
         viewModelScope.launch {
             runCatching {
                 LeaveDialogUseCase(dialogEntity).execute()
+                if (isNotExistDialog(dialogEntity, dialogs)) {
+                    return@launch
+                }
+
+                val index = dialogs.indexOf(dialogEntity)
                 dialogs.remove(dialogEntity)
-                _updatedDialogs.value = Unit
+                _updatedDialogs.postValue(Pair(DialogChangeType.DELETED, index))
             }.onFailure { error ->
                 showError(error.message)
             }
@@ -130,14 +149,25 @@ class DialogsViewModel : BaseViewModel() {
 
     private fun subscribeToDialogsEvents() {
         viewModelScope.launch {
-            subscribeDialogsEventUseCase.execute().collect { dialogEntity ->
-                dialogs.remove(dialogEntity)
-                dialogEntity?.let {
-                    dialogs.add(0, it)
+            DialogsEventUseCase().execute().collect { dialogEntity ->
+                if (isNotExistDialog(dialogEntity, dialogs)) {
+                    return@collect
                 }
-                _updatedDialogs.value = Unit
+
+                val index = dialogs.indexOf(dialogEntity)
+                dialogEntity?.let { dialog ->
+                    dialogs.removeAt(index)
+                    dialogs.add(0, dialog)
+
+                    _updatedDialogs.value = Pair(DialogChangeType.UPDATED, index)
+                }
             }
         }
+    }
+
+    private fun isNotExistDialog(dialog: DialogEntity?, dialogs: ArrayList<DialogEntity>): Boolean {
+        val index = dialogs.indexOf(dialog)
+        return index == -1
     }
 
     override fun onConnected() {
@@ -147,7 +177,6 @@ class DialogsViewModel : BaseViewModel() {
     override fun onDisconnected() {
         viewModelScope.launch {
             getDialogsUseCase.release()
-            subscribeDialogsEventUseCase.release()
             getDialogsJob?.cancel()
         }
     }

@@ -102,6 +102,16 @@ open class BaseTest {
         }
     }
 
+    protected fun deleteDialog(dialogId: String?) {
+        dialogId?.let {
+            try {
+                QBRestChatService.deleteDialog(dialogId, true).perform()
+            } catch (exception: QBResponseException) {
+                println(exception)
+            }
+        }
+    }
+
     open class DependencyStub : Dependency {
         override fun getConnectionRepository(): ConnectionRepository {
             throw RuntimeException("expected: override, actual: not override")

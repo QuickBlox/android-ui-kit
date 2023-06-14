@@ -7,13 +7,13 @@ package com.quickblox.android_ui_kit.domain.usecases
 
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
-import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.exception.DomainException
 import com.quickblox.android_ui_kit.domain.usecases.base.BaseUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class DeliverMessageUseCase(private val message: IncomingChatMessageEntity) : BaseUseCase<Unit>() {
+class DeliverMessageUseCase(private val message: MessageEntity) : BaseUseCase<Unit>() {
     private val messagesRepository = QuickBloxUiKit.getDependency().getMessagesRepository()
     private val dialogsRepository = QuickBloxUiKit.getDependency().getDialogsRepository()
     override suspend fun execute() {

@@ -7,8 +7,9 @@ package com.quickblox.android_ui_kit.domain.usecases
 
 import com.quickblox.android_ui_kit.BaseTest
 import com.quickblox.android_ui_kit.QuickBloxUiKit
+import com.quickblox.android_ui_kit.domain.exception.DomainException
 import com.quickblox.android_ui_kit.domain.repository.EventsRepository
-import com.quickblox.android_ui_kit.domain.usecases.DialogEventUseCase
+import com.quickblox.android_ui_kit.spy.DependencySpy
 import com.quickblox.android_ui_kit.spy.entity.DialogEntitySpy
 import com.quickblox.android_ui_kit.spy.repository.EventsRepositorySpy
 import com.quickblox.android_ui_kit.stub.DependencyStub
@@ -38,6 +39,14 @@ class DialogEventUseCaseTest : BaseTest() {
     @ExperimentalCoroutinesApi
     fun release() {
         Dispatchers.resetMain()
+    }
+
+    @Test(expected = DomainException::class)
+    @ExperimentalCoroutinesApi
+    fun createUseCaseWithEmptyDialogId_execute_receivedException() = runTest {
+        QuickBloxUiKit.setDependency(DependencySpy())
+
+        DialogEventUseCase("").execute()
     }
 
     @Test

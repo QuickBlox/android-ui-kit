@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/clItem"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/ivMediaIcon"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:scaleType="center"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:background="@drawable/bg_media_message"
+        tools:src="@drawable/ic_audio_file" />
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_margin="5dp"
+        android:indeterminateTint="@color/white"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/ivMediaIcon"
+        app:layout_constraintEnd_toEndOf="@+id/ivMediaIcon"
+        app:layout_constraintStart_toStartOf="@+id/ivMediaIcon"
+        app:layout_constraintTop_toTopOf="@+id/ivMediaIcon"
+        tools:visibility="visible" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/tvFileName"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:ellipsize="end"
+        android:textColor="@color/secondary500"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@+id/ivMediaIcon"
+        app:layout_constraintStart_toEndOf="@+id/ivMediaIcon"
+        app:layout_constraintTop_toTopOf="@+id/ivMediaIcon"
+        tools:text="video.mp4" />
+</androidx.constraintlayout.widget.ConstraintLayout>

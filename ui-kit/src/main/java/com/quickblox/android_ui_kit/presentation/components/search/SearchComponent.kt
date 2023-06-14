@@ -17,9 +17,10 @@ interface SearchComponent : Component {
 
     fun getSearchText(): String
     fun setSearchText(text: String?)
-    fun setTextWatcherToEditText(textWatcher: TextWatcher)
+    fun setTextWatcherToEditText(textWatcher: TextWatcher?)
     fun setSearchTextColor(@ColorInt color: Int)
     fun setMinCharactersLengthForSearch(number: Int)
+    fun clearSearchTextAndReinitTextWatcher()
 
     fun getSearchClickListener(): SearchEventListener?
     fun setSearchClickListener(searchEventListener: SearchEventListener?)

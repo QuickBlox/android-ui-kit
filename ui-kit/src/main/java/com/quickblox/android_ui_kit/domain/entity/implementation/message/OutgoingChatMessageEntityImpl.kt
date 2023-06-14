@@ -9,11 +9,11 @@ import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MediaContentEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
-import com.quickblox.chat.utils.MongoDBObjectId
+import kotlin.random.Random
 
 class OutgoingChatMessageEntityImpl(
     private var outgoingState: OutgoingChatMessageEntity.OutgoingStates?,
-    private var contentType: ChatMessageEntity.ContentTypes
+    private var contentType: ChatMessageEntity.ContentTypes,
 ) : OutgoingChatMessageEntity {
     private var dialogId: String? = null
     private var messageId: String? = null
@@ -21,11 +21,7 @@ class OutgoingChatMessageEntityImpl(
     private var content: String? = null
     private var participantId: Int? = null
     private var mediaContent: MediaContentEntity? = null
-
-    init {
-        // TODO: need to move to data layer
-        messageId = MongoDBObjectId.get().toString()
-    }
+    private var senderId: Int? = null
 
     override fun getChatMessageType(): ChatMessageEntity.ChatMessageTypes {
         return ChatMessageEntity.ChatMessageTypes.FROM_LOGGED_USER
@@ -44,11 +40,11 @@ class OutgoingChatMessageEntityImpl(
     }
 
     override fun getSenderId(): Int? {
-        TODO("Not yet implemented")
+        return senderId
     }
 
     override fun setSenderId(id: Int?) {
-        TODO("Not yet implemented")
+        senderId = id
     }
 
     override fun getContentType(): ChatMessageEntity.ContentTypes {
@@ -109,15 +105,21 @@ class OutgoingChatMessageEntityImpl(
 
     override fun equals(other: Any?): Boolean {
         return if (other is MessageEntity) {
-            messageId == other.geMessageId()
+            messageId != null && messageId == other.geMessageId()
         } else {
             false
         }
     }
 
     override fun hashCode(): Int {
+        val messageIdHashCode = if (messageId != null) {
+            messageId.hashCode()
+        } else {
+            Random.nextInt(1000, 100000)
+        }
+
         var hash = 1
-        hash = 31 * hash + messageId.hashCode()
+        hash = 31 * hash + messageIdHashCode
         return hash
     }
 }

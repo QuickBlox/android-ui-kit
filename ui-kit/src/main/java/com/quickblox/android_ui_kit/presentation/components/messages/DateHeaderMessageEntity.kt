@@ -10,18 +10,15 @@ import com.quickblox.android_ui_kit.domain.entity.implementation.message.EventMe
 // TODO: Need to move this class in EventMessageEntity as a separate type.
 //  Since the logic for adding a Date Header must be at the domain level.
 //  Also need to create in EventMessageEntity specific types of events, for example, a user has been added, a user has been deleted
-class DateHeaderMessage(private var id: String? = null, private var messageText: String? = null) :
+class DateHeaderMessageEntity(id: String? = null, private var messageText: String? = null) :
     EventMessageEntityImpl() {
     init {
         val randomMessageId = System.currentTimeMillis().toString()
         setMessageId(randomMessageId)
+        setDialogId(id)
     }
 
     override fun getText(): String? {
         return messageText
-    }
-
-    override fun getDialogId(): String? {
-        return id
     }
 }

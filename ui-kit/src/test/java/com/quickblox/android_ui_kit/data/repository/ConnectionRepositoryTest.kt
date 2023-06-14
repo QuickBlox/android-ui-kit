@@ -26,8 +26,6 @@ import org.junit.Test
 import java.util.concurrent.CountDownLatch
 
 class ConnectionRepositoryTest : BaseTest() {
-    // TODO: need to move DomainBaseTest to BaseTest
-
     @Before
     @ExperimentalCoroutinesApi
     fun init() {

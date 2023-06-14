@@ -12,7 +12,7 @@ import android.view.ViewGroup
 import androidx.annotation.ColorInt
 import com.quickblox.android_ui_kit.databinding.DateHeaderMessageItemBinding
 import com.quickblox.android_ui_kit.presentation.base.BaseViewHolder
-import com.quickblox.android_ui_kit.presentation.components.messages.DateHeaderMessage
+import com.quickblox.android_ui_kit.presentation.components.messages.DateHeaderMessageEntity
 import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
 
@@ -32,7 +32,7 @@ class DateHeaderViewHolder(binding: DateHeaderMessageItemBinding) :
         applyTheme(theme)
     }
 
-    fun bind(message: DateHeaderMessage?) {
+    fun bind(message: DateHeaderMessageEntity?) {
         binding.tvDate.text = message?.getText()
         applyTheme(theme)
     }

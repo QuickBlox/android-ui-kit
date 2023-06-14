@@ -9,10 +9,13 @@ import com.quickblox.android_ui_kit.BaseTest
 import com.quickblox.android_ui_kit.DEFAULT_DELAY
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.domain.entity.FileEntity
+import com.quickblox.android_ui_kit.domain.exception.DomainException
 import com.quickblox.android_ui_kit.domain.exception.repository.FilesRepositoryException
 import com.quickblox.android_ui_kit.domain.repository.FilesRepository
+import com.quickblox.android_ui_kit.spy.DependencySpy
 import com.quickblox.android_ui_kit.spy.repository.FileRepositorySpy
 import com.quickblox.android_ui_kit.stub.DependencyStub
+import com.quickblox.android_ui_kit.stub.repository.FilesRepositoryStub
 import junit.framework.Assert.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -23,6 +26,24 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 class CreateLocalFileUseCaseTest : BaseTest() {
+    @Test(expected = DomainException::class)
+    @ExperimentalCoroutinesApi
+    fun createLocalFileThrowsException_execute_receivedException() = runTest {
+        val fileRepository = object : FilesRepositoryStub() {
+            override fun createLocalFile(extension: String): FileEntity {
+                throw FilesRepositoryException(FilesRepositoryException.Codes.NOT_FOUND_ITEM, "")
+            }
+        }
+
+        QuickBloxUiKit.setDependency(object : DependencySpy() {
+            override fun getFilesRepository(): FilesRepository {
+                return fileRepository
+            }
+        })
+
+        CreateLocalFileUseCase("jpg").execute()
+    }
+
     @Test
     @ExperimentalCoroutinesApi
     fun repositoryHasFileEntity_execute_entityExist() = runTest {

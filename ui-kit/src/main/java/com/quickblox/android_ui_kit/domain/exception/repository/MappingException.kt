@@ -5,4 +5,7 @@
 
 package com.quickblox.android_ui_kit.domain.exception.repository
 
+import com.quickblox.android_ui_kit.ExcludeFromCoverage
+
+@ExcludeFromCoverage
 class MappingException(description: String) : Exception(description)

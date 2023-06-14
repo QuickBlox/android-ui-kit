@@ -21,6 +21,9 @@ object RemoteMessageDTOMapper {
         dto.type = parseType(qbChatMessage)
         dto.time = qbChatMessage.dateSent
         dto.participantId = qbChatMessage.recipientId
+        dto.loggedUserId = loggedUserId
+        dto.readIds = qbChatMessage.readIds
+        dto.deliveredIds = qbChatMessage.deliveredIds
 
         val messageHasAttachment = isChatMessageTypeIn(qbChatMessage) && isExistAttachmentIn(qbChatMessage)
         if (messageHasAttachment) {
@@ -30,7 +33,31 @@ object RemoteMessageDTOMapper {
             dto.mimeType = attachment.contentType
         }
 
+        if (dto.outgoing == true) {
+            dto.outgoingState = parseOutgoingState(qbChatMessage, loggedUserId)
+        }
+
         return dto
+    }
+
+    private fun parseOutgoingState(qbChatMessage: QBChatMessage, loggedUserId: Int): RemoteMessageDTO.OutgoingMessageStates {
+        val readIds = qbChatMessage.readIds
+        val deliveredIds = qbChatMessage.deliveredIds
+
+        readIds.remove(loggedUserId)
+        deliveredIds.remove(loggedUserId)
+
+        val isAlreadyRead = readIds.isNotEmpty()
+        if (isAlreadyRead) {
+            return RemoteMessageDTO.OutgoingMessageStates.READ
+        }
+
+        val isAlreadyDelivered = deliveredIds.isNotEmpty()
+        if (isAlreadyDelivered) {
+            return RemoteMessageDTO.OutgoingMessageStates.DELIVERED
+        }
+
+        return RemoteMessageDTO.OutgoingMessageStates.SENT
     }
 
     @VisibleForTesting

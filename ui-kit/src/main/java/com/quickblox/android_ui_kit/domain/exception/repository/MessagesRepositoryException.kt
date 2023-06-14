@@ -4,7 +4,11 @@
  */
 package com.quickblox.android_ui_kit.domain.exception.repository
 
+import com.quickblox.android_ui_kit.ExcludeFromCoverage
+
+@ExcludeFromCoverage
 class MessagesRepositoryException(val code: Codes, val description: String) : Exception(description) {
+    @ExcludeFromCoverage
     enum class Codes {
         UNEXPECTED,
         NOT_FOUND_ITEM,

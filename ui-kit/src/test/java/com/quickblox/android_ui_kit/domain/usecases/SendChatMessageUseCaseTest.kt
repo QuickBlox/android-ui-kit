@@ -8,15 +8,16 @@ package com.quickblox.android_ui_kit.domain.usecases
 import com.quickblox.android_ui_kit.BaseTest
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
+import com.quickblox.android_ui_kit.domain.entity.implementation.message.MediaContentEntityImpl
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.OutgoingChatMessageEntityImpl
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.exception.DomainException
 import com.quickblox.android_ui_kit.domain.exception.repository.MessagesRepositoryException
 import com.quickblox.android_ui_kit.domain.repository.MessagesRepository
 import com.quickblox.android_ui_kit.spy.DependencySpy
 import com.quickblox.android_ui_kit.spy.repository.MessagesRepositorySpy
-import junit.framework.Assert.assertEquals
-import junit.framework.Assert.fail
+import junit.framework.Assert.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -42,6 +43,66 @@ class SendChatMessageUseCaseTest : BaseTest() {
     @ExperimentalCoroutinesApi
     fun release() {
         Dispatchers.resetMain()
+    }
+
+    @Test(expected = DomainException::class)
+    @ExperimentalCoroutinesApi
+    fun createMediaMessageWithoutMediaContent_execute_receivedException() = runTest {
+        QuickBloxUiKit.setDependency(DependencySpy())
+
+        val message = OutgoingChatMessageEntityImpl(null, ChatMessageEntity.ContentTypes.MEDIA)
+        message.setDialogId("dummy_dialog_id")
+
+        SendChatMessageUseCase(message).execute()
+    }
+
+    @Test(expected = DomainException::class)
+    @ExperimentalCoroutinesApi
+    fun createMediaMessageWithoutDialogId_execute_receivedException() = runTest {
+        QuickBloxUiKit.setDependency(DependencySpy())
+
+        val message = OutgoingChatMessageEntityImpl(null, ChatMessageEntity.ContentTypes.MEDIA)
+
+        SendChatMessageUseCase(message).execute()
+    }
+
+    @Test
+    @ExperimentalCoroutinesApi
+    fun createMediaContentEntity_makeMessageBodyFromMediaContent_messageBodyEquals() {
+        QuickBloxUiKit.setDependency(DependencySpy())
+
+        val useCase = SendChatMessageUseCase(buildChatOutgoingMessage())
+
+        val mediaContentEntity = MediaContentEntityImpl("dummy_file_name", "dummy_file_url", "dummy_mime_type")
+        val messageBody = useCase.makeMessageBodyFromMediaContent(mediaContentEntity)
+        assertEquals("MediaContentEntity|dummy_file_name|dummy_file_url|dummy_mime_type", messageBody)
+    }
+
+    @Test
+    @ExperimentalCoroutinesApi
+    fun createChatMessageEntityWithMediaContent_isMediaContentNotAvailableIn_receivedFalse() {
+        QuickBloxUiKit.setDependency(DependencySpy())
+
+        val useCase = SendChatMessageUseCase(buildChatOutgoingMessage())
+
+        val message = OutgoingChatMessageEntityImpl(null, ChatMessageEntity.ContentTypes.MEDIA)
+        message.setMediaContent(MediaContentEntityImpl("dummy_file_name", "dummy_file_url", "dummy_mime_type"))
+
+        val mediaContentAvailable = useCase.isMediaContentNotAvailableIn(message)
+        assertFalse(mediaContentAvailable)
+    }
+
+    @Test
+    @ExperimentalCoroutinesApi
+    fun createChatMessageEntityWithoutMediaContent_isMediaContentNotAvailableIn_receivedTrue() {
+        QuickBloxUiKit.setDependency(DependencySpy())
+
+        val useCase = SendChatMessageUseCase(buildChatOutgoingMessage())
+
+        val message = OutgoingChatMessageEntityImpl(null, ChatMessageEntity.ContentTypes.TEXT)
+
+        val mediaContentAvailable = useCase.isMediaContentNotAvailableIn(message)
+        assertTrue(mediaContentAvailable)
     }
 
     @Test

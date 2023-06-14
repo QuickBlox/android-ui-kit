@@ -11,12 +11,15 @@ import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
 import android.view.View
 import androidx.appcompat.widget.LinearLayoutCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.Recycler
 import com.quickblox.android_ui_kit.R
 import com.quickblox.android_ui_kit.databinding.DialogsComponentBinding
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.presentation.components.search.SearchComponent
-import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
+import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 
 class DialogsComponentImpl : LinearLayoutCompat, DialogsComponent {
     private var binding: DialogsComponentBinding? = null
@@ -47,9 +50,11 @@ class DialogsComponentImpl : LinearLayoutCompat, DialogsComponent {
     private fun setDefaultState() {
         binding?.rvDialogs?.setHasFixedSize(true)
         binding?.rvDialogs?.background = ColorDrawable(theme.getMainBackgroundColor())
+        binding?.rvDialogs?.itemAnimator = null
+        binding?.rvDialogs?.adapter = adapter
+
         adapter?.setTheme(theme)
         adapter?.setDialogAdapterListener(DialogAdapterListenerImpl())
-        binding?.rvDialogs?.adapter = adapter
         binding?.progressBar?.indeterminateTintList = ColorStateList.valueOf(theme.getMainElementsColor())
         binding?.tvSyncing?.setTextColor(theme.getMainTextColor())
         binding?.llSyncing?.background = ColorDrawable(theme.getMainBackgroundColor())

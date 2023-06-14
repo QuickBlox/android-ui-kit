@@ -12,9 +12,7 @@ interface EventMessageEntity : MessageEntity {
         LEFT_USER_FROM_DIALOG,
         REMOVED_USER_FROM_DIALOG,
         STARTED_TYPING,
-        STOPPED_TYPING,
-        READ_MESSAGE,
-        DELIVERED_MESSAGE
+        STOPPED_TYPING
     }
 
     fun setEventType(type: EventTypes?)
@@ -22,4 +20,14 @@ interface EventMessageEntity : MessageEntity {
 
     fun setText(text: String?)
     fun getText(): String?
+
+    fun setLoggedUserId(id: Int?)
+
+    fun setReadIds(ids: Collection<Int>?)
+
+    fun setDeliveredIds(ids: Collection<Int>?)
+
+    fun isNotRead(): Boolean
+
+    fun isNotDelivered(): Boolean
 }

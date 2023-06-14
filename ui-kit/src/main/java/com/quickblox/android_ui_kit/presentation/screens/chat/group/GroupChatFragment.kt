@@ -31,8 +31,10 @@ import com.quickblox.android_ui_kit.databinding.ContainerFragmentBinding
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity.ContentTypes
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
 import com.quickblox.android_ui_kit.presentation.base.BaseFragment
+import com.quickblox.android_ui_kit.presentation.components.messages.MessageAdapter
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.*
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.ImageIncomingViewHolder.ImageIncomingListener
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.ImageOutgoingViewHolder.ImageOutgoingListener
@@ -44,6 +46,7 @@ import com.quickblox.android_ui_kit.presentation.screens.chat.CameraResultContra
 import com.quickblox.android_ui_kit.presentation.screens.chat.EXTRA_DATA
 import com.quickblox.android_ui_kit.presentation.screens.chat.PermissionsContract
 import com.quickblox.android_ui_kit.presentation.screens.chat.full_image_screen.FullImageScreenActivity
+import com.quickblox.android_ui_kit.presentation.screens.chat.group.GroupChatViewModel.TypingEvents
 import com.quickblox.android_ui_kit.presentation.screens.info.group.GroupChatInfoActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -56,7 +59,7 @@ open class GroupChatFragment : BaseFragment() {
         val TAG: String = GroupChatFragment::class.java.simpleName
 
         fun newInstance(
-            dialogId: String? = null, screenSettings: GroupChatScreenSettings? = null
+            dialogId: String? = null, screenSettings: GroupChatScreenSettings? = null,
         ): GroupChatFragment {
             val privateChatFragment = GroupChatFragment()
             privateChatFragment.dialogId = dialogId
@@ -124,6 +127,7 @@ open class GroupChatFragment : BaseFragment() {
         setFileIncomingListener()
         setAudioOutgoingListener()
         setAudioIncomingListener()
+        setReadMessageListener()
     }
 
     private fun setImageOutgoingListener() {
@@ -262,6 +266,19 @@ open class GroupChatFragment : BaseFragment() {
         }
     }
 
+    private fun setReadMessageListener() {
+        val messageAdapter = screenSettings?.getMessagesComponent()?.getAdapter()
+
+        val readMessageListener = messageAdapter?.getReadMessageListener()
+        if (readMessageListener == null) {
+            messageAdapter?.setReadMessageListener(object : MessageAdapter.ReadMessageListener {
+                override fun read(message: MessageEntity) {
+                    viewModel.sendRead(message)
+                }
+            })
+        }
+    }
+
     private fun startActionView(message: ChatMessageEntity?) {
         val url = message?.getMediaContent()?.getUrl()
         val mimeType = message?.getMediaContent()?.getMimeType()
@@ -309,6 +326,14 @@ open class GroupChatFragment : BaseFragment() {
                 override fun onClickFile() {
                     launchFileSelection()
                 }
+
+                override fun onStartedTyping() {
+                    viewModel.sendStartedTyping()
+                }
+
+                override fun onStoppedTyping() {
+                    viewModel.sendStoppedTyping()
+                }
             })
         }
     }
@@ -336,7 +361,7 @@ open class GroupChatFragment : BaseFragment() {
         binding = ContainerFragmentBinding.inflate(inflater, container, false)
 
         val views = collectViewsTemplateMethod(requireContext())
-        for (view in views){
+        for (view in views) {
             view?.let {
                 binding?.llParent?.addView(view)
             }
@@ -353,6 +378,7 @@ open class GroupChatFragment : BaseFragment() {
         subscribeToUpdatedMessage()
         subscribeToReceivedMessage()
         subscribeToMessagesLoading()
+        subscribeToUpdateDialog()
 
         return binding?.root
     }
@@ -407,6 +433,24 @@ open class GroupChatFragment : BaseFragment() {
         }
     }
 
+    private fun subscribeToUpdateDialog() {
+        viewModel.typingEvents.observe(viewLifecycleOwner) { result ->
+            val sendMessageComponent = screenSettings?.getMessagesComponent()?.getSendMessageComponent()
+
+            val typingEvent = result.first
+            val text = result.second
+
+            when (typingEvent) {
+                TypingEvents.STARTED -> {
+                    sendMessageComponent?.showStartedTyping(text)
+                }
+                TypingEvents.STOPPED -> {
+                    sendMessageComponent?.showStoppedTyping()
+                }
+            }
+        }
+    }
+
     override fun collectViewsTemplateMethod(context: Context): List<View?> {
         val views = mutableListOf<View?>()
         views.add(screenSettings?.getHeaderComponent()?.getView())
@@ -426,6 +470,8 @@ open class GroupChatFragment : BaseFragment() {
     }
 
     protected open fun backPressed() {
+        // TODO: Need to add logic for update dialog,
+        //  because when we send read message the unread message counter not updating in DialogsScreen
         activity?.onBackPressedDispatcher?.onBackPressed()
     }
 

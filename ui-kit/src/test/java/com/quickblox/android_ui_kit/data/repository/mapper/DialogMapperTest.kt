@@ -23,7 +23,7 @@ class DialogMapperTest {
     @Test
     fun buildDialogEntityStub_mappingToRemoteDto_NoException() {
         val entity = buildGroupDialogEntityStub()
-        val dto = DialogMapper.dtoRemoteFrom(entity)
+        val dto = DialogMapper.remoteDTOFrom(entity)
 
         assertEquals(dto.id, entity.getDialogId())
         assertEquals(dto.ownerId, entity.getOwnerId())
@@ -41,14 +41,14 @@ class DialogMapperTest {
     fun buildDialogEntityStubWithTypeNull_mappingToRemoteDto_MappingException() {
         val entity = buildGroupDialogEntityStub()
         entity.setDialogType(null)
-        DialogMapper.dtoRemoteFrom(entity)
+        DialogMapper.remoteDTOFrom(entity)
     }
 
     @Test(expected = MappingException::class)
     fun buildDialogEntityStubWithTypePublicAndNameNull_mappingToRemoteDto_MappingException() {
         val entity = buildPublicDialogEntityStub()
         entity.setName(null)
-        DialogMapper.dtoRemoteFrom(entity)
+        DialogMapper.remoteDTOFrom(entity)
     }
 
     @Test(expected = MappingException::class)
@@ -56,14 +56,14 @@ class DialogMapperTest {
         val entity = buildGroupDialogEntityStub()
         entity.setDialogType(GROUP)
         entity.setName("")
-        DialogMapper.dtoRemoteFrom(entity)
+        DialogMapper.remoteDTOFrom(entity)
     }
 
     @Test(expected = MappingException::class)
     fun buildDialogEntityStubWithTypePrivateAndParticipantIdsNull_mappingToRemoteDto_MappingException() {
         val entity = buildPrivateDialogEntityStub()
         entity.setParticipantIds(null)
-        DialogMapper.dtoRemoteFrom(entity)
+        DialogMapper.remoteDTOFrom(entity)
     }
 
     @Test(expected = MappingException::class)
@@ -71,7 +71,7 @@ class DialogMapperTest {
         val entity = buildGroupDialogEntityStub()
         entity.setDialogType(PRIVATE)
         entity.setParticipantIds(arrayListOf())
-        DialogMapper.dtoRemoteFrom(entity)
+        DialogMapper.remoteDTOFrom(entity)
     }
 
     @Test

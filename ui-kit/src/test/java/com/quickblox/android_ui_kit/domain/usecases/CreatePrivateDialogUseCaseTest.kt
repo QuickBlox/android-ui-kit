@@ -9,13 +9,15 @@ import com.quickblox.android_ui_kit.BaseTest
 import com.quickblox.android_ui_kit.DEFAULT_DELAY
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
+import com.quickblox.android_ui_kit.domain.exception.DomainException
 import com.quickblox.android_ui_kit.domain.exception.repository.DialogsRepositoryException
 import com.quickblox.android_ui_kit.domain.exception.repository.DialogsRepositoryException.Codes.INCORRECT_DATA
 import com.quickblox.android_ui_kit.domain.exception.repository.DialogsRepositoryException.Codes.UNAUTHORISED
 import com.quickblox.android_ui_kit.domain.repository.DialogsRepository
 import com.quickblox.android_ui_kit.domain.repository.UsersRepository
-import com.quickblox.android_ui_kit.spy.repository.UsersRepositorySpy
+import com.quickblox.android_ui_kit.spy.DependencySpy
 import com.quickblox.android_ui_kit.spy.entity.DialogEntitySpy
+import com.quickblox.android_ui_kit.spy.repository.UsersRepositorySpy
 import com.quickblox.android_ui_kit.stub.DependencyStub
 import com.quickblox.android_ui_kit.stub.repository.DialogsRepositoryStub
 import junit.framework.Assert.assertEquals
@@ -30,6 +32,13 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 class CreatePrivateDialogUseCaseTest : BaseTest() {
+    @Test(expected = DomainException::class)
+    @ExperimentalCoroutinesApi
+    fun createUseCaseWithIncorrectParticipantId_execute_receivedException() = runTest {
+        QuickBloxUiKit.setDependency(DependencySpy())
+        CreatePrivateDialogUseCase(0).execute()
+    }
+
     @Test
     @ExperimentalCoroutinesApi
     fun createRemoteAndSaveLocal_execute_onComplete() = runTest {

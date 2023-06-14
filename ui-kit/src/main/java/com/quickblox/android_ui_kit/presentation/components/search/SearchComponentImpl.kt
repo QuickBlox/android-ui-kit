@@ -20,10 +20,11 @@ import com.quickblox.android_ui_kit.presentation.hideKeyboard
 import com.quickblox.android_ui_kit.presentation.makeClickableBackground
 import com.quickblox.android_ui_kit.presentation.screens.SimpleTextWatcher
 import com.quickblox.android_ui_kit.presentation.screens.setOnClick
-import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
+import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 
 class SearchComponentImpl : ConstraintLayout, SearchComponent {
+    private var textWatcher: TextWatcher? = null
     private var binding: SearchComponentBinding? = null
     private var theme: UiKitTheme = LightUIKitTheme()
 
@@ -69,7 +70,12 @@ class SearchComponentImpl : ConstraintLayout, SearchComponent {
     }
 
     private fun setDefaultTextWatcher() {
-        setTextWatcherToEditText(object : SimpleTextWatcher() {
+        textWatcher = buildDefaultTextWatcher()
+        setTextWatcherToEditText(textWatcher)
+    }
+
+    private fun buildDefaultTextWatcher(): TextWatcher? {
+        return object : SimpleTextWatcher() {
             override fun onTextChanged(charSequence: CharSequence?, start: Int, before: Int, count: Int) {
                 val text = charSequence.toString()
                 if (text.isEmpty()) {
@@ -85,7 +91,7 @@ class SearchComponentImpl : ConstraintLayout, SearchComponent {
                     setSearchButtonNotClickableState()
                 }
             }
-        })
+        }
     }
 
     private fun applyTheme() {
@@ -118,7 +124,8 @@ class SearchComponentImpl : ConstraintLayout, SearchComponent {
         binding?.etSearch?.setText(text)
     }
 
-    override fun setTextWatcherToEditText(textWatcher: TextWatcher) {
+    override fun setTextWatcherToEditText(textWatcher: TextWatcher?) {
+        this.textWatcher = textWatcher
         binding?.etSearch?.addTextChangedListener(textWatcher)
     }
 
@@ -128,6 +135,12 @@ class SearchComponentImpl : ConstraintLayout, SearchComponent {
 
     override fun setMinCharactersLengthForSearch(length: Int) {
         minCharactersLength = length
+    }
+
+    override fun clearSearchTextAndReinitTextWatcher() {
+        setTextWatcherToEditText(null)
+        binding?.etSearch?.text?.clear()
+        setTextWatcherToEditText(textWatcher)
     }
 
     override fun setVisibleSearchButton(visible: Boolean) {

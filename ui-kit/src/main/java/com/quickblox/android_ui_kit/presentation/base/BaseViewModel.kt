@@ -9,6 +9,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.quickblox.android_ui_kit.QuickBloxUiKit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -31,10 +33,12 @@ abstract class BaseViewModel : ViewModel() {
 
         connectionJob = viewModelScope.launch {
             connectionRepository.subscribe().collect { connected ->
-                if (connected) {
-                    onConnected()
-                } else {
-                    onDisconnected()
+                CoroutineScope(Dispatchers.Main).launch {
+                    if (connected) {
+                        onConnected()
+                    } else {
+                        onDisconnected()
+                    }
                 }
             }
         }

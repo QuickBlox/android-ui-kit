@@ -26,6 +26,26 @@ open class IncomingChatMessageEntityStub : MessageEntityStub(), IncomingChatMess
         throw buildRuntimeException()
     }
 
+    override fun setLoggedUserId(id: Int?) {
+        throw buildRuntimeException()
+    }
+
+    override fun setReadIds(ids: Collection<Int>?) {
+        throw buildRuntimeException()
+    }
+
+    override fun setDeliveredIds(ids: Collection<Int>?) {
+        throw buildRuntimeException()
+    }
+
+    override fun isNotRead(): Boolean {
+        throw buildRuntimeException()
+    }
+
+    override fun isNotDelivered(): Boolean {
+        throw buildRuntimeException()
+    }
+
     override fun setTime(time: Long?) {
         throw buildRuntimeException()
     }

@@ -20,7 +20,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-@ExcludeFromCoverage
 object AppLifecycleManager {
     private val TAG = AppLifecycleManager::class.java.simpleName
 

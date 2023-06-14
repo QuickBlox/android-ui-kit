@@ -6,6 +6,11 @@ The main goal of the QuickBlox UIKit for Android is to offer developers a stream
 
 The QuickBlox UIKit for Android offers modules that encapsulate complex chat functionalities, such as dialogs and chat management and real-time updates. These modules provide a simplified interface for integrating chat features into applications without the need for extensive knowledge of the underlying protocols or server-side infrastructure.
 
+# Screenshots
+
+<img src="screenshots/android-doc.png" />
+
+
 # Features
 
 QuickBlox UIKit for Android provides next functionality:

@@ -5,6 +5,7 @@
 
 package com.quickblox.android_ui_kit.domain.usecases
 
+import com.quickblox.android_ui_kit.ExcludeFromCoverage
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.usecases.base.FlowUseCase
@@ -35,6 +36,7 @@ class DialogsEventUseCase : FlowUseCase<DialogEntity?>() {
         return dialogsEventFlow
     }
 
+    @ExcludeFromCoverage
     override suspend fun release() {
         scope.cancel()
     }

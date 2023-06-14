@@ -12,13 +12,62 @@ import com.quickblox.android_ui_kit.domain.entity.DialogEntity.Types.PRIVATE
 import com.quickblox.android_ui_kit.domain.entity.implementation.DialogEntityImpl
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.IncomingChatMessageEntityImpl
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import com.quickblox.android_ui_kit.spy.entity.CustomDataEntitySpy
+import org.junit.Assert.*
 import org.junit.Test
 import java.util.*
 import kotlin.random.Random
 
 class DialogEntityTest {
+    @Test
+    fun buildDialogEntity_IsOwnerSetTrue_IsOwnerReturnTrue() {
+        val entity = DialogEntityImpl()
+        entity.setIsOwner(true)
+
+        assertTrue(entity.isOwner()!!)
+    }
+
+    @Test
+    fun buildDialogEntity_IsOwnerSetFalse_IsOwnerReturnFalse() {
+        val entity = DialogEntityImpl()
+        entity.setIsOwner(false)
+
+        assertFalse(entity.isOwner()!!)
+    }
+
+    @Test
+    fun buildDialogEntity_SetCustomData_CustomDataAreEquals() {
+        val customData = CustomDataEntitySpy()
+
+        val entity = DialogEntityImpl()
+        entity.setCustomData(customData)
+
+        assertEquals(customData, entity.getCustomData())
+    }
+
+    @Test
+    fun build2DialogsEntityWithSameDialogId_GetHashCode_DialogsAndHashCodesAreEquals() {
+        val dialogId = System.currentTimeMillis().toString()
+
+        val entityA = DialogEntityImpl()
+        entityA.setDialogId(dialogId)
+
+        val entityB = DialogEntityImpl()
+        entityB.setDialogId(dialogId)
+
+        assertTrue(entityA == entityB)
+        assertTrue(entityA.hashCode() == entityB.hashCode())
+    }
+
+    @Test
+    fun build2DialogsEntityWithoutDialogId_GetHashCode_DialogsAndHashCodesNotEquals() {
+        val entityA = DialogEntityImpl()
+        val entityB = DialogEntityImpl()
+
+        assertTrue(entityA != entityB)
+        assertTrue(entityA.hashCode() != entityB.hashCode())
+    }
+
     @Test
     fun buildGroupDialogEntityStub_CompareEntities_EqualsTrue() {
         val entity = buildDialogEntityStub()

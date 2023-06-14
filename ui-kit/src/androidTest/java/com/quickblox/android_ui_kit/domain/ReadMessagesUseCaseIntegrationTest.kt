@@ -20,7 +20,6 @@ import com.quickblox.chat.model.QBChatDialog
 import com.quickblox.chat.model.QBChatMessage
 import com.quickblox.chat.model.QBDialogType
 import com.quickblox.users.model.QBUser
-import junit.framework.Assert
 import junit.framework.Assert.assertEquals
 import junit.framework.Assert.fail
 import kotlinx.coroutines.*
@@ -88,7 +87,7 @@ class ReadMessagesUseCaseIntegrationTest : BaseTest() {
 
     @Test
     @ExperimentalCoroutinesApi
-    fun createGroupDialog_sendChatMessageAndSendRead_receivedReadMessage() = runBlocking {
+    fun createGroupDialog_sendChatMessageAndSendRead_receivedReadMessageAndUnreadMessageCountIsZero() = runBlocking {
         createGroupDialog()
 
         deleteAllMessagesIn(createdDialog!!)
@@ -108,13 +107,15 @@ class ReadMessagesUseCaseIntegrationTest : BaseTest() {
 
         CountDownLatch(1).await(3, TimeUnit.SECONDS)
 
-        val opponentUser = buildOpponentUser()
-        val qbDialog = buildOpponentGroupQBChatDialogFrom(createdDialog!!, opponentChatService!!, opponentUser)
-        sendChatMessageToDialog(qbDialog)
+        sendChatMessageToGroupDialogFromOpponent()
 
         receivedMessageLatch.await(10, TimeUnit.SECONDS)
-
         assertEquals(0, receivedMessageLatch.count)
+
+        val dialogId = createdDialog?.getDialogId()!!
+        GetDialogByIdUseCase(dialogId).execute()
+
+        assertEquals(1, getUnreadMessageCountFromCacheBy(dialogId))
 
         val readMessageLatch = CountDownLatch(1)
         opponentChatService?.messageStatusesManager?.addMessageStatusListener(StatusMessageListenerImpl(readMessageLatch))
@@ -124,6 +125,7 @@ class ReadMessagesUseCaseIntegrationTest : BaseTest() {
         readMessageLatch.await(10, TimeUnit.SECONDS)
 
         assertEquals(0, readMessageLatch.count)
+        assertEquals(0, getUnreadMessageCountFromCacheBy(dialogId))
     }
 
     private suspend fun createGroupDialog() {
@@ -135,25 +137,15 @@ class ReadMessagesUseCaseIntegrationTest : BaseTest() {
             }.onSuccess { result ->
                 createdDialog = result
             }.onFailure { error ->
-                Assert.fail("expected: NoException, actual: Exception")
+                fail("expected: NoException, actual: Exception, details: $error")
             }
         }
     }
 
-    private fun deleteAllMessagesIn(dialog: DialogEntity?) {
-        val qbDialog = QBChatDialog()
-        qbDialog.dialogId = dialog?.getDialogId()!!
-
-        val loadedMessages = QBRestChatService.getDialogMessages(qbDialog, null).perform()
-
-        val needToDeleteMessageIds = arrayListOf<String>()
-        loadedMessages.forEach { qbChatMessage ->
-            needToDeleteMessageIds.add(qbChatMessage.id)
-        }
-
-        if (needToDeleteMessageIds.isNotEmpty()) {
-            QBRestChatService.deleteMessages(needToDeleteMessageIds.toSet(), true).perform()
-        }
+    private fun sendChatMessageToGroupDialogFromOpponent() {
+        val opponentUser = buildOpponentUser()
+        val qbDialog = buildOpponentGroupQBChatDialogFrom(createdDialog!!, opponentChatService!!, opponentUser)
+        sendChatMessageTo(qbDialog)
     }
 
     private fun buildOpponentGroupQBChatDialogFrom(
@@ -178,7 +170,7 @@ class ReadMessagesUseCaseIntegrationTest : BaseTest() {
 
     @Test
     @ExperimentalCoroutinesApi
-    fun createPrivateDialog_sendChatMessageAndSendRead_receivedReadMessage() = runBlocking {
+    fun createPrivateDialog_sendChatMessageAndSendRead_receivedReadMessageAndUnreadMessageCountIsZero() = runBlocking {
         createPrivateDialog()
 
         deleteAllMessagesIn(createdDialog!!)
@@ -198,13 +190,15 @@ class ReadMessagesUseCaseIntegrationTest : BaseTest() {
 
         CountDownLatch(1).await(3, TimeUnit.SECONDS)
 
-        val opponentUser = buildOpponentUser()
-        val qbDialog = buildOpponentPrivateQBChatDialogFrom(createdDialog!!, opponentChatService!!, opponentUser)
-        sendChatMessageToDialog(qbDialog)
+        sendChatMessageToPrivateDialogFromOpponent()
 
         receivedMessageLatch.await(10, TimeUnit.SECONDS)
-
         assertEquals(0, receivedMessageLatch.count)
+
+        val dialogId = createdDialog?.getDialogId()!!
+        GetDialogByIdUseCase(dialogId).execute()
+
+        assertEquals(1, getUnreadMessageCountFromCacheBy(dialogId))
 
         val readMessageLatch = CountDownLatch(1)
         opponentChatService?.messageStatusesManager?.addMessageStatusListener(StatusMessageListenerImpl(readMessageLatch))
@@ -214,6 +208,7 @@ class ReadMessagesUseCaseIntegrationTest : BaseTest() {
         readMessageLatch.await(10, TimeUnit.SECONDS)
 
         assertEquals(0, readMessageLatch.count)
+        assertEquals(0, getUnreadMessageCountFromCacheBy(dialogId))
     }
 
     private suspend fun createPrivateDialog() {
@@ -223,9 +218,31 @@ class ReadMessagesUseCaseIntegrationTest : BaseTest() {
             }.onSuccess { result ->
                 createdDialog = result
             }.onFailure { error ->
-                Assert.fail("expected: NoException, actual: Exception")
+                fail("expected: NoException, actual: Exception, details: $error")
             }
         }
+    }
+
+    private fun deleteAllMessagesIn(dialog: DialogEntity?) {
+        val qbDialog = QBChatDialog()
+        qbDialog.dialogId = dialog?.getDialogId()!!
+
+        val loadedMessages = QBRestChatService.getDialogMessages(qbDialog, null).perform()
+
+        val needToDeleteMessageIds = arrayListOf<String>()
+        loadedMessages.forEach { qbChatMessage ->
+            needToDeleteMessageIds.add(qbChatMessage.id)
+        }
+
+        if (needToDeleteMessageIds.isNotEmpty()) {
+            QBRestChatService.deleteMessages(needToDeleteMessageIds.toSet(), true).perform()
+        }
+    }
+
+    private fun sendChatMessageToPrivateDialogFromOpponent() {
+        val opponentUser = buildOpponentUser()
+        val qbDialog = buildOpponentPrivateQBChatDialogFrom(createdDialog!!, opponentChatService!!, opponentUser)
+        sendChatMessageTo(qbDialog)
     }
 
     private fun buildOpponentPrivateQBChatDialogFrom(
@@ -256,7 +273,7 @@ class ReadMessagesUseCaseIntegrationTest : BaseTest() {
         return opponentUser
     }
 
-    private fun sendChatMessageToDialog(qbDialog: QBChatDialog) {
+    private fun sendChatMessageTo(qbDialog: QBChatDialog) {
         val qbMessage = QBChatMessage()
         qbMessage.body = "test_message: ${System.currentTimeMillis()}"
         qbMessage.setSaveToHistory(true)
@@ -274,5 +291,10 @@ class ReadMessagesUseCaseIntegrationTest : BaseTest() {
             assertEquals(loadedMessage!!.geMessageId(), messageId)
             messageReadLatch.countDown()
         }
+    }
+
+    private fun getUnreadMessageCountFromCacheBy(dialogId: String): Int? {
+        val dialogsRepository = QuickBloxUiKit.getDependency().getDialogsRepository()
+        return dialogsRepository.getDialogFromLocal(dialogId).getUnreadMessagesCount()
     }
 }

@@ -8,11 +8,11 @@ package com.quickblox.android_ui_kit.spy.repository
 import android.net.Uri
 import com.quickblox.android_ui_kit.domain.entity.FileEntity
 import com.quickblox.android_ui_kit.domain.entity.implementation.FileEntityImpl
-import com.quickblox.android_ui_kit.stub.repository.FileRepositoryStub
+import com.quickblox.android_ui_kit.stub.repository.FilesRepositoryStub
 import org.mockito.Mockito.mock
 import java.io.File
 
-open class FileRepositorySpy : FileRepositoryStub() {
+open class FileRepositorySpy : FilesRepositoryStub() {
     override fun saveFileToLocal(entity: FileEntity) {}
 
     override fun saveFileToRemote(entity: FileEntity): FileEntity {
