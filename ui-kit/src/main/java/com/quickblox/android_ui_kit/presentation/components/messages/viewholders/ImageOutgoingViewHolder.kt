@@ -116,40 +116,30 @@ class ImageOutgoingViewHolder(binding: ImageOutgiongMessageItemBinding) :
             OutgoingStates.SENDING -> {
                 resourceId = R.drawable.sending
                 color = theme.getTertiaryElementsColor()
-
-                binding.ivStatus.setImageResource(resourceId)
-                binding.ivStatus.setColorFilter(color)
             }
             OutgoingStates.SENT -> {
                 resourceId = R.drawable.sent
                 color = theme.getTertiaryElementsColor()
-
-                binding.ivStatus.setImageResource(resourceId)
-                binding.ivStatus.setColorFilter(color)
             }
             OutgoingStates.DELIVERED -> {
                 resourceId = R.drawable.delivered
                 color = theme.getTertiaryElementsColor()
-
-                binding.ivStatus.setImageResource(resourceId)
-                binding.ivStatus.setColorFilter(color)
             }
             OutgoingStates.READ -> {
                 resourceId = R.drawable.read
                 color = theme.getMainElementsColor()
-
-                binding.ivStatus.setImageResource(resourceId)
-                binding.ivStatus.setColorFilter(color)
             }
             OutgoingStates.ERROR -> {
                 resourceId = R.drawable.send_error
                 color = theme.getErrorColor()
-
-                binding.ivStatus.setImageResource(resourceId)
-                binding.ivStatus.setColorFilter(color)
             }
-            else -> {}
+            else -> {
+                return
+            }
         }
+
+        binding.ivStatus.setImageResource(resourceId)
+        binding.ivStatus.setColorFilter(color)
     }
 
     private inner class RequestListenerImpl(private val message: OutgoingChatMessageEntity?) :

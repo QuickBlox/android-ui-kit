@@ -92,40 +92,30 @@ class FileOutgoingViewHolder(binding: FileOutgiongMessageItemBinding) :
             OutgoingChatMessageEntity.OutgoingStates.SENDING -> {
                 resourceId = R.drawable.sending
                 color = theme.getTertiaryElementsColor()
-
-                binding.ivStatus.setImageResource(resourceId)
-                binding.ivStatus.setColorFilter(color)
             }
             OutgoingChatMessageEntity.OutgoingStates.SENT -> {
                 resourceId = R.drawable.sent
                 color = theme.getTertiaryElementsColor()
-
-                binding.ivStatus.setImageResource(resourceId)
-                binding.ivStatus.setColorFilter(color)
             }
             OutgoingChatMessageEntity.OutgoingStates.DELIVERED -> {
                 resourceId = R.drawable.delivered
                 color = theme.getTertiaryElementsColor()
-
-                binding.ivStatus.setImageResource(resourceId)
-                binding.ivStatus.setColorFilter(color)
             }
             OutgoingChatMessageEntity.OutgoingStates.READ -> {
                 resourceId = R.drawable.read
                 color = theme.getMainElementsColor()
-
-                binding.ivStatus.setImageResource(resourceId)
-                binding.ivStatus.setColorFilter(color)
             }
             OutgoingChatMessageEntity.OutgoingStates.ERROR -> {
                 resourceId = R.drawable.send_error
                 color = theme.getErrorColor()
-
-                binding.ivStatus.setImageResource(resourceId)
-                binding.ivStatus.setColorFilter(color)
             }
-            else -> {}
+            else -> {
+                return
+            }
         }
+
+        binding.ivStatus.setImageResource(resourceId)
+        binding.ivStatus.setColorFilter(color)
     }
 
     interface FileOutgoingListener {

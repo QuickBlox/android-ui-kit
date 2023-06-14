@@ -18,10 +18,10 @@ interface MessagesRepository {
     fun createMessage(entity: OutgoingChatMessageEntity): OutgoingChatMessageEntity
 
     @Throws(MessagesRepositoryException::class)
-    fun readMessage(entity: IncomingChatMessageEntity, dialog: DialogEntity)
+    fun readMessage(entity: MessageEntity, dialog: DialogEntity)
 
     @Throws(MessagesRepositoryException::class)
-    fun deliverMessage(entity: IncomingChatMessageEntity, dialog: DialogEntity)
+    fun deliverMessage(entity: MessageEntity, dialog: DialogEntity)
 
     @Throws(MessagesRepositoryException::class)
     fun sendChatMessageToRemote(entity: OutgoingChatMessageEntity, dialog: DialogEntity)

@@ -62,7 +62,7 @@ object DialogMapper {
         return dto
     }
 
-    fun dtoRemoteFrom(entity: DialogEntity): RemoteDialogDTO {
+    fun remoteDTOFrom(entity: DialogEntity): RemoteDialogDTO {
         val dto = RemoteDialogDTO()
 
         val type = validateTypeDialog(entity.getType()?.code)

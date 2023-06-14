@@ -16,4 +16,7 @@ open class SendMessageComponentListenerImpl : SendMessageComponentListener {
     override fun onClickVideoCamera() {}
     override fun onClickPhotoAndVideoGallery() {}
     override fun onClickFile() {}
+
+    override fun onStartedTyping() {}
+    override fun onStoppedTyping() {}
 }

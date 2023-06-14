@@ -36,6 +36,14 @@ open class MessageEntityStub : BaseStub(), MessageEntity {
         throw buildRuntimeException()
     }
 
+    override fun getSenderId(): Int? {
+        throw buildRuntimeException()
+    }
+
+    override fun setSenderId(id: Int?) {
+        throw buildRuntimeException()
+    }
+
     override fun setParticipantId(participantId: Int?) {
         throw buildRuntimeException()
     }

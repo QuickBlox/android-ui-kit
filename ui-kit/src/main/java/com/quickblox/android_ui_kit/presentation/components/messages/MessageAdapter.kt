@@ -49,6 +49,8 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
     private var theme: UiKitTheme = LightUIKitTheme()
     private var items: List<MessageEntity>? = null
 
+    private var readMessageListener: ReadMessageListener? = null
+
     private var imageOutgoingListener: ImageOutgoingListener? = null
     private var imageIncomingListener: ImageIncomingListener? = null
     private var textIncomingListener: TextIncomingListener? = null
@@ -67,9 +69,22 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
     override fun onBindViewHolder(holder: BaseViewHolder<*>, position: Int) {
         val message = items?.get(position)
         holder.setTheme(theme)
+
+        // TODO: Need to add one more interface in EventMessageEntity and IncomingMessageEntity and move delivered and read methods
+        if (message is EventMessageEntity) {
+            val isNotNullSenderId = message.getSenderId() != null
+            if (message.isNotRead() && isNotNullSenderId) {
+                readMessageListener?.read(message)
+            }
+        } else if (message is IncomingChatMessageEntity) {
+            if (message.isNotRead()) {
+                readMessageListener?.read(message)
+            }
+        }
+
         when (holder) {
             is DateHeaderViewHolder -> {
-                message as DateHeaderMessage
+                message as DateHeaderMessageEntity
                 holder.bind(message)
             }
 
@@ -222,6 +237,14 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
         this.audioIncomingListener = listener
     }
 
+    fun getReadMessageListener(): ReadMessageListener? {
+        return readMessageListener
+    }
+
+    fun setReadMessageListener(listener: ReadMessageListener?) {
+        this.readMessageListener = listener
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder<*> {
         return createMessageViewHolderBy(viewType, parent)
     }
@@ -280,7 +303,7 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
     }
 
     private fun isDateHeader(message: MessageEntity?): Boolean {
-        return message is DateHeaderMessage
+        return message is DateHeaderMessageEntity
     }
 
     private fun getViewHolderTypeForIncoming(message: MessageEntity?): Int {
@@ -339,5 +362,9 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
                 throw IllegalArgumentException()
             }
         }
+    }
+
+    interface ReadMessageListener {
+        fun read(message: MessageEntity)
     }
 }

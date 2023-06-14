@@ -53,16 +53,7 @@ open class OutgoingChatMessageEntityStub : MessageEntityStub(), OutgoingChatMess
         throw buildRuntimeException()
     }
 
-    override fun getSenderId(): Int? {
-        throw buildRuntimeException()
-    }
-
-    override fun setSenderId(id: Int?) {
-        throw buildRuntimeException()
-    }
-
     override fun getContentType(): ChatMessageEntity.ContentTypes {
         throw buildRuntimeException()
     }
-
 }

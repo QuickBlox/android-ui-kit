@@ -35,7 +35,7 @@ open class DialogsRepositoryImpl(
 
     override fun createDialogInRemote(entity: DialogEntity): DialogEntity {
         try {
-            val dto = DialogMapper.dtoRemoteFrom(entity)
+            val dto = DialogMapper.remoteDTOFrom(entity)
             val remoteDTO = remoteDataSource.createDialog(dto)
             return DialogMapper.toEntity(remoteDTO)
         } catch (exception: RemoteDataSourceException) {
@@ -58,7 +58,7 @@ open class DialogsRepositoryImpl(
 
     override fun updateDialogInRemote(entity: DialogEntity): DialogEntity {
         try {
-            val dto = DialogMapper.dtoRemoteFrom(entity)
+            val dto = DialogMapper.remoteDTOFrom(entity)
             val remoteDTO = remoteDataSource.updateDialog(dto)
             return DialogMapper.toEntity(remoteDTO)
         } catch (exception: RemoteDataSourceException) {
@@ -134,7 +134,7 @@ open class DialogsRepositoryImpl(
 
     override fun addUsersToDialog(entity: DialogEntity, userIds: Collection<Int>): DialogEntity {
         try {
-            val dto = DialogMapper.dtoRemoteFrom(entity)
+            val dto = DialogMapper.remoteDTOFrom(entity)
             val dialog = remoteDataSource.addUsersToDialog(dto, userIds)
             return DialogMapper.toEntity(dialog)
         } catch (exception: RemoteDataSourceException) {
@@ -146,7 +146,7 @@ open class DialogsRepositoryImpl(
 
     override fun removeUsersFromDialog(entity: DialogEntity, userIds: Collection<Int>): DialogEntity {
         try {
-            val dto = DialogMapper.dtoRemoteFrom(entity)
+            val dto = DialogMapper.remoteDTOFrom(entity)
             val dialog = remoteDataSource.removeUsersFromDialog(dto, userIds)
             return DialogMapper.toEntity(dialog)
         } catch (exception: RemoteDataSourceException) {
@@ -177,7 +177,7 @@ open class DialogsRepositoryImpl(
 
     override fun leaveDialogFromRemote(entity: DialogEntity) {
         try {
-            val dto = DialogMapper.dtoRemoteFrom(entity)
+            val dto = DialogMapper.remoteDTOFrom(entity)
             remoteDataSource.leaveDialog(dto)
         } catch (exception: RemoteDataSourceException) {
             throw exceptionFactory.makeBy(exception.code, exception.description)
@@ -190,6 +190,7 @@ open class DialogsRepositoryImpl(
         return localDataSource.subscribeLocalSyncing()
     }
 
+    // TODO: Need to rename to subscribeRemoteDialogEvents and move to EventsRepository
     @ExperimentalCoroutinesApi
     override fun subscribeDialogEvents(): Flow<DialogEntity?> {
         return remoteDataSource.subscribeDialogsEvent().map { remoteDialogDTO ->

@@ -4,6 +4,10 @@
  */
 package com.quickblox.android_ui_kit.domain.exception.repository
 
+import com.quickblox.android_ui_kit.ExcludeFromCoverage
+
+@ExcludeFromCoverage
 class EventsRepositoryException(val code: Codes, val description: String) : Exception(description) {
+    @ExcludeFromCoverage
     enum class Codes { INCORRECT_DATA }
 }

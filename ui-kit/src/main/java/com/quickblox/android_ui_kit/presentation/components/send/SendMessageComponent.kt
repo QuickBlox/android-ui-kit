@@ -42,6 +42,9 @@ interface SendMessageComponent : Component {
     fun setVoiceButtonColor(@ColorInt color: Int)
     fun setImageVoiceButton(@DrawableRes resource: Int)
 
+    fun showStartedTyping(text: String)
+    fun showStoppedTyping()
+
     fun setBackground(@ColorInt color: Int)
     fun getMessageEditText(): AppCompatEditText?
 }

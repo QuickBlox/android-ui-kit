@@ -5,6 +5,7 @@
 
 package com.quickblox.android_ui_kit.domain.usecases
 
+import androidx.annotation.VisibleForTesting
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
@@ -51,8 +52,9 @@ class SendChatMessageUseCase(private val message: OutgoingChatMessageEntity) :
         return message
     }
 
-    private fun isMediaContentNotAvailableIn(message: OutgoingChatMessageEntity): Boolean {
-        return message.getMediaContent()?.getUrl()?.isEmpty() == true
+    @VisibleForTesting
+    fun isMediaContentNotAvailableIn(message: OutgoingChatMessageEntity): Boolean {
+        return message.getMediaContent()?.getUrl()?.isBlank() ?: true
     }
 
     private fun getDialogBy(dialogId: String): DialogEntity {
@@ -60,7 +62,8 @@ class SendChatMessageUseCase(private val message: OutgoingChatMessageEntity) :
     }
 
     // TODO: temporary solution, need to be deleted in 2nd iteration when we will have message cache
-    private fun makeMessageBodyFromMediaContent(mediaContentEntity: MediaContentEntity): String {
+    @VisibleForTesting
+    fun makeMessageBodyFromMediaContent(mediaContentEntity: MediaContentEntity): String {
         val fileName = mediaContentEntity.getName()
         val fileUrl = mediaContentEntity.getUrl()
         val fileMimeType = mediaContentEntity.getMimeType()

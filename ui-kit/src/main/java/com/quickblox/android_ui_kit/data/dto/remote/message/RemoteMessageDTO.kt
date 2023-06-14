@@ -15,6 +15,7 @@ class RemoteMessageDTO {
 
     enum class OutgoingMessageStates {
         SENDING,
+        SENT,
         DELIVERED,
         READ,
     }
@@ -32,4 +33,7 @@ class RemoteMessageDTO {
     var fileName: String? = null
     var mimeType: String? = null
     var outgoingState: OutgoingMessageStates? = null
+    var loggedUserId: Int? = null
+    var readIds: Collection<Int>? = null
+    var deliveredIds: Collection<Int>? = null
 }

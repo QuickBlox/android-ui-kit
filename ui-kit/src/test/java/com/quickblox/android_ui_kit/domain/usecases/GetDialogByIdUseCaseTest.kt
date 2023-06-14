@@ -8,8 +8,11 @@ package com.quickblox.android_ui_kit.domain.usecases
 import com.quickblox.android_ui_kit.BaseTest
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
+import com.quickblox.android_ui_kit.domain.exception.DomainException
 import com.quickblox.android_ui_kit.domain.exception.repository.DialogsRepositoryException
 import com.quickblox.android_ui_kit.domain.repository.DialogsRepository
+import com.quickblox.android_ui_kit.spy.DependencySpy
+import com.quickblox.android_ui_kit.spy.repository.DialogsRepositorySpy
 import com.quickblox.android_ui_kit.stub.DependencyStub
 import com.quickblox.android_ui_kit.stub.entity.DialogEntityStub
 import com.quickblox.android_ui_kit.stub.repository.DialogsRepositoryStub
@@ -26,6 +29,57 @@ import java.util.*
 import java.util.concurrent.CountDownLatch
 
 class GetDialogByIdUseCaseTest : BaseTest() {
+    @Test(expected = DomainException::class)
+    fun getDialogFromLocalThrowsException_getDialogFromLocal_receivedException() {
+        val dialogsRepository = object : DialogsRepositorySpy() {
+            override fun getDialogFromLocal(dialogId: String): DialogEntity {
+                throw DialogsRepositoryException(DialogsRepositoryException.Codes.NOT_FOUND_ITEM, "")
+            }
+        }
+
+        QuickBloxUiKit.setDependency(object : DependencySpy() {
+            override fun getDialogsRepository(): DialogsRepository {
+                return dialogsRepository
+            }
+        })
+
+        GetDialogByIdUseCase("dummy_dialog_id").getDialogFromLocal()
+    }
+
+    @Test(expected = DomainException::class)
+    fun getDialogFromRemoteThrowsException_getDialogFromRemote_receivedException() {
+        val dialogsRepository = object : DialogsRepositorySpy() {
+            override fun getDialogFromRemote(dialogId: String): DialogEntity {
+                throw DialogsRepositoryException(DialogsRepositoryException.Codes.NOT_FOUND_ITEM, "")
+            }
+        }
+
+        QuickBloxUiKit.setDependency(object : DependencySpy() {
+            override fun getDialogsRepository(): DialogsRepository {
+                return dialogsRepository
+            }
+        })
+
+        GetDialogByIdUseCase("dummy_dialog_id").getDialogFromRemote()
+    }
+
+    @Test(expected = DomainException::class)
+    fun updateDialogInLocalThrowsException_updateDialogInLocal_receivedException() = runTest {
+        val dialogsRepository = object : DialogsRepositorySpy() {
+            override suspend fun updateDialogInLocal(entity: DialogEntity) {
+                throw DialogsRepositoryException(DialogsRepositoryException.Codes.NOT_FOUND_ITEM, "")
+            }
+        }
+
+        QuickBloxUiKit.setDependency(object : DependencySpy() {
+            override fun getDialogsRepository(): DialogsRepository {
+                return dialogsRepository
+            }
+        })
+
+        GetDialogByIdUseCase("dummy_dialog_id").updateDialogInLocal(DialogEntityStub())
+    }
+
     @Test
     @ExperimentalCoroutinesApi
     fun localCacheSynced_execute_receivedDialog() = runTest {

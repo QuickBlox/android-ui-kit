@@ -21,6 +21,7 @@ open class OutgoingChatMessageEntitySpy : OutgoingChatMessageEntityStub() {
     private var time: Long? = Random.nextLong(1000, 10000)
     private var outgoingStates: OutgoingChatMessageEntity.OutgoingStates? = null
     private var participantId: Int? = null
+    private var senderId: Int? = null
     private var mediaContent: MediaContentEntity? =
         MediaContentEntityImpl("temp_song", "https://test.com/temp_song.mp3", "audio/mpeg")
 
@@ -74,6 +75,14 @@ open class OutgoingChatMessageEntitySpy : OutgoingChatMessageEntityStub() {
 
     override fun getParticipantId(): Int? {
         return participantId
+    }
+
+    override fun getSenderId(): Int? {
+        return senderId
+    }
+
+    override fun setSenderId(id: Int?) {
+        senderId = id
     }
 
     override fun getChatMessageType(): ChatMessageEntity.ChatMessageTypes {

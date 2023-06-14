@@ -8,6 +8,7 @@ import com.quickblox.android_ui_kit.data.dto.remote.dialog.RemoteDialogDTO
 import com.quickblox.android_ui_kit.data.dto.remote.file.RemoteFileDTO
 import com.quickblox.android_ui_kit.data.dto.remote.message.RemoteMessageDTO
 import com.quickblox.android_ui_kit.data.dto.remote.message.RemoteMessagePaginationDTO
+import com.quickblox.android_ui_kit.data.dto.remote.typing.RemoteTypingDTO
 import com.quickblox.android_ui_kit.data.dto.remote.user.RemoteUserDTO
 import com.quickblox.android_ui_kit.data.dto.remote.user.RemoteUserFilterDTO
 import com.quickblox.android_ui_kit.data.dto.remote.user.RemoteUserPaginationDTO
@@ -29,6 +30,15 @@ interface RemoteDataSource {
 
     @Throws(RemoteDataSourceException::class)
     fun subscribeMessagesEvent(): Flow<RemoteMessageDTO?>
+
+    @Throws(RemoteDataSourceException::class)
+    fun subscribeTypingEvent(): Flow<RemoteTypingDTO?>
+
+    @Throws(RemoteDataSourceException::class)
+    fun startTyping(dialogDTO: RemoteDialogDTO)
+
+    @Throws(RemoteDataSourceException::class)
+    fun stopTyping(dialogDTO: RemoteDialogDTO)
 
     @Throws(RemoteDataSourceException::class)
     fun createDialog(dto: RemoteDialogDTO): RemoteDialogDTO

@@ -15,12 +15,13 @@ import com.quickblox.android_ui_kit.domain.entity.FileEntity
 import com.quickblox.android_ui_kit.domain.entity.PaginationEntity
 import com.quickblox.android_ui_kit.domain.entity.implementation.PaginationEntityImpl
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity.ContentTypes
+import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.exception.DomainException
 import com.quickblox.android_ui_kit.domain.usecases.*
 import com.quickblox.android_ui_kit.presentation.base.BaseViewModel
-import com.quickblox.android_ui_kit.presentation.components.messages.DateHeaderMessage
+import com.quickblox.android_ui_kit.presentation.components.messages.DateHeaderMessageEntity
 import com.quickblox.android_ui_kit.presentation.screens.modifyChatDateStringFrom
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.catch
@@ -30,6 +31,14 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class GroupChatViewModel : BaseViewModel() {
+    enum class TypingEvents {
+        STARTED, STOPPED
+    }
+
+    private val _typingEvents = MutableLiveData<Pair<TypingEvents, String>>()
+    val typingEvents: LiveData<Pair<TypingEvents, String>>
+        get() = _typingEvents
+
     private var dialog: DialogEntity? = null
 
     private val _loadedMessage = MutableLiveData<Int>()
@@ -83,6 +92,10 @@ class GroupChatViewModel : BaseViewModel() {
                 _loadedDialogEntity.postValue(dialog)
                 loadMessages()
                 subscribeToMessagesEvent()
+
+                dialog?.let {
+                    subscribeToTypingEvents(it)
+                }
             }.onFailure { error ->
                 hideLoading()
                 showError(error.message)
@@ -121,6 +134,10 @@ class GroupChatViewModel : BaseViewModel() {
             }?.collect { result ->
                 val message = result.getOrNull()?.first
                 message?.let {
+                    if (isNeedSendDelivered(message)) {
+                        sendDelivered(message)
+                    }
+
                     if (messages.isNotEmpty()) {
                         val previousMessage = messages[messages.size - 1]
                         if (isNeedAddHeaderBetweenMessages(message, previousMessage)) {
@@ -139,7 +156,7 @@ class GroupChatViewModel : BaseViewModel() {
     }
 
     private fun addLastHeader(lastMessage: MessageEntity) {
-        if (lastMessage !is DateHeaderMessage) {
+        if (lastMessage !is DateHeaderMessageEntity) {
             val time = lastMessage.getTime()
             val dialogId = lastMessage.getDialogId()
 
@@ -161,13 +178,13 @@ class GroupChatViewModel : BaseViewModel() {
         }
     }
 
-    private fun buildHeader(time: Long?, dialogId: String?): DateHeaderMessage {
+    private fun buildHeader(time: Long?, dialogId: String?): DateHeaderMessageEntity {
         val timeString = modifyChatDateStringFrom(time ?: 0)
-        return DateHeaderMessage(dialogId, timeString)
+        return DateHeaderMessageEntity(dialogId, timeString)
     }
 
     private fun isNeedAddHeaderBetweenMessages(message: MessageEntity, previousMessage: MessageEntity): Boolean {
-        val isPreviousHeader = previousMessage is DateHeaderMessage
+        val isPreviousHeader = previousMessage is DateHeaderMessageEntity
         if (isPreviousHeader) {
             return false
         }
@@ -198,11 +215,34 @@ class GroupChatViewModel : BaseViewModel() {
         subscribeMessagesEventJob = viewModelScope.launch {
             subscribeMessagesEventUseCase = MessagesEventUseCase(dialog!!)
             subscribeMessagesEventUseCase?.execute()?.collect { messageEntity ->
-                messageEntity?.let {
-                    addFirstOrUpdateMessage(it)
+                messageEntity?.let { message ->
+                    if (isExistMessage(message)) {
+                        updatedMessage(message)
+                        return@let
+                    }
+
+                    if (isDelivered(message) || isRead(message)) {
+                        return@let
+                    }
+
+                    if (isNeedAddHeaderBeforeFirst(message)) {
+                        addHeaderBeforeFirst(message)
+                    }
+
+                    addAsFirst(message)
                 }
             }
         }
+    }
+
+    private fun isDelivered(message: MessageEntity): Boolean {
+        return message is OutgoingChatMessageEntity &&
+                message.getOutgoingState() == OutgoingChatMessageEntity.OutgoingStates.DELIVERED
+    }
+
+    private fun isRead(message: MessageEntity): Boolean {
+        return message is OutgoingChatMessageEntity &&
+                message.getOutgoingState() == OutgoingChatMessageEntity.OutgoingStates.READ
     }
 
     override fun onConnected() {
@@ -226,7 +266,17 @@ class GroupChatViewModel : BaseViewModel() {
         viewModelScope.launch {
             runCatching {
                 val sentMessage = SendChatMessageUseCase(message).execute()
-                addFirstOrUpdateMessage(sentMessage)
+
+                if (isExistMessage(sentMessage)) {
+                    updatedMessage(sentMessage)
+                    return@launch
+                }
+
+                if (isNeedAddHeaderBeforeFirst(sentMessage)) {
+                    addHeaderBeforeFirst(sentMessage)
+                }
+
+                addAsFirst(sentMessage)
             }.onFailure { error ->
                 showError(error.message)
             }
@@ -269,7 +319,16 @@ class GroupChatViewModel : BaseViewModel() {
                 }.collect { message ->
                     message as MessageEntity
 
-                    addFirstOrUpdateMessage(message)
+                    if (isExistMessage(message)) {
+                        updatedMessage(message)
+                        return@collect
+                    }
+
+                    if (isNeedAddHeaderBeforeFirst(message)) {
+                        addHeaderBeforeFirst(message)
+                    }
+
+                    addAsFirst(message)
                     sendingMessage = message
                 }
             } catch (exception: DomainException) {
@@ -278,28 +337,104 @@ class GroupChatViewModel : BaseViewModel() {
         }
     }
 
-    private fun addFirstOrUpdateMessage(message: MessageEntity) {
+    private fun isExistMessage(message: MessageEntity): Boolean {
         val index = messages.indexOf(message)
-        val isNotFoundMessage = index == -1
-        if (isNotFoundMessage) {
-            addHeaderIsNeed(message)
-            _receivedMessage.postValue(Unit)
+        return index != -1
+    }
 
-            messages.add(0, message)
-            _receivedMessage.postValue(Unit)
-        } else {
-            messages[index] = message
-            _updatedMessage.postValue(index)
+    private fun isNeedAddHeaderBeforeFirst(message: MessageEntity): Boolean {
+        return messages.isNotEmpty() && isNeedAddHeaderBetweenMessages(messages[0], message)
+    }
+
+    // TODO: Need to refactor when we will have message cache
+    private fun updatedMessage(newMessage: MessageEntity) {
+        val index = messages.indexOf(newMessage)
+        val oldMessage = messages[index]
+        if (oldMessage is OutgoingChatMessageEntity && newMessage is OutgoingChatMessageEntity) {
+            oldMessage.setOutgoingState(newMessage.getOutgoingState())
+        }
+        _updatedMessage.postValue(index)
+    }
+
+    private fun addHeaderBeforeFirst(message: MessageEntity) {
+        val time = message.getTime()
+        val dialogId = message.getDialogId()
+
+        val header = buildHeader(time, dialogId)
+        messages.add(0, header)
+
+        _receivedMessage.postValue(Unit)
+    }
+
+    private fun addAsFirst(message: MessageEntity) {
+        messages.add(0, message)
+        _receivedMessage.postValue(Unit)
+    }
+
+    fun sendRead(message: MessageEntity) {
+        viewModelScope.launch {
+            runCatching {
+                ReadMessageUseCase(message).execute()
+            }.onFailure {
+                showError(it.message)
+            }
         }
     }
 
-    private fun addHeaderIsNeed(message: MessageEntity) {
-        if (messages.isNotEmpty() && isNeedAddHeaderBetweenMessages(messages[0], message)) {
-            val time = message.getTime()
-            val dialogId = message.getDialogId()
-
-            val header = buildHeader(time, dialogId)
-            messages.add(0, header)
+    private fun sendDelivered(message: MessageEntity) {
+        viewModelScope.launch {
+            runCatching {
+                DeliverMessageUseCase(message).execute()
+            }.onFailure {
+                showError(it.message)
+            }
         }
+    }
+
+    private fun subscribeToTypingEvents(dialogEntity: DialogEntity) {
+        viewModelScope.launch {
+            TypingEventUseCase(dialogEntity).execute().runCatching {
+                collect { typingEntity ->
+                    if (typingEntity?.isStarted() == true) {
+                        _typingEvents.postValue(Pair(TypingEvents.STARTED, typingEntity.getText()))
+                    } else if (typingEntity?.isStopped() == true) {
+                        _typingEvents.postValue(Pair(TypingEvents.STOPPED, ""))
+                    }
+                }
+            }.onFailure {
+                showError(it.message)
+            }
+        }
+    }
+
+    fun sendStartedTyping() {
+        viewModelScope.launch {
+            dialog?.getDialogId()?.let {
+                runCatching {
+                    StartTypingEventUseCase(it).execute()
+                }.onFailure {
+                    showError(it.message)
+                }
+            }
+        }
+    }
+
+    fun sendStoppedTyping() {
+        viewModelScope.launch {
+            dialog?.getDialogId()?.let {
+                runCatching {
+                    StopTypingEventUseCase(it).execute()
+                }.onFailure {
+                    showError(it.message)
+                }
+            }
+        }
+    }
+
+    private fun isNeedSendDelivered(message: MessageEntity): Boolean {
+        if (message is IncomingChatMessageEntity && message.isNotDelivered()) {
+            return true
+        }
+        return false
     }
 }

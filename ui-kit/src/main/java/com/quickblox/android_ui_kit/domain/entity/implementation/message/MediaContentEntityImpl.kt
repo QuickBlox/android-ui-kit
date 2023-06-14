@@ -21,7 +21,8 @@ class MediaContentEntityImpl(
         return parseMediaContentTypeFrom(fileMimeType)
     }
 
-    private fun parseMediaContentTypeFrom(mimeType: String): MediaContentEntity.Types {
+    @VisibleForTesting
+    fun parseMediaContentTypeFrom(mimeType: String): MediaContentEntity.Types {
         val fileType = getFileTypeFrom(mimeType)
         when (fileType) {
             MediaContentEntity.Types.FILE.value -> {
@@ -52,6 +53,10 @@ class MediaContentEntityImpl(
 
     override fun isGif(): Boolean {
         return getFileExtensionFrom(getMimeType()).lowercase() == "gif"
+    }
+
+    override fun isImage(): Boolean {
+        return getType() == MediaContentEntity.Types.IMAGE
     }
 
     @VisibleForTesting

@@ -9,7 +9,7 @@ import com.quickblox.android_ui_kit.domain.repository.ConnectionRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 
-class ConnectionRepositorySpy(existConnection: Boolean = false) : ConnectionRepository {
+open class ConnectionRepositorySpy(existConnection: Boolean = false) : ConnectionRepository {
     private val flow: MutableStateFlow<Boolean> = MutableStateFlow(existConnection)
 
     suspend fun setConnection(exist: Boolean) {

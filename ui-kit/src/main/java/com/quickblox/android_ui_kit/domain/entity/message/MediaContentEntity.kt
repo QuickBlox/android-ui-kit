@@ -22,4 +22,6 @@ interface MediaContentEntity {
     fun getMimeType(): String
 
     fun isGif(): Boolean
+
+    fun isImage(): Boolean
 }

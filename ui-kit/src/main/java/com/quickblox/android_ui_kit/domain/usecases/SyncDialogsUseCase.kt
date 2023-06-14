@@ -6,6 +6,7 @@
 package com.quickblox.android_ui_kit.domain.usecases
 
 import android.util.Log
+import com.quickblox.android_ui_kit.ExcludeFromCoverage
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.domain.exception.repository.DialogsRepositoryException
 import com.quickblox.android_ui_kit.domain.usecases.base.BaseUseCase
@@ -73,6 +74,7 @@ class SyncDialogsUseCase : BaseUseCase<Unit>() {
         }
     }
 
+    @ExcludeFromCoverage
     override suspend fun release() {
         setSyncInProgressAndClearLocal()
         scope.cancel()

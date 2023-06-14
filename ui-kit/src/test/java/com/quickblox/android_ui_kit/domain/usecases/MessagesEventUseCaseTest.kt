@@ -9,16 +9,21 @@ import com.quickblox.android_ui_kit.BaseTest
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.data.dto.remote.message.RemoteMessageDTO
 import com.quickblox.android_ui_kit.data.repository.mapper.MessageMapper
+import com.quickblox.android_ui_kit.domain.entity.UserEntity
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.IncomingChatMessageEntityImpl
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.exception.DomainException
+import com.quickblox.android_ui_kit.domain.exception.repository.UsersRepositoryException
 import com.quickblox.android_ui_kit.domain.repository.EventsRepository
+import com.quickblox.android_ui_kit.domain.repository.UsersRepository
 import com.quickblox.android_ui_kit.spy.DependencySpy
 import com.quickblox.android_ui_kit.spy.entity.DialogEntitySpy
+import com.quickblox.android_ui_kit.spy.entity.UserEntitySpy
 import com.quickblox.android_ui_kit.spy.repository.EventsRepositorySpy
-import junit.framework.Assert.assertEquals
-import junit.framework.Assert.assertTrue
+import com.quickblox.android_ui_kit.spy.repository.UsersRepositorySpy
+import junit.framework.Assert.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -45,6 +50,203 @@ class MessagesEventUseCaseTest : BaseTest() {
     @ExperimentalCoroutinesApi
     fun release() {
         Dispatchers.resetMain()
+    }
+
+
+    @Test
+    fun senderIdExistInUsers_getUser_userExist() {
+        QuickBloxUiKit.setDependency(DependencySpy())
+
+        val userA = UserEntitySpy()
+        userA.setUserId(888)
+
+        val userB = UserEntitySpy()
+        userB.setUserId(777)
+
+        val user = MessagesEventUseCase(DialogEntitySpy()).getUser(888, arrayListOf(userA, userB))
+        assertEquals(888, user!!.getUserId())
+    }
+
+    @Test
+    fun senderIdIsNull_getUser_userExist() {
+        QuickBloxUiKit.setDependency(DependencySpy())
+
+        val userA = UserEntitySpy()
+        userA.setUserId(888)
+
+        val userB = UserEntitySpy()
+        userB.setUserId(777)
+
+        val user = MessagesEventUseCase(DialogEntitySpy()).getUser(null, arrayListOf(userA, userB))
+        assertNull(user)
+    }
+
+    @Test
+    fun senderIdNotExistInUsersButExistInRemote_getUser_userExist() {
+        val usersRepository = object : UsersRepositorySpy() {
+            override fun getUserFromRemote(userId: Int): UserEntity {
+                val remoteUser = UserEntitySpy()
+                remoteUser.setUserId(888)
+
+                return remoteUser
+            }
+        }
+
+        QuickBloxUiKit.setDependency(object : DependencySpy() {
+            override fun getUsersRepository(): UsersRepository {
+                return usersRepository
+            }
+        })
+
+        val userA = UserEntitySpy()
+        userA.setUserId(777)
+
+        val userB = UserEntitySpy()
+        userB.setUserId(555)
+
+        val user = MessagesEventUseCase(DialogEntitySpy()).getUser(888, arrayListOf(userA, userB))
+        assertEquals(888, user!!.getUserId())
+    }
+
+    @Test
+    fun createDialog_getUsersFrom_received2Users() {
+        val usersRepository = object : UsersRepositorySpy() {
+            override fun getUserFromRemote(userId: Int): UserEntity {
+                if (userId == 777) {
+                    val userA = UserEntitySpy()
+                    userA.setUserId(777)
+
+                    return userA
+                }
+
+                if (userId == 555) {
+                    val userB = UserEntitySpy()
+                    userB.setUserId(555)
+
+                    return userB
+                }
+
+                throw UsersRepositoryException(UsersRepositoryException.Codes.NOT_FOUND_ITEM, "")
+            }
+        }
+
+        QuickBloxUiKit.setDependency(object : DependencySpy() {
+            override fun getUsersRepository(): UsersRepository {
+                return usersRepository
+            }
+        })
+
+        val dialog = object : DialogEntitySpy() {
+            override fun getParticipantIds(): Collection<Int> {
+                return arrayListOf(555, 777)
+            }
+        }
+
+        val users = MessagesEventUseCase(DialogEntitySpy()).getUsersFrom(dialog)
+
+        assertEquals(2, users.size)
+    }
+
+    @Test(expected = DomainException::class)
+    @ExperimentalCoroutinesApi
+    fun dialogIdIsEmpty_execute_receivedException() = runTest {
+        QuickBloxUiKit.setDependency(DependencySpy())
+
+        val dialog = object : DialogEntitySpy() {
+            override fun getDialogId(): String {
+                return ""
+            }
+        }
+
+        MessagesEventUseCase(dialog).execute()
+    }
+
+    @Test(expected = DomainException::class)
+    @ExperimentalCoroutinesApi
+    fun dialogIdIsNull_execute_receivedException() = runTest {
+        QuickBloxUiKit.setDependency(DependencySpy())
+
+        val dialog = object : DialogEntitySpy() {
+            override fun getDialogId(): String? {
+                return null
+            }
+        }
+
+        MessagesEventUseCase(dialog).execute()
+    }
+
+    @Test(expected = DomainException::class)
+    @ExperimentalCoroutinesApi
+    fun participantsAreEmpty_execute_receivedException() = runTest {
+        QuickBloxUiKit.setDependency(DependencySpy())
+
+        val dialog = object : DialogEntitySpy() {
+            override fun getParticipantIds(): Collection<Int> {
+                return arrayListOf()
+            }
+        }
+
+        MessagesEventUseCase(dialog).execute()
+    }
+
+    @Test(expected = DomainException::class)
+    @ExperimentalCoroutinesApi
+    fun participantsAreNull_execute_receivedException() = runTest {
+        QuickBloxUiKit.setDependency(DependencySpy())
+
+        val dialog = object : DialogEntitySpy() {
+            override fun getParticipantIds(): Collection<Int>? {
+                return null
+            }
+        }
+
+        MessagesEventUseCase(dialog).execute()
+    }
+
+    @Test
+    @ExperimentalCoroutinesApi
+    fun messageEntityIsNull_addUserToMessage_receivedNull() = runTest {
+        QuickBloxUiKit.setDependency(DependencySpy())
+
+        val dialog = object : DialogEntitySpy() {
+            override fun getParticipantIds(): Collection<Int>? {
+                return null
+            }
+        }
+
+        val userA = UserEntitySpy()
+        userA.setUserId(777)
+
+        val userB = UserEntitySpy()
+        userB.setUserId(555)
+
+        val usersFromDialog = arrayListOf(userA, userB)
+
+        val message = MessagesEventUseCase(dialog).addUserToMessage(null, usersFromDialog)
+        assertNull(message)
+    }
+
+    @Test
+    @ExperimentalCoroutinesApi
+    fun messageEntityExist_addUserToMessage_receivedMessageEntity() = runTest {
+        QuickBloxUiKit.setDependency(DependencySpy())
+
+        val messageEntity = object : IncomingChatMessageEntityImpl(ChatMessageEntity.ContentTypes.TEXT) {
+            override fun getSenderId(): Int {
+                return 777
+            }
+        }
+
+        val userA = UserEntitySpy()
+        userA.setUserId(777)
+
+        val userB = UserEntitySpy()
+        userB.setUserId(555)
+
+        val usersFromDialog = arrayListOf(userA, userB)
+
+        val message = MessagesEventUseCase(DialogEntitySpy()).addUserToMessage(messageEntity, usersFromDialog)
+        assertEquals(777, message?.getSender()?.getUserId()!!)
     }
 
     @Test

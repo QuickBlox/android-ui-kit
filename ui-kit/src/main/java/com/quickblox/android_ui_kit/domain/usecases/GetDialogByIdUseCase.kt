@@ -5,6 +5,7 @@
 
 package com.quickblox.android_ui_kit.domain.usecases
 
+import androidx.annotation.VisibleForTesting
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.exception.DomainException
@@ -35,7 +36,8 @@ class GetDialogByIdUseCase(private val dialogId: String) : BaseUseCase<DialogEnt
         return foundDialog
     }
 
-    private fun getDialogFromLocal(): DialogEntity? {
+    @VisibleForTesting
+    fun getDialogFromLocal(): DialogEntity? {
         var foundDialog: DialogEntity? = null
 
         runCatching {
@@ -55,7 +57,8 @@ class GetDialogByIdUseCase(private val dialogId: String) : BaseUseCase<DialogEnt
         return dialogFromRemote
     }
 
-    private fun getDialogFromRemote(): DialogEntity? {
+    @VisibleForTesting
+    fun getDialogFromRemote(): DialogEntity? {
         var foundDialog: DialogEntity? = null
 
         runCatching {
@@ -67,7 +70,8 @@ class GetDialogByIdUseCase(private val dialogId: String) : BaseUseCase<DialogEnt
         return foundDialog
     }
 
-    private suspend fun updateDialogInLocal(dialog: DialogEntity) {
+    @VisibleForTesting
+    suspend fun updateDialogInLocal(dialog: DialogEntity) {
         runCatching {
             dialogRepository.updateDialogInLocal(dialog)
         }.onFailure { error ->

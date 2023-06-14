@@ -56,8 +56,8 @@ open class DialogsFragment : BaseFragment() {
     }
 
     override fun onStop() {
-        screenSettings?.getDialogsComponent()?.getSearchComponent()?.setSearchText("")
         super.onStop()
+        screenSettings?.getDialogsComponent()?.getSearchComponent()?.clearSearchTextAndReinitTextWatcher()
     }
 
     private fun initDialogsComponentListeners() {
@@ -106,7 +106,7 @@ open class DialogsFragment : BaseFragment() {
         binding = ContainerFragmentBinding.inflate(inflater, container, false)
 
         val views = collectViewsTemplateMethod(requireContext())
-        for (view in views){
+        for (view in views) {
             view?.let {
                 binding?.llParent?.addView(view)
             }
@@ -119,15 +119,33 @@ open class DialogsFragment : BaseFragment() {
         screenSettings?.getHeaderComponent()?.setTitle(tittle)
 
         subscribeToSyncing()
-        subscribeToAddedUser()
+        subscribeToUpdateDialog()
         subscribeToError()
 
         return binding?.root
     }
 
-    private fun subscribeToAddedUser() {
-        viewModel.updatedDialogs.observe(viewLifecycleOwner) {
-            screenSettings?.getDialogsComponent()?.getAdapter()?.notifyDataSetChanged()
+    private fun subscribeToUpdateDialog() {
+        viewModel.updatedDialogs.observe(viewLifecycleOwner) { result ->
+            val adapter = screenSettings?.getDialogsComponent()?.getAdapter()
+
+            val changeType = result.first
+            val index = result.second
+
+            when (changeType) {
+                DialogsViewModel.DialogChangeType.UPDATED_RANGE -> {
+                    adapter?.notifyItemRangeChanged(0, index)
+                }
+                DialogsViewModel.DialogChangeType.UPDATED -> {
+                    adapter?.notifyItemChanged(index)
+                }
+                DialogsViewModel.DialogChangeType.ADDED -> {
+                    adapter?.notifyItemInserted(index)
+                }
+                DialogsViewModel.DialogChangeType.DELETED -> {
+                    adapter?.notifyItemRemoved(index)
+                }
+            }
         }
     }
 

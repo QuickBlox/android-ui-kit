@@ -9,7 +9,7 @@ import com.quickblox.android_ui_kit.stub.entity.FileEntityStub
 import java.io.File
 import kotlin.random.Random
 
-class FileEntitySpy : FileEntityStub() {
+class FileEntitySpy(private var file: File? = null) : FileEntityStub() {
     override fun getUri(): Uri? {
         return null
     }
@@ -19,11 +19,11 @@ class FileEntitySpy : FileEntityStub() {
     }
 
     override fun getFile(): File? {
-        return buildFile()
+        return file
     }
 
     override fun setFile(file: File?) {
-
+        this.file = file
     }
 
     override fun setUrl(url: String?) {
@@ -40,20 +40,6 @@ class FileEntitySpy : FileEntityStub() {
 
     override fun getMimeType(): String? {
         return ""
-    }
-
-    private fun buildFile(): File {
-        val name = generateName()
-        val file = File("test")
-
-        val text = "Hello world from Android UI Kit test!"
-        file.writeBytes(text.toByteArray())
-
-        return file
-    }
-
-    private fun generateName(): String {
-        return "${System.currentTimeMillis()}_temp_file.txt"
     }
 
     override fun getId(): Int? {

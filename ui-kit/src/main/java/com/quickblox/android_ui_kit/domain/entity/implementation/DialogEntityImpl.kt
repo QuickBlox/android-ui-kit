@@ -7,6 +7,7 @@ package com.quickblox.android_ui_kit.domain.entity.implementation
 import com.quickblox.android_ui_kit.domain.entity.CustomDataEntity
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
+import kotlin.random.Random
 
 class DialogEntityImpl : DialogEntity {
     private var id: String? = null
@@ -111,15 +112,21 @@ class DialogEntityImpl : DialogEntity {
 
     override fun equals(other: Any?): Boolean {
         return if (other is DialogEntityImpl) {
-            id == other.getDialogId()
+            id != null && id == other.getDialogId()
         } else {
             false
         }
     }
 
     override fun hashCode(): Int {
+        val dialogIdHasCode = if (id != null) {
+            id.hashCode()
+        } else {
+            Random.nextInt(1000, 100000)
+        }
+
         var hash = 1
-        hash = 31 * hash + id.hashCode()
+        hash = 31 * hash + dialogIdHasCode
         return hash
     }
 }

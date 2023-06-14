@@ -9,9 +9,11 @@ import com.quickblox.android_ui_kit.data.dto.remote.message.RemoteMessageDTO
 import com.quickblox.android_ui_kit.data.dto.remote.message.RemoteMessageDTO.MessageTypes.CHAT_MESSAGE
 import com.quickblox.android_ui_kit.data.repository.mapper.DialogMapper
 import com.quickblox.android_ui_kit.data.repository.mapper.MessageMapper
+import com.quickblox.android_ui_kit.data.repository.mapper.TypingMapper
 import com.quickblox.android_ui_kit.data.source.local.LocalDataSource
 import com.quickblox.android_ui_kit.data.source.remote.RemoteDataSource
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
+import com.quickblox.android_ui_kit.domain.entity.TypingEntity
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.repository.EventsRepository
@@ -24,6 +26,25 @@ class EventsRepositoryImpl(
 ) : EventsRepository {
     private val exceptionFactory: EventsRepositoryExceptionFactory = EventsRepositoryExceptionFactoryImpl()
 
+    override fun startTypingEvent(dialogEntity: DialogEntity) {
+        val dialogDTO = DialogMapper.remoteDTOFrom(dialogEntity)
+        remoteDataSource.startTyping(dialogDTO)
+    }
+
+    override fun stopTypingEvent(dialogEntity: DialogEntity) {
+        val dialogDTO = DialogMapper.remoteDTOFrom(dialogEntity)
+        remoteDataSource.stopTyping(dialogDTO)
+    }
+
+    override fun subscribeTypingEvents(): Flow<Pair<Int?, TypingEntity.TypingTypes?>> {
+        return remoteDataSource.subscribeTypingEvent().map { remoteTypingDTO ->
+            val type = TypingMapper.parseTypeFrom(remoteTypingDTO?.type)
+            val senderId = TypingMapper.getSenderIdFrom(remoteTypingDTO?.senderId)
+            Pair(senderId, type)
+        }
+    }
+
+    // TODO: Need to rename to subscribeLocalDialogEvents
     override fun subscribeDialogEvents(): Flow<DialogEntity?> {
         return localDataSource.subscribeLocalUpdateDialogs().map { localDialogDTO ->
             localDialogDTO?.let {

@@ -65,40 +65,29 @@ class TextOutgoingViewHolder(binding: TextOutgiongMessageItemBinding) :
             SENDING -> {
                 resourceId = R.drawable.sending
                 color = theme.getTertiaryElementsColor()
-
-                binding.ivStatus.setImageResource(resourceId)
-                binding.ivStatus.setColorFilter(color)
             }
             SENT -> {
                 resourceId = R.drawable.sent
                 color = theme.getTertiaryElementsColor()
-
-                binding.ivStatus.setImageResource(resourceId)
-                binding.ivStatus.setColorFilter(color)
             }
             DELIVERED -> {
                 resourceId = R.drawable.delivered
                 color = theme.getTertiaryElementsColor()
-
-                binding.ivStatus.setImageResource(resourceId)
-                binding.ivStatus.setColorFilter(color)
             }
             READ -> {
                 resourceId = R.drawable.read
                 color = theme.getMainElementsColor()
-
-                binding.ivStatus.setImageResource(resourceId)
-                binding.ivStatus.setColorFilter(color)
             }
             ERROR -> {
                 resourceId = R.drawable.send_error
                 color = theme.getErrorColor()
-
-                binding.ivStatus.setImageResource(resourceId)
-                binding.ivStatus.setColorFilter(color)
             }
-            else -> {}
+            else -> {
+                return
+            }
         }
+        binding.ivStatus.setImageResource(resourceId)
+        binding.ivStatus.setColorFilter(color)
     }
 
     private fun applyTheme(theme: UiKitTheme) {

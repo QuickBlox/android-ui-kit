@@ -30,11 +30,11 @@ open class MessagesRepositorySpy(private val remoteMessagesCount: Int = 10) : Me
         return OutgoingChatMessageEntityImpl(outgoingState, contentType)
     }
 
-    override fun readMessage(entity: IncomingChatMessageEntity, dialog: DialogEntity) {
+    override fun readMessage(entity: MessageEntity, dialog: DialogEntity) {
 
     }
 
-    override fun deliverMessage(entity: IncomingChatMessageEntity, dialog: DialogEntity) {
+    override fun deliverMessage(entity: MessageEntity, dialog: DialogEntity) {
 
     }
 

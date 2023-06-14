@@ -10,18 +10,22 @@ import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MediaContentEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
+import kotlin.random.Random
 
-class IncomingChatMessageEntityImpl(
-    private var contentType: ChatMessageEntity.ContentTypes
+open class IncomingChatMessageEntityImpl(
+    private var contentType: ChatMessageEntity.ContentTypes,
 ) : IncomingChatMessageEntity {
     private var dialogId: String? = null
     private var senderId: Int? = null
+    private var loggedUserId: Int? = null
     private var sender: UserEntity? = null
     private var messageId: String? = null
     private var time: Long? = null
     private var content: String? = null
     private var participantId: Int? = null
     private var mediaContent: MediaContentEntity? = null
+    private var readIds: Collection<Int>? = null
+    private var deliveredIds: Collection<Int>? = null
 
     override fun getChatMessageType(): ChatMessageEntity.ChatMessageTypes {
         return ChatMessageEntity.ChatMessageTypes.FROM_OPPONENT
@@ -75,6 +79,10 @@ class IncomingChatMessageEntityImpl(
         senderId = id
     }
 
+    override fun setLoggedUserId(id: Int?) {
+        loggedUserId = id
+    }
+
     override fun getContent(): String? {
         return content
     }
@@ -103,17 +111,43 @@ class IncomingChatMessageEntityImpl(
         this.dialogId = dialogId
     }
 
+    override fun setReadIds(ids: Collection<Int>?) {
+        readIds = ids
+    }
+
+    override fun setDeliveredIds(ids: Collection<Int>?) {
+        deliveredIds = ids
+    }
+
+    override fun isNotRead(): Boolean {
+        val isContains = readIds?.contains(loggedUserId)
+        val isNotContains = !(isContains ?: false)
+        return isNotContains
+    }
+
+    override fun isNotDelivered(): Boolean {
+        val isContains = deliveredIds?.contains(loggedUserId)
+        val isNotContains = !(isContains ?: false)
+        return isNotContains
+    }
+
     override fun equals(other: Any?): Boolean {
         return if (other is MessageEntity) {
-            messageId == other.geMessageId()
+            messageId != null && messageId == other.geMessageId()
         } else {
             false
         }
     }
 
     override fun hashCode(): Int {
+        val messageIdHashCode = if (messageId != null) {
+            messageId.hashCode()
+        } else {
+            Random.nextInt(1000, 100000)
+        }
+
         var hash = 1
-        hash = 31 * hash + messageId.hashCode()
+        hash = 31 * hash + messageIdHashCode
         return hash
     }
 }

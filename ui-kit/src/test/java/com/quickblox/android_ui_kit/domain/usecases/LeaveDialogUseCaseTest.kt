@@ -13,6 +13,7 @@ import com.quickblox.android_ui_kit.domain.exception.repository.DialogsRepositor
 import com.quickblox.android_ui_kit.domain.exception.repository.DialogsRepositoryException.Codes.UNAUTHORISED
 import com.quickblox.android_ui_kit.domain.repository.DialogsRepository
 import com.quickblox.android_ui_kit.spy.DependencySpy
+import com.quickblox.android_ui_kit.spy.entity.DialogEntitySpy
 import com.quickblox.android_ui_kit.stub.DependencyStub
 import com.quickblox.android_ui_kit.stub.entity.DialogEntityStub
 import com.quickblox.android_ui_kit.stub.entity.UserEntityStub
@@ -29,6 +30,14 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 class LeaveDialogUseCaseTest : BaseTest() {
+    @Test
+    @ExperimentalCoroutinesApi
+    fun temp() {
+        QuickBloxUiKit.setDependency(DependencySpy())
+
+        LeaveDialogUseCase(createDialogEntity("Test dialogId")).sendEvent(DialogEntitySpy())
+    }
+
     @Test
     @ExperimentalCoroutinesApi
     fun haveUserName_createTextMessage_receivedName() {
@@ -78,6 +87,10 @@ class LeaveDialogUseCaseTest : BaseTest() {
         val loggedUser = object : UserEntityStub() {
             override fun getName(): String {
                 return loggedUserName
+            }
+
+            override fun getLogin(): String? {
+                return null
             }
         }
         val gotUserName = useCase.getUserNameFrom(loggedUser)

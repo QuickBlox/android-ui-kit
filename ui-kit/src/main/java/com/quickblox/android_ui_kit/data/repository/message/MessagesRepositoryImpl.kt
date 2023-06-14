@@ -113,10 +113,10 @@ class MessagesRepositoryImpl(private val remoteDataSource: RemoteDataSource) : M
         }
     }
 
-    override fun readMessage(entity: IncomingChatMessageEntity, dialog: DialogEntity) {
+    override fun readMessage(entity: MessageEntity, dialog: DialogEntity) {
         try {
-            val remoteMessageDTO = MessageMapper.remoteDTOFromIncomingChatMessage(entity)
-            val remoteDialogDTO = DialogMapper.dtoRemoteFrom(dialog)
+            val remoteMessageDTO = MessageMapper.remoteDTOFromMessageEntity(entity)
+            val remoteDialogDTO = DialogMapper.remoteDTOFrom(dialog)
             remoteDataSource.readMessage(remoteMessageDTO, remoteDialogDTO)
         } catch (exception: RemoteDataSourceException) {
             throw exceptionFactory.makeBy(exception.code, exception.description)
@@ -125,10 +125,10 @@ class MessagesRepositoryImpl(private val remoteDataSource: RemoteDataSource) : M
         }
     }
 
-    override fun deliverMessage(entity: IncomingChatMessageEntity, dialog: DialogEntity) {
+    override fun deliverMessage(entity: MessageEntity, dialog: DialogEntity) {
         try {
-            val remoteMessageDTO = MessageMapper.remoteDTOFromIncomingChatMessage(entity)
-            val remoteDialogDTO = DialogMapper.dtoRemoteFrom(dialog)
+            val remoteMessageDTO = MessageMapper.remoteDTOFromMessageEntity(entity)
+            val remoteDialogDTO = DialogMapper.remoteDTOFrom(dialog)
             remoteDataSource.deliverMessage(remoteMessageDTO, remoteDialogDTO)
         } catch (exception: RemoteDataSourceException) {
             throw exceptionFactory.makeBy(exception.code, exception.description)
@@ -140,7 +140,7 @@ class MessagesRepositoryImpl(private val remoteDataSource: RemoteDataSource) : M
     override fun sendChatMessageToRemote(entity: OutgoingChatMessageEntity, dialog: DialogEntity) {
         try {
             val remoteMessageDTO = MessageMapper.remoteDTOFromOutgoingChatMessage(entity)
-            val remoteDialogDTO = DialogMapper.dtoRemoteFrom(dialog)
+            val remoteDialogDTO = DialogMapper.remoteDTOFrom(dialog)
             remoteDataSource.sendChatMessage(remoteMessageDTO, remoteDialogDTO)
         } catch (exception: RemoteDataSourceException) {
             throw exceptionFactory.makeBy(exception.code, exception.description)
@@ -152,7 +152,7 @@ class MessagesRepositoryImpl(private val remoteDataSource: RemoteDataSource) : M
     override fun sendEventMessageToRemote(entity: EventMessageEntity, dialog: DialogEntity) {
         try {
             val remoteMessageDTO = MessageMapper.remoteDTOFromEventMessage(entity)
-            val remoteDialogDTO = DialogMapper.dtoRemoteFrom(dialog)
+            val remoteDialogDTO = DialogMapper.remoteDTOFrom(dialog)
             remoteDataSource.sendEventMessage(remoteMessageDTO, remoteDialogDTO)
         } catch (exception: RemoteDataSourceException) {
             throw exceptionFactory.makeBy(exception.code, exception.description)

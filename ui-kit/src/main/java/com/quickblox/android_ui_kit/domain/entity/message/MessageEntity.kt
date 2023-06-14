@@ -18,6 +18,9 @@ interface MessageEntity {
     fun setTime(time: Long?)
     fun getTime(): Long?
 
+    fun getSenderId(): Int?
+    fun setSenderId(id: Int?)
+
     fun setParticipantId(participantId: Int?)
     fun getParticipantId(): Int?
 

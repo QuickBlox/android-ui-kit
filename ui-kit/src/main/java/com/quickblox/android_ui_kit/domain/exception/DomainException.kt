@@ -4,6 +4,10 @@
  */
 package com.quickblox.android_ui_kit.domain.exception
 
+import com.quickblox.android_ui_kit.ExcludeFromCoverage
+
+@ExcludeFromCoverage
 class DomainException(description: String) : Exception(description) {
+    @ExcludeFromCoverage
     enum class Codes { UNEXPECTED }
 }

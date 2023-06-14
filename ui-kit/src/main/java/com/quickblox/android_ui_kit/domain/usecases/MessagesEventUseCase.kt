@@ -5,6 +5,8 @@
 
 package com.quickblox.android_ui_kit.domain.usecases
 
+import androidx.annotation.VisibleForTesting
+import com.quickblox.android_ui_kit.ExcludeFromCoverage
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.entity.UserEntity
@@ -32,11 +34,13 @@ class MessagesEventUseCase(private val dialog: DialogEntity) : FlowUseCase<Messa
             scope = CoroutineScope(Dispatchers.IO)
         }
 
-        if (dialog.getDialogId()?.isEmpty() == true) {
+        val isDialogIdNotExist = dialog.getDialogId() == null || dialog.getDialogId()?.isEmpty() == true
+        if (isDialogIdNotExist) {
             throw DomainException("The dialogId should not be empty")
         }
 
-        if (dialog.getParticipantIds()?.isEmpty() == true) {
+        val isParticipantsNotExist = dialog.getParticipantIds() == null || dialog.getParticipantIds()?.isEmpty() == true
+        if (isParticipantsNotExist) {
             throw DomainException("The participantIds should not be empty")
         }
 
@@ -60,8 +64,10 @@ class MessagesEventUseCase(private val dialog: DialogEntity) : FlowUseCase<Messa
         return messagesEventFlow
     }
 
-    private fun addUserToMessage(
-        messageEntity: MessageEntity?, usersFromDialog: Collection<UserEntity>
+    @VisibleForTesting
+    fun addUserToMessage(
+        messageEntity: MessageEntity?,
+        usersFromDialog: Collection<UserEntity>
     ): IncomingChatMessageEntity? {
         val incomingMessage = messageEntity as IncomingChatMessageEntity?
         val senderId = incomingMessage?.getSenderId()
@@ -73,7 +79,8 @@ class MessagesEventUseCase(private val dialog: DialogEntity) : FlowUseCase<Messa
         return incomingMessage
     }
 
-    private fun getUsersFrom(dialogEntity: DialogEntity): Collection<UserEntity> {
+    @VisibleForTesting
+    fun getUsersFrom(dialogEntity: DialogEntity): Collection<UserEntity> {
         val users = arrayListOf<UserEntity>()
 
         val opponentIds = dialogEntity.getParticipantIds()
@@ -85,7 +92,8 @@ class MessagesEventUseCase(private val dialog: DialogEntity) : FlowUseCase<Messa
         return users
     }
 
-    private fun getUser(senderId: Int?, usersFromDialog: Collection<UserEntity>): UserEntity? {
+    @VisibleForTesting
+    fun getUser(senderId: Int?, usersFromDialog: Collection<UserEntity>): UserEntity? {
         var foundUser: UserEntity? = null
 
         senderId?.let {
@@ -105,6 +113,7 @@ class MessagesEventUseCase(private val dialog: DialogEntity) : FlowUseCase<Messa
         return usersRepository.getUserFromRemote(userId)
     }
 
+    @ExcludeFromCoverage
     override suspend fun release() {
         scope.cancel()
     }

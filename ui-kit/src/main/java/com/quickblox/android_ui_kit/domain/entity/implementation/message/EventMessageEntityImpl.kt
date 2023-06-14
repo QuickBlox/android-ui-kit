@@ -5,9 +5,9 @@
 
 package com.quickblox.android_ui_kit.domain.entity.implementation.message
 
-import com.quickblox.android_ui_kit.domain.entity.implementation.DialogEntityImpl
 import com.quickblox.android_ui_kit.domain.entity.message.EventMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
+import kotlin.random.Random
 
 open class EventMessageEntityImpl : EventMessageEntity {
     private var messageId: String? = null
@@ -16,6 +16,10 @@ open class EventMessageEntityImpl : EventMessageEntity {
     private var time: Long? = null
     private var participantId: Int? = null
     private var eventType: EventMessageEntity.EventTypes? = null
+    private var senderId: Int? = null
+    private var loggedUserId: Int? = null
+    private var readIds: Collection<Int>? = null
+    private var deliveredIds: Collection<Int>? = null
 
     override fun setEventType(type: EventMessageEntity.EventTypes?) {
         this.eventType = type
@@ -61,6 +65,38 @@ open class EventMessageEntityImpl : EventMessageEntity {
         return time
     }
 
+    override fun getSenderId(): Int? {
+        return senderId
+    }
+
+    override fun setSenderId(id: Int?) {
+        senderId = id
+    }
+
+    override fun setLoggedUserId(id: Int?) {
+        loggedUserId = id
+    }
+
+    override fun setReadIds(ids: Collection<Int>?) {
+        readIds = ids
+    }
+
+    override fun setDeliveredIds(ids: Collection<Int>?) {
+        deliveredIds = ids
+    }
+
+    override fun isNotDelivered(): Boolean {
+        val isContains = deliveredIds?.contains(loggedUserId)
+        val isNotContains = !(isContains ?: false)
+        return isNotContains
+    }
+
+    override fun isNotRead(): Boolean {
+        val isContains = readIds?.contains(loggedUserId)
+        val isNotContains = !(isContains ?: false)
+        return isNotContains
+    }
+
     override fun setParticipantId(participantId: Int?) {
         this.participantId = participantId
     }
@@ -71,15 +107,21 @@ open class EventMessageEntityImpl : EventMessageEntity {
 
     override fun equals(other: Any?): Boolean {
         return if (other is MessageEntity) {
-            messageId == other.geMessageId()
+            messageId != null && messageId == other.geMessageId()
         } else {
             false
         }
     }
 
     override fun hashCode(): Int {
+        val messageIdHashCode = if (messageId != null) {
+            messageId.hashCode()
+        } else {
+            Random.nextInt(1000, 100000)
+        }
+
         var hash = 1
-        hash = 31 * hash + messageId.hashCode()
+        hash = 31 * hash + messageIdHashCode
         return hash
     }
 }

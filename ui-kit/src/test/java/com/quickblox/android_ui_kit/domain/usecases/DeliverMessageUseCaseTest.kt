@@ -8,7 +8,7 @@ package com.quickblox.android_ui_kit.domain.usecases
 import com.quickblox.android_ui_kit.BaseTest
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
-import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.exception.DomainException
 import com.quickblox.android_ui_kit.domain.exception.repository.DialogsRepositoryException
 import com.quickblox.android_ui_kit.domain.exception.repository.MessagesRepositoryException
@@ -29,7 +29,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 
-class DeliveredMessageUseCaseTest : BaseTest() {
+class DeliverMessageUseCaseTest : BaseTest() {
     @Before
     @ExperimentalCoroutinesApi
     fun init() {
@@ -92,7 +92,7 @@ class DeliveredMessageUseCaseTest : BaseTest() {
     @ExperimentalCoroutinesApi
     fun buildMessageAndMessagesRepositoryThrowsException_execute_receivedException() = runTest {
         val messagesRepository = object : MessagesRepositorySpy() {
-            override fun deliverMessage(entity: IncomingChatMessageEntity, dialog: DialogEntity) {
+            override fun deliverMessage(entity: MessageEntity, dialog: DialogEntity) {
                 throw MessagesRepositoryException(MessagesRepositoryException.Codes.INCORRECT_DATA, "")
             }
         }

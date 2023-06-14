@@ -12,6 +12,7 @@ import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.text.Editable
 import android.text.TextWatcher
 import android.util.AttributeSet
 import android.view.MotionEvent
@@ -38,6 +39,7 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
     private var componentState: MessageComponentStates = VOICE_MESSAGE
     private var listener: SendMessageComponentListener? = null
     private var textWatcher: TextWatcher? = null
+    private var typingTimer = TypingTimer()
 
     constructor(context: Context) : super(context) {
         init(context)
@@ -66,6 +68,9 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
             if (textMessage.isNotEmpty()) {
                 listener?.onSendTextMessageClickListener(textMessage)
                 binding?.etMessage?.text?.clear()
+
+                typingTimer.stop()
+                listener?.onStoppedTyping()
             }
         }
 
@@ -121,7 +126,12 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
     }
 
     private fun setDefaultTextWatcher() {
-        setTextWatcherToEditText(object : SimpleTextWatcher() {
+        val textWatcher = buildDefaultTextWatcher()
+        setTextWatcherToEditText(textWatcher)
+    }
+
+    private fun buildDefaultTextWatcher(): TextWatcher {
+        return object : SimpleTextWatcher() {
             override fun onTextChanged(charSequence: CharSequence?, start: Int, before: Int, count: Int) {
                 val text = charSequence.toString()
                 if (text.isEmpty()) {
@@ -130,7 +140,22 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
                 }
                 setChatState()
             }
-        })
+
+            override fun afterTextChanged(editable: Editable?) {
+                if (editable.toString().isEmpty()) {
+                    return
+                }
+
+                if (typingTimer.isNotRunning()) {
+                    listener?.onStartedTyping()
+                }
+
+                val typingDelay = 1000L
+                typingTimer.start(typingDelay) {
+                    listener?.onStoppedTyping()
+                }
+            }
+        }
     }
 
     private fun buildAnimationToRecording(): AlphaAnimation {
@@ -185,6 +210,7 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
         setSendMessageButtonColor(theme.getMainElementsColor())
 
         binding?.ivRecord?.setColorFilter(theme.getErrorColor())
+        binding?.tvTyping?.setTextColor(theme.getTertiaryElementsColor())
 
         binding?.ivSendVoice?.makeClickableBackground(theme.getMainElementsColor())
         binding?.ivSend?.makeClickableBackground(theme.getMainElementsColor())
@@ -288,6 +314,16 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
         binding?.ivSendVoice?.setImageResource(resource)
     }
 
+    override fun showStartedTyping(text: String) {
+        binding?.tvTyping?.text = text
+        binding?.tvTyping?.visibility = View.VISIBLE
+    }
+
+    override fun showStoppedTyping() {
+        binding?.tvTyping?.visibility = View.GONE
+        binding?.tvTyping?.text = ""
+    }
+
     override fun setBackground(color: Int) {
         binding?.root?.setBackgroundColor(color)
     }
@@ -310,6 +346,9 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
         fun onClickVideoCamera()
         fun onClickPhotoAndVideoGallery()
         fun onClickFile()
+
+        fun onStartedTyping()
+        fun onStoppedTyping()
     }
 
     private inner class AttachmentsDialogListenerImpl : AttachmentsDialog.AttachmentsDialogListener {

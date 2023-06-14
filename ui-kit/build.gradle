@@ -10,7 +10,7 @@ ext {
     qbSdkVersion = '4.1.1'
 
     uiKitVersionCode = 1
-    uiKitVersionName = "0.1.1"
+    uiKitVersionName = "0.1.2"
 }
 
 android {
@@ -143,7 +143,7 @@ task jacocoTestReport(type: JacocoReport, dependsOn: ['testDebugUnitTest']) {
     def sourceFile = "${project.projectDir}/src/main/java"
     getSourceDirectories().setFrom(files([sourceFile]))
 
-    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*', 'presentation/**', 'data/dto/**', 'data/source/**']
+    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*', 'presentation/**', 'data/**', 'lifecycle/**']
 
     def javaTree = fileTree(dir: "$project.buildDir/intermediates/javac/debug/classes", excludes: fileFilter)
     def kotlinTree = fileTree(dir: "$project.buildDir/tmp/kotlin-classes/debug/com/quickblox/android_ui_kit", excludes: fileFilter)

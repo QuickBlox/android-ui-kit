@@ -10,4 +10,13 @@ import com.quickblox.android_ui_kit.domain.entity.UserEntity
 interface IncomingChatMessageEntity : ChatMessageEntity {
     fun getSender(): UserEntity?
     fun setSender(userEntity: UserEntity?)
+
+    fun setLoggedUserId(id: Int?)
+
+    fun setReadIds(ids: Collection<Int>?)
+
+    fun setDeliveredIds(ids: Collection<Int>?)
+
+    fun isNotRead(): Boolean
+    fun isNotDelivered(): Boolean
 }

@@ -9,7 +9,7 @@ import android.net.Uri
 import com.quickblox.android_ui_kit.domain.entity.FileEntity
 import com.quickblox.android_ui_kit.domain.repository.FilesRepository
 
-open class FileRepositoryStub : FilesRepository {
+open class FilesRepositoryStub : FilesRepository {
     override fun saveFileToLocal(entity: FileEntity) {
         throw RuntimeException("expected: override, actual: not override")
     }

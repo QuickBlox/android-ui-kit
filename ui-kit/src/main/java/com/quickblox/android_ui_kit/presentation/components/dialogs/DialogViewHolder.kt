@@ -6,16 +6,27 @@ package com.quickblox.android_ui_kit.presentation.components.dialogs
 
 import android.annotation.SuppressLint
 import android.content.res.ColorStateList
+import android.text.TextUtils
+import android.util.TypedValue
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.ProgressBar
 import androidx.annotation.ColorInt
+import androidx.appcompat.widget.AppCompatImageView
+import androidx.appcompat.widget.AppCompatTextView
+import androidx.core.content.ContextCompat
+import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.quickblox.android_ui_kit.R
 import com.quickblox.android_ui_kit.databinding.DialogGroupItemBinding
+import com.quickblox.android_ui_kit.databinding.DialogMediaMessageItemBinding
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity.Types.PRIVATE
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.MediaContentEntity
 import com.quickblox.android_ui_kit.presentation.base.BaseViewHolder
+import com.quickblox.android_ui_kit.presentation.listeners.ImageLoadListenerWithProgress
 import com.quickblox.android_ui_kit.presentation.makeClickableBackground
 import com.quickblox.android_ui_kit.presentation.screens.loadCircleImageFromUrl
 import com.quickblox.android_ui_kit.presentation.screens.modifyDialogsDateStringFrom
@@ -27,6 +38,7 @@ class DialogViewHolder(binding: DialogGroupItemBinding) : BaseViewHolder<DialogG
     private var theme: UiKitTheme = LightUIKitTheme()
     private var isVisibleAvatar: Boolean = true
     private var isVisibleCounter: Boolean = true
+    private var lastMessageColor: Int = theme.getSecondaryTextColor()
 
     companion object {
         fun newInstance(parent: ViewGroup): DialogViewHolder {
@@ -43,8 +55,13 @@ class DialogViewHolder(binding: DialogGroupItemBinding) : BaseViewHolder<DialogG
     }
 
     fun bind(dialog: DialogEntity) {
+        applyTheme(theme)
+
         binding.tvDialogName.text = dialog.getName()
-        binding.tvLastMessage.text = buildLastMessageFrom(dialog.getLastMessage() as IncomingChatMessageEntity)
+
+        showUnreadMessageCounter(dialog.getUnreadMessagesCount())
+
+        showMessage(dialog.getLastMessage())
 
         dialog.getLastMessage()?.getTime()?.let { time ->
             val modifiedTime = modifyDialogsDateStringFrom(time)
@@ -56,16 +73,102 @@ class DialogViewHolder(binding: DialogGroupItemBinding) : BaseViewHolder<DialogG
         } else {
             binding.ivAvatar.loadCircleImageFromUrl(dialog.getPhoto(), R.drawable.group_holder)
         }
-
-        applyTheme(theme)
     }
 
-    private fun buildLastMessageFrom(message: IncomingChatMessageEntity): String {
-        if (message.isMediaContent()) {
-            return "Attachment ${message.getMediaContent()?.getName()}"
+    private fun showMessage(message: IncomingChatMessageEntity?) {
+        binding.flLastMessage.removeAllViews()
+
+        val isMediaMessage = message?.isMediaContent() == true
+        if (isMediaMessage) {
+            showMediaMessage(message?.getMediaContent())
         } else {
-            return message.getContent() ?: ""
+            showTextMessage(message?.getContent())
         }
+    }
+
+    private fun showMediaMessage(mediaContentEntity: MediaContentEntity?) {
+        val mediaMessageBinding = buildMediaMessageBinding()
+
+        mediaMessageBinding.tvFileName.text = mediaContentEntity?.getName()
+        mediaMessageBinding.tvFileName.setTextColor(lastMessageColor)
+
+        val resourceId = getResourceIdByMediaContent(mediaContentEntity?.getType())
+
+        val context = binding.root.context
+        mediaMessageBinding.ivMediaIcon.background = ContextCompat.getDrawable(context, R.drawable.bg_media_message)
+        mediaMessageBinding.ivMediaIcon.setImageResource(resourceId)
+
+        if (mediaContentEntity?.isImage() == true) {
+            val progressBar = mediaMessageBinding.progressBar
+
+            val backgroundImageView = mediaMessageBinding.ivMediaIcon
+            backgroundImageView.scaleType = ImageView.ScaleType.CENTER_CROP
+            loadImageByUrl(mediaContentEntity.getUrl(), backgroundImageView, progressBar)
+        }
+
+        binding.flLastMessage.addView(mediaMessageBinding.root)
+    }
+
+    private fun loadImageByUrl(url: String?, imageView: AppCompatImageView, progressBar: ProgressBar) {
+        val context = binding.root.context
+
+        Glide.with(context).load(url).diskCacheStrategy(DiskCacheStrategy.ALL)
+            .placeholder(ContextCompat.getDrawable(context, R.drawable.ic_image_placeholder))
+            .listener(ImageLoadListenerWithProgress(imageView, context, progressBar))
+            .into(imageView)
+    }
+
+    private fun getResourceIdByMediaContent(contentType: MediaContentEntity.Types?): Int {
+        when (contentType) {
+            MediaContentEntity.Types.IMAGE -> {
+                return R.drawable.ic_image_placeholder
+            }
+            MediaContentEntity.Types.VIDEO -> {
+                return R.drawable.ic_video_file
+            }
+            MediaContentEntity.Types.AUDIO -> {
+                return R.drawable.ic_audio_file
+            }
+            MediaContentEntity.Types.FILE -> {
+                return R.drawable.ic_application_file
+            }
+            else -> {
+                throw IllegalArgumentException("$contentType - type does not exist for media content")
+            }
+        }
+    }
+
+    private fun buildMediaMessageBinding(): DialogMediaMessageItemBinding {
+        val inflater = LayoutInflater.from(binding.root.context)
+
+        return DialogMediaMessageItemBinding.inflate(inflater)
+    }
+
+    private fun showTextMessage(text: String?) {
+        val textView = buildMessageTextView()
+        textView.text = text
+
+        binding.flLastMessage.addView(textView)
+    }
+
+    private fun showUnreadMessageCounter(counter: Int?) {
+        if (counter == null || counter == 0) {
+            setVisibleCounter(false)
+        } else {
+            setVisibleCounter(true)
+            binding.tvCounter.text = counter.toString()
+        }
+    }
+
+    private fun buildMessageTextView(): AppCompatTextView {
+        val textView = AppCompatTextView(binding.root.context)
+        textView.setTextColor(ContextCompat.getColor(binding.root.context, R.color.secondary500))
+        textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+        textView.setTextColor(lastMessageColor)
+        textView.ellipsize = TextUtils.TruncateAt.END
+        textView.setLines(2)
+
+        return textView
     }
 
     private fun applyTheme(theme: UiKitTheme) {
@@ -83,7 +186,7 @@ class DialogViewHolder(binding: DialogGroupItemBinding) : BaseViewHolder<DialogG
     }
 
     fun setLastMessageColor(@ColorInt color: Int) {
-        binding.tvLastMessage.setTextColor(color)
+        this.lastMessageColor = color
     }
 
     fun setTimeColor(@ColorInt color: Int) {
@@ -109,7 +212,7 @@ class DialogViewHolder(binding: DialogGroupItemBinding) : BaseViewHolder<DialogG
     }
 
     fun setVisibleLastMessage(visible: Boolean) {
-        binding.tvLastMessage.setVisibility(visible)
+        binding.flLastMessage.setVisibility(visible)
     }
 
     fun setVisibleTime(visible: Boolean) {

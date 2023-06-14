@@ -26,6 +26,9 @@ object MessageMapper {
         entity.setContent(dto.text)
         entity.setSenderId(dto.senderId)
         entity.setParticipantId(dto.participantId)
+        entity.setLoggedUserId(dto.loggedUserId)
+        entity.setReadIds(dto.readIds)
+        entity.setDeliveredIds(dto.deliveredIds)
 
         if (isExistFileIn(dto)) {
             val mediaContent = getMediaContentFrom(dto)
@@ -43,6 +46,7 @@ object MessageMapper {
         entity.setDialogId(dto.dialogId)
         entity.setMessageId(dto.id)
         entity.setTime(dto.time)
+        entity.setSenderId(dto.senderId)
         entity.setContent(dto.text)
         entity.setParticipantId(dto.participantId)
 
@@ -64,6 +68,9 @@ object MessageMapper {
             }
             RemoteMessageDTO.OutgoingMessageStates.SENDING -> {
                 return OutgoingChatMessageEntity.OutgoingStates.SENDING
+            }
+            RemoteMessageDTO.OutgoingMessageStates.SENT -> {
+                return OutgoingChatMessageEntity.OutgoingStates.SENT
             }
             else -> {
                 return null
@@ -103,6 +110,10 @@ object MessageMapper {
         entity.setText(dto.text)
         entity.setTime(dto.time)
         entity.setParticipantId(dto.participantId)
+        entity.setSenderId(dto.senderId)
+        entity.setLoggedUserId(dto.loggedUserId)
+        entity.setReadIds(dto.readIds)
+        entity.setDeliveredIds(dto.deliveredIds)
 
         val parsedEntityType = parseEventEntityTypeFrom(dto.type)
         entity.setEventType(parsedEntityType)
@@ -175,6 +186,17 @@ object MessageMapper {
         return dto
     }
 
+    fun remoteDTOFromMessageEntity(entity: MessageEntity): RemoteMessageDTO {
+        val dto = RemoteMessageDTO()
+        dto.id = entity.geMessageId()
+        dto.dialogId = entity.getDialogId()
+        dto.senderId = entity.getSenderId()
+        dto.time = entity.getTime()
+        dto.participantId = entity.getParticipantId()
+
+        return dto
+    }
+
     private fun isNeedSendChatMessage(type: EventTypes?): Boolean {
         return when (type) {
             EventTypes.CREATED_DIALOG -> true
@@ -182,8 +204,6 @@ object MessageMapper {
             EventTypes.REMOVED_USER_FROM_DIALOG -> true
             EventTypes.LEFT_USER_FROM_DIALOG -> true
 
-            EventTypes.READ_MESSAGE -> false
-            EventTypes.DELIVERED_MESSAGE -> false
             EventTypes.STARTED_TYPING -> false
             EventTypes.STOPPED_TYPING -> false
 
@@ -208,9 +228,7 @@ object MessageMapper {
                 parsedMessageType = RemoteMessageDTO.MessageTypes.EVENT_REMOVED_USER
             }
             EventTypes.STARTED_TYPING,
-            EventTypes.STOPPED_TYPING,
-            EventTypes.READ_MESSAGE,
-            EventTypes.DELIVERED_MESSAGE -> {
+            EventTypes.STOPPED_TYPING -> {
             }
             else -> {
                 return null

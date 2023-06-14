@@ -8,7 +8,7 @@ import com.quickblox.android_ui_kit.domain.entity.UserEntity
 import java.util.*
 
 open class UserEntityStub : UserEntity {
-    override fun getUserId(): Int {
+    override fun getUserId(): Int? {
         throw RuntimeException()
     }
 

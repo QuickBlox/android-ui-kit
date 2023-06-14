@@ -6,6 +6,7 @@ package com.quickblox.android_ui_kit.domain.entity.implementation
 
 import com.quickblox.android_ui_kit.domain.entity.UserEntity
 import java.util.*
+import kotlin.random.Random
 
 class UserEntityImpl : UserEntity {
     private var userId: Int? = null
@@ -118,6 +119,11 @@ class UserEntityImpl : UserEntity {
     }
 
     override fun equals(other: Any?): Boolean {
+        val isOtherUserIdNotCorrect = other is UserEntityImpl && other.userId == null
+        if (userId == null || isOtherUserIdNotCorrect) {
+            return false
+        }
+
         return if (other is UserEntityImpl) {
             userId == other.getUserId() && name == other.getName() && email == other.getEmail()
                     && login == other.getLogin() && phone == other.getPhone()
@@ -131,8 +137,14 @@ class UserEntityImpl : UserEntity {
     }
 
     override fun hashCode(): Int {
+        val userIdHash = if (userId != null) {
+            userId.hashCode()
+        } else {
+            Random.nextInt(1000, 10000)
+        }
+
         var hash = 1
-        hash = 31 * hash + userId.hashCode()
+        hash = 31 * hash + userIdHash.hashCode()
         return hash
     }
 }
