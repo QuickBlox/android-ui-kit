@@ -138,7 +138,7 @@ class SearchComponentImpl : ConstraintLayout, SearchComponent {
     }
 
     override fun clearSearchTextAndReinitTextWatcher() {
-        setTextWatcherToEditText(null)
+        binding?.etSearch?.addTextChangedListener(SimpleTextWatcher())
         binding?.etSearch?.text?.clear()
         setTextWatcherToEditText(textWatcher)
     }

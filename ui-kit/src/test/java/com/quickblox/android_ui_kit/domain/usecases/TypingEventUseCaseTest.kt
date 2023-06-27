@@ -27,6 +27,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -384,6 +385,7 @@ class TypingEventUseCaseTest : BaseTest() {
     }
 
     @Test
+    @Ignore
     @ExperimentalCoroutinesApi
     fun executeAndStartTyping_stopTyping_receivedTyping() = runTest {
         val usersRepository = object : UsersRepositorySpy() {

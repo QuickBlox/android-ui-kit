@@ -7,6 +7,7 @@
 package com.quickblox.android_ui_kit.domain.entity
 
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.MediaContentEntityImpl
+import com.quickblox.android_ui_kit.domain.entity.message.MediaContentEntity
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -47,9 +48,10 @@ class MediaContentEntityTest {
         assertFalse(isGif)
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test
     fun createdMediaContent_parseMediaContentTypeFrom_receivedException() {
         val entity = MediaContentEntityImpl("dummy", "dummy", "dummy")
-        entity.parseMediaContentTypeFrom("notExistMimeType")
+        val type = entity.parseMediaContentTypeFrom("notExistMimeType")
+        assertEquals(MediaContentEntity.Types.FILE, type)
     }
 }

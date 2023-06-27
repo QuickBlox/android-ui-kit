@@ -167,7 +167,7 @@ open class PrivateChatFragment : BaseFragment() {
         if (videoOutgoingListener == null) {
             messageComponent?.setVideoOutgoingListener(object : VideoOutgoingViewHolder.VideoOutgoingListener {
                 override fun onVideoClick(message: OutgoingChatMessageEntity?) {
-                    startActionView(message)
+                    openChooserToShowFileFrom(message)
                 }
 
                 override fun onVideoLongClick(message: OutgoingChatMessageEntity?) {
@@ -184,7 +184,7 @@ open class PrivateChatFragment : BaseFragment() {
         if (videoIncomingListener == null) {
             messageComponent?.setVideoIncomingListener(object : VideoIncomingViewHolder.VideoIncomingListener {
                 override fun onVideoClick(message: IncomingChatMessageEntity?) {
-                    startActionView(message)
+                    openChooserToShowFileFrom(message)
                 }
 
                 override fun onVideoLongClick(message: IncomingChatMessageEntity?) {
@@ -201,7 +201,7 @@ open class PrivateChatFragment : BaseFragment() {
         if (fileOutgoingListener == null) {
             messageComponent?.setFileOutgoingListener(object : FileOutgoingViewHolder.FileOutgoingListener {
                 override fun onFileClick(message: OutgoingChatMessageEntity?) {
-                    startActionView(message)
+                    openChooserToShowFileFrom(message)
                 }
 
                 override fun onFileLongClick(message: OutgoingChatMessageEntity?) {
@@ -218,7 +218,7 @@ open class PrivateChatFragment : BaseFragment() {
         if (fileIngoingListener == null) {
             messageComponent?.setFileIncomingListener(object : FileIncomingViewHolder.FileIncomingListener {
                 override fun onFileClick(message: IncomingChatMessageEntity?) {
-                    startActionView(message)
+                    openChooserToShowFileFrom(message)
                 }
 
                 override fun onFileLongClick(message: IncomingChatMessageEntity?) {
@@ -235,7 +235,7 @@ open class PrivateChatFragment : BaseFragment() {
         if (audioOutgoingListener == null) {
             messageComponent?.setAudioOutgoingListener(object : AudioOutgoingViewHolder.AudioOutgoingListener {
                 override fun onAudioClick(message: OutgoingChatMessageEntity?) {
-                    startActionView(message)
+                    openChooserToShowFileFrom(message)
                 }
 
                 override fun onAudioLongClick(message: OutgoingChatMessageEntity?) {
@@ -252,7 +252,7 @@ open class PrivateChatFragment : BaseFragment() {
         if (audioIncomingListener == null) {
             messageComponent?.setAudioIncomingListener(object : AudioIncomingViewHolder.AudioIncomingListener {
                 override fun onAudioClick(message: IncomingChatMessageEntity?) {
-                    startActionView(message)
+                    openChooserToShowFileFrom(message)
                 }
 
                 override fun onAudioLongClick(message: IncomingChatMessageEntity?) {
@@ -275,18 +275,29 @@ open class PrivateChatFragment : BaseFragment() {
         }
     }
 
-    private fun startActionView(message: ChatMessageEntity?) {
-        val url = message?.getMediaContent()?.getUrl()
+    private fun openChooserToShowFileFrom(message: ChatMessageEntity?) {
+        val uri = Uri.parse(message?.getMediaContent()?.getUrl())
         val mimeType = message?.getMediaContent()?.getMimeType()
 
-        val intent = Intent(Intent.ACTION_VIEW)
-        intent.setDataAndType(Uri.parse(url), mimeType)
         try {
-            startActivity(intent)
-            // TODO: Need to refactor catch block
+            openChooser(uri, mimeType)
         } catch (exception: Exception) {
-            showToast(exception.message.toString())
+            openChooserWithCommonMimeTypeAndHandleException(uri)
         }
+    }
+
+    private fun openChooserWithCommonMimeTypeAndHandleException(uri: Uri) {
+        try {
+            openChooser(uri, "*/*")
+        } catch (exception: Exception) {
+            showToast("There is a problem to open file")
+        }
+    }
+
+    private fun openChooser(uri: Uri, mimeType: String?) {
+        val intent = Intent(Intent.ACTION_VIEW)
+        intent.setDataAndType(uri, mimeType)
+        startActivity(intent)
     }
 
     private fun initSendMessagesComponentListeners() {
@@ -689,7 +700,7 @@ open class PrivateChatFragment : BaseFragment() {
     }
 
     private fun launchFileSelection() {
-        val APPLICATION_MIME = "application/*"
+        val APPLICATION_MIME = "*/*"
         fileLauncher.launch(APPLICATION_MIME)
     }
 

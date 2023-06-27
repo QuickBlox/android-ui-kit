@@ -23,6 +23,8 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.withContext
 import java.io.File
 
+private const val MAX_MEGABYTES_FILE_LENGTH = 10
+
 class CreateMessageUseCase(
     private val contentType: ChatMessageEntity.ContentTypes,
     private val dialogId: String,
@@ -36,8 +38,12 @@ class CreateMessageUseCase(
             throw DomainException("The content parameter should not be empty for Text message")
         }
 
-        if (isMediaMessage(contentType) && isIncorrectFile(fileEntity)) {
-            throw DomainException("The file parameter should not be empty for Media message")
+        if (isMediaMessage(contentType) && isNotCorrectFileSize(fileEntity?.getFile(), MAX_MEGABYTES_FILE_LENGTH)) {
+            throw DomainException("The file size more then max supported $MAX_MEGABYTES_FILE_LENGTH megabytes")
+        }
+
+        if (isMediaMessage(contentType) && isNotCorrectFile(fileEntity)) {
+            throw DomainException("The file has wrong URL or MimeType")
         }
 
         return channelFlow {
@@ -84,14 +90,25 @@ class CreateMessageUseCase(
     }
 
     @VisibleForTesting
-    fun isIncorrectFile(file: FileEntity?): Boolean {
-        val fileNotHasLength = file?.getFile()?.length() == null
-        val isIncorrectFileLength = fileNotHasLength || file?.getFile()?.length()!! <= 0
+    fun isNotCorrectFile(file: FileEntity?): Boolean {
+        val isIncorrectFileLength = isNotCorrectFileSize(file?.getFile(), MAX_MEGABYTES_FILE_LENGTH)
 
         val isIncorrectFileUrl = TextUtils.isEmpty(file?.getUrl())
         val isIncorrectFileMimeType = TextUtils.isEmpty(file?.getMimeType())
 
         return isIncorrectFileLength || isIncorrectFileUrl || isIncorrectFileMimeType
+    }
+
+    private fun isNotCorrectFileSize(file: File?, maxMegaBytesFileLength: Int): Boolean {
+        if (file == null) {
+            return true
+        }
+
+        val bytesFileLength = file.length()
+        val kiloBytesFileLength = bytesFileLength / 1024
+        val megaBytesFileLength = kiloBytesFileLength / 1024
+
+        return megaBytesFileLength > maxMegaBytesFileLength
     }
 
     @VisibleForTesting

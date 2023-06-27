@@ -15,7 +15,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 
-const val MAX_MEGABYTES_FILE_LENGTH = 10
+private const val MAX_MEGABYTES_FILE_LENGTH = 10
 
 class UploadFileUseCase(private val fileEntity: FileEntity) : BaseUseCase<FileEntity?>() {
     private val filesRepository = QuickBloxUiKit.getDependency().getFilesRepository()

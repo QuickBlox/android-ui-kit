@@ -17,6 +17,7 @@ import com.quickblox.android_ui_kit.domain.exception.DomainException
 import com.quickblox.android_ui_kit.domain.repository.MessagesRepository
 import com.quickblox.android_ui_kit.spy.DependencySpy
 import com.quickblox.android_ui_kit.spy.repository.MessagesRepositorySpy
+import com.quickblox.android_ui_kit.utils.FileUtils
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
@@ -60,7 +61,7 @@ class CreateMessageUseCaseTest : BaseTest() {
 
     @Test
     @ExperimentalCoroutinesApi
-    fun createCorrectFile_isIncorrectFile_receivedFalse() = runTest {
+    fun createCorrectFile_isNotCorrectFile_receivedFalse() = runTest {
         QuickBloxUiKit.setDependency(DependencySpy())
 
         val file = File("testPathName")
@@ -72,29 +73,49 @@ class CreateMessageUseCaseTest : BaseTest() {
         fileEntity.setUrl("android://content-data/test.file")
         fileEntity.setMimeType("image/png")
 
-        val isIncorrectFile = buildCreateMessageUseCase().isIncorrectFile(fileEntity)
+        val isNotCorrectFile = buildCreateMessageUseCase().isNotCorrectFile(fileEntity)
 
         file.delete()
 
-        assertFalse(isIncorrectFile)
+        assertFalse(isNotCorrectFile)
     }
 
     @Test
     @ExperimentalCoroutinesApi
-    fun createNullFile_isIncorrectFile_receivedTrue() = runTest {
+    fun createCorrectFile11MbFile_isNotCorrectFile_receivedFalse() = runTest {
         QuickBloxUiKit.setDependency(DependencySpy())
-        val isIncorrectFile = buildCreateMessageUseCase().isIncorrectFile(null)
-        assertTrue(isIncorrectFile)
+
+        val file = FileUtils.buildFileWithMegaBytesLength(11)
+
+        val fileEntity = FileEntityImpl()
+        fileEntity.setFile(file)
+        fileEntity.setUri(Uri.fromFile(file))
+        fileEntity.setUrl("android://content-data/test.file")
+        fileEntity.setMimeType("image/png")
+
+        val isNotCorrectFile = buildCreateMessageUseCase().isNotCorrectFile(fileEntity)
+
+        file.delete()
+
+        assertTrue(isNotCorrectFile)
     }
 
     @Test
     @ExperimentalCoroutinesApi
-    fun createEmptyFile_isIncorrectFile_receivedTrue() = runTest {
+    fun createNullFile_isNotCorrectFile_receivedTrue() = runTest {
+        QuickBloxUiKit.setDependency(DependencySpy())
+        val isNotCorrectFile = buildCreateMessageUseCase().isNotCorrectFile(null)
+        assertTrue(isNotCorrectFile)
+    }
+
+    @Test
+    @ExperimentalCoroutinesApi
+    fun createEmptyFile_isNotCorrectFile_receivedTrue() = runTest {
         QuickBloxUiKit.setDependency(DependencySpy())
 
         val fileEntity = FileEntityImpl()
-        val isIncorrectFile = buildCreateMessageUseCase().isIncorrectFile(fileEntity)
-        assertTrue(isIncorrectFile)
+        val isNotCorrectFile = buildCreateMessageUseCase().isNotCorrectFile(fileEntity)
+        assertTrue(isNotCorrectFile)
     }
 
     @Test
