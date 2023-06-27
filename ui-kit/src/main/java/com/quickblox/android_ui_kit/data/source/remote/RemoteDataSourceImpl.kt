@@ -26,10 +26,7 @@ import com.quickblox.android_ui_kit.data.source.remote.parser.EventMessageParser
 import com.quickblox.android_ui_kit.domain.exception.repository.MappingException
 import com.quickblox.auth.session.QBSessionManager
 import com.quickblox.auth.session.Query
-import com.quickblox.chat.JIDHelper
-import com.quickblox.chat.QBAbstractChat
-import com.quickblox.chat.QBChatService
-import com.quickblox.chat.QBRestChatService
+import com.quickblox.chat.*
 import com.quickblox.chat.model.QBChatDialog
 import com.quickblox.chat.model.QBChatMessage
 import com.quickblox.chat.model.QBDialogType
@@ -55,6 +52,7 @@ import org.jivesoftware.smack.XMPPException
 import org.jivesoftware.smack.filter.MessageTypeFilter
 import org.jivesoftware.smackx.muc.DiscussionHistory
 import java.io.IOException
+import java.lang.reflect.Field
 
 
 @ExcludeFromCoverage
@@ -183,7 +181,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
                 } catch (exception: SmackException) {
                     val errorMessage = exception.message.toString() + " dialogId: ${qbChatDialog.dialogId}"
                     send(Result.failure(exceptionFactory.makeConnectionFailed(errorMessage)))
-                } catch (exception: java.lang.IllegalStateException) {
+                } catch (exception: IllegalStateException) {
                     val errorMessage = exception.message.toString() + " dialogId: ${qbChatDialog.dialogId}"
                     send(Result.failure(exceptionFactory.makeUnexpected(errorMessage)))
                 }
@@ -587,9 +585,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
             val messages = pair.first
 
             val messagePaginationDTO = RemotePaginationDTOMapper.remoteMessagePaginationDtoFrom(
-                messages.size,
-                paginationDTO.page,
-                paginationDTO.perPage
+                messages.size, paginationDTO.page, paginationDTO.perPage
             )
 
             if (messages.isEmpty()) {
@@ -956,6 +952,38 @@ open class RemoteDataSourceImpl : RemoteDataSource {
         QBChatService.getInstance().addConnectionListener(xmppConnectionListener)
     }
 
+    private fun joinAllGroupDialogs() {
+        if (QBChatService.getInstance().groupChatManager != null) {
+            val groupChatManager = QBChatService.getInstance().groupChatManager
+            val fields = groupChatManager.javaClass.declaredFields
+
+            val dialogsField: Field = fields[1]
+            dialogsField.isAccessible = true
+
+            val dialogsFieldValue = dialogsField.get(groupChatManager)
+
+            if (dialogsFieldValue is Map<*, *>) {
+                val dialogs = dialogsFieldValue as Map<String, QBGroupChat>
+                for ((jid, groupChat) in dialogs) {
+                    joinGroupDialog(groupChat)
+                }
+            }
+        }
+    }
+
+    private fun joinGroupDialog(groupChat: QBGroupChat) {
+        // TODO: Need to add Exception handling
+        try {
+            groupChat.join(null)
+        } catch (e: XMPPException) {
+            // ignore
+        } catch (e: SmackException) {
+            // ignore
+        } catch (e: IllegalStateException) {
+            // ignore
+        }
+    }
+
     private inner class XMPPConnectionListener : AbstractConnectionListener() {
         override fun connected(connection: XMPPConnection?) {
             connection?.let {
@@ -976,6 +1004,10 @@ open class RemoteDataSourceImpl : RemoteDataSource {
             CoroutineScope(Dispatchers.IO).launch {
                 connectionFlow.emit(false)
             }
+        }
+
+        override fun reconnectionSuccessful() {
+            joinAllGroupDialogs()
         }
 
         override fun reconnectionFailed(p0: Exception?) {

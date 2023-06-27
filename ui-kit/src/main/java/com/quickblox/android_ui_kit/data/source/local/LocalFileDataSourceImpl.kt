@@ -10,6 +10,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.text.TextUtils
 import androidx.core.content.FileProvider
 import com.quickblox.android_ui_kit.ExcludeFromCoverage
 import com.quickblox.android_ui_kit.data.dto.local.file.LocalFileDTO
@@ -155,7 +156,14 @@ class LocalFileDataSourceImpl(private val context: Context) : LocalFileDataSourc
     }
 
     private fun getMimeType(file: File): String {
-        return URLConnection.guessContentTypeFromName(file.name)
+        var mimeType = URLConnection.guessContentTypeFromName(file.name)
+        if (TextUtils.isEmpty(mimeType)) {
+            // TODO: need to add this logic in the future to get mime type by extension
+            // val startExtensionIndex = file.name.lastIndexOf(".") + 1
+            // val extension = file.name.substring(startExtensionIndex, file.name.length)
+            mimeType = "*/*"
+        }
+        return mimeType
     }
 
     override fun deleteFile(dto: LocalFileDTO) {

@@ -25,9 +25,6 @@ class MediaContentEntityImpl(
     fun parseMediaContentTypeFrom(mimeType: String): MediaContentEntity.Types {
         val fileType = getFileTypeFrom(mimeType)
         when (fileType) {
-            MediaContentEntity.Types.FILE.value -> {
-                return MediaContentEntity.Types.FILE
-            }
             MediaContentEntity.Types.AUDIO.value -> {
                 return MediaContentEntity.Types.AUDIO
             }
@@ -38,7 +35,7 @@ class MediaContentEntityImpl(
                 return MediaContentEntity.Types.IMAGE
             }
             else -> {
-                throw IllegalArgumentException("Error parse file type from $fileType")
+                return MediaContentEntity.Types.FILE
             }
         }
     }

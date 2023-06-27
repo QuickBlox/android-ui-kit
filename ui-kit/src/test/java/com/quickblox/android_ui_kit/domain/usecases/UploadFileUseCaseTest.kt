@@ -68,7 +68,7 @@ class UploadFileUseCaseTest : BaseTest() {
         val file = File("temp")
         file.writeBytes("Test file bytes".toByteArray())
 
-        val isNotCorrectFile = UploadFileUseCase(FileEntitySpy()).isNotCorrectSize(file, MAX_MEGABYTES_FILE_LENGTH)
+        val isNotCorrectFile = UploadFileUseCase(FileEntitySpy()).isNotCorrectSize(file, 10)
 
         file.delete()
         assertFalse(isNotCorrectFile)
@@ -80,7 +80,7 @@ class UploadFileUseCaseTest : BaseTest() {
 
         val file = FileUtils.buildFileWithMegaBytesLength(11)
 
-        val isNotCorrectFile = UploadFileUseCase(FileEntitySpy()).isNotCorrectSize(file, MAX_MEGABYTES_FILE_LENGTH)
+        val isNotCorrectFile = UploadFileUseCase(FileEntitySpy()).isNotCorrectSize(file, 10)
 
         file.delete()
         assertTrue(isNotCorrectFile)
