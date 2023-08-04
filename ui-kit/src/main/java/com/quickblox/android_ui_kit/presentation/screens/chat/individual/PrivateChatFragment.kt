@@ -24,6 +24,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.R
 import com.quickblox.android_ui_kit.databinding.ContainerFragmentBinding
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
@@ -35,6 +36,8 @@ import com.quickblox.android_ui_kit.presentation.components.messages.MessageAdap
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.*
 import com.quickblox.android_ui_kit.presentation.components.send.Recorder
 import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponentListenerImpl
+import com.quickblox.android_ui_kit.presentation.dialogs.AIMenuDialog
+import com.quickblox.android_ui_kit.presentation.dialogs.OkDialog
 import com.quickblox.android_ui_kit.presentation.dialogs.PositiveNegativeDialog
 import com.quickblox.android_ui_kit.presentation.screens.chat.CameraResultContract
 import com.quickblox.android_ui_kit.presentation.screens.chat.EXTRA_DATA
@@ -62,13 +65,11 @@ open class PrivateChatFragment : BaseFragment() {
         }
     }
 
-
     private val viewModel by viewModels<PrivateChatViewModel>()
     private var binding: ContainerFragmentBinding? = null
     private var screenSettings: PrivateChatScreenSettings? = null
     private var dialogId: String? = null
     private var scrollListenerImpl = ScrollListenerImpl()
-
 
     private val requestCameraPermissionLauncher = registerCameraPermissionLauncher()
     private val requestAudioRecordPermissionLauncher = registerAudioRecordPermissionLauncher()
@@ -124,6 +125,7 @@ open class PrivateChatFragment : BaseFragment() {
         setAudioOutgoingListener()
         setAudioIncomingListener()
         setReadMessageListener()
+        setAIListener()
     }
 
     private fun setImageOutgoingListener() {
@@ -275,6 +277,46 @@ open class PrivateChatFragment : BaseFragment() {
         }
     }
 
+    private fun setAIListener() {
+        val messageComponent = screenSettings?.getMessagesComponent()
+
+        val aiListener = messageComponent?.getAIListener()
+        if (aiListener == null) {
+            messageComponent?.setAIListener(object : TextIncomingViewHolder.AIListener {
+                override fun onIconClick(message: IncomingChatMessageEntity?) {
+                    if (message == null) {
+                        return
+                    }
+
+                    if (isConfiguredAIAnswerAssistant()) {
+                        AIMenuDialog.show(
+                            requireContext(),
+                            message,
+                            screenSettings?.getTheme(),
+                            object : AIMenuDialog.IncomingMessageMenuListener {
+                                override fun onAiAnswerAssistantClicked(message: IncomingChatMessageEntity?) {
+                                    if (dialogId != null && message != null) {
+                                        viewModel.executeAIAnswerAssistant(dialogId!!, message)
+                                    }
+                                }
+                            })
+                    } else {
+                        OkDialog.show(requireContext(), getString(R.string.error_init_ai), screenSettings?.getTheme())
+                    }
+                }
+            })
+        }
+    }
+
+    private fun isConfiguredAIAnswerAssistant(): Boolean {
+        val enabledByOpenAIToken = QuickBloxUiKit.isAIAnswerAssistantEnabledByOpenAIToken()
+        val enabledByQuickBloxToken = QuickBloxUiKit.isAIAnswerAssistantEnabledByQuickBloxToken()
+
+        val enabledByOpenAITokenOrQuickBloxToken = enabledByOpenAIToken || enabledByQuickBloxToken
+
+        return QuickBloxUiKit.isEnabledAIAnswerAssistant() && enabledByOpenAITokenOrQuickBloxToken
+    }
+
     private fun openChooserToShowFileFrom(message: ChatMessageEntity?) {
         val uri = Uri.parse(message?.getMediaContent()?.getUrl())
         val mimeType = message?.getMediaContent()?.getMimeType()
@@ -386,6 +428,9 @@ open class PrivateChatFragment : BaseFragment() {
         subscribeToReceivedMessage()
         subscribeToMessagesLoading()
         subscribeToUpdateDialog()
+        subscribeToAIAnswer()
+
+        enableAI()
 
         return binding?.root
     }
@@ -456,6 +501,18 @@ open class PrivateChatFragment : BaseFragment() {
                 }
             }
         }
+    }
+
+    private fun subscribeToAIAnswer() {
+        viewModel.aiAnswer.observe(viewLifecycleOwner) { result ->
+            val editText = screenSettings?.getMessagesComponent()?.getSendMessageComponent()?.getMessageEditText()
+            editText?.setText(result)
+        }
+    }
+
+    private fun enableAI() {
+        val enabledAI = QuickBloxUiKit.isEnabledAIAnswerAssistant()
+        screenSettings?.getMessagesComponent()?.getAdapter()?.enabledAI(enabledAI)
     }
 
     override fun collectViewsTemplateMethod(context: Context): List<View?> {

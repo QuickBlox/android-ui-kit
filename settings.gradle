@@ -13,6 +13,9 @@ dependencyResolutionManagement {
         maven {
             url "https://github.com/QuickBlox/quickblox-android-sdk-releases/raw/master/"
         }
+        maven {
+            url "https://github.com/QuickBlox/android-ai-releases/raw/main/"
+        }
     }
 }
 rootProject.name = "android-ui-kit"

@@ -312,6 +312,14 @@ open class RemoteDataSourceImpl : RemoteDataSource {
         }
     }
 
+    override fun getUserSessionToken(): String {
+        val token = QBSessionManager.getInstance().token
+        if (token == null) {
+            throw exceptionFactory.makeUnauthorised("The session token is null")
+        }
+        return token
+    }
+
     private fun getLoggedUserIdOrThrowException(): Int {
         val loggedUserId = getLoggedUserIdFromSession()
         if (loggedUserId == null) {

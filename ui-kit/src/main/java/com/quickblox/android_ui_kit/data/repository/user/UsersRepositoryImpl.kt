@@ -113,4 +113,14 @@ class UsersRepositoryImpl(
             throw exceptionFactory.makeIncorrectData(exception.message.toString())
         }
     }
+
+    override fun getUserSessionToken(): String {
+        try {
+            return remoteDataSource.getUserSessionToken()
+        } catch (exception: LocalDataSourceException) {
+            throw exceptionFactory.makeBy(exception.code, exception.description)
+        } catch (exception: MappingException) {
+            throw exceptionFactory.makeIncorrectData(exception.message.toString())
+        }
+    }
 }

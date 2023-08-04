@@ -27,4 +27,7 @@ interface UsersRepository {
 
     @Throws(UsersRepositoryException::class)
     fun getLoggedUserId(): Int
+
+    @Throws(UsersRepositoryException::class)
+    fun getUserSessionToken(): String
 }

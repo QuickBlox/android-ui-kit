@@ -9,6 +9,7 @@ import android.net.Uri
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.entity.FileEntity
 import com.quickblox.android_ui_kit.domain.entity.PaginationEntity
@@ -51,6 +52,10 @@ class PrivateChatViewModel : BaseViewModel() {
     private val _updatedMessage = MutableLiveData<Int>()
     val updatedMessage: LiveData<Int>
         get() = _updatedMessage
+
+    private val _aiAnswer = MutableLiveData<String>()
+    val aiAnswer: LiveData<String>
+        get() = _aiAnswer
 
     val messages = arrayListOf<MessageEntity>()
     private var loadMessagesJob: Job? = null
@@ -431,6 +436,39 @@ class PrivateChatViewModel : BaseViewModel() {
                     StopTypingEventUseCase(it).execute()
                 }.onFailure {
                     showError(it.message)
+                }
+            }
+        }
+    }
+
+    fun executeAIAnswerAssistant(dialogId: String, message: IncomingChatMessageEntity) {
+        showLoading()
+
+        if (QuickBloxUiKit.isAIAnswerAssistantEnabledByOpenAIToken()) {
+            viewModelScope.launch {
+                try {
+                    val answers = LoadAIAnswerAssistantByOpenAITokenUseCase(dialogId, message).execute()
+                    hideLoading()
+                    if (answers.isNotEmpty()) {
+                        _aiAnswer.postValue(answers[0])
+                    }
+                } catch (exception: DomainException) {
+                    hideLoading()
+                    showError(exception.message)
+                }
+            }
+        }
+        if (QuickBloxUiKit.isAIAnswerAssistantEnabledByQuickBloxToken()) {
+            viewModelScope.launch {
+                try {
+                    val answers = LoadAIAnswerAssistantByQuickBloxTokenUseCase(dialogId, message).execute()
+                    hideLoading()
+                    if (answers.isNotEmpty()) {
+                        _aiAnswer.postValue(answers[0])
+                    }
+                } catch (exception: DomainException) {
+                    hideLoading()
+                    showError(exception.message)
                 }
             }
         }

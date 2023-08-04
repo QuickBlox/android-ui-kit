@@ -8,6 +8,7 @@ package com.quickblox.android_ui_kit.presentation.components.messages.viewholder
 
 import android.content.res.ColorStateList
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
@@ -17,8 +18,8 @@ import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEnt
 import com.quickblox.android_ui_kit.presentation.base.BaseViewHolder
 import com.quickblox.android_ui_kit.presentation.screens.convertToStringTime
 import com.quickblox.android_ui_kit.presentation.screens.loadCircleImageFromUrl
-import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
+import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 
 class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
     BaseViewHolder<TextIncomingMessageItemBinding>(binding) {
@@ -36,7 +37,7 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
         applyTheme(theme)
     }
 
-    fun bind(message: IncomingChatMessageEntity?, listener: TextIncomingListener?) {
+    fun bind(message: IncomingChatMessageEntity?, textListener: TextIncomingListener?, aiListener: AIListener?) {
         binding.tvMessage.text = message?.getContent()
         binding.tvMessage.setTextColor(theme.getMainTextColor())
 
@@ -51,14 +52,15 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
             binding.ivAvatar.loadCircleImageFromUrl(sender?.getAvatarUrl(), R.drawable.user_avatar_holder)
         }
 
-        setListener(message, listener)
+        setTextListener(message, textListener)
+        setAIListener(message, aiListener)
 
         binding.tvName.text = sender?.getName() ?: sender?.getLogin()
 
         applyTheme(theme)
     }
 
-    private fun setListener(message: IncomingChatMessageEntity?, listener: TextIncomingListener?) {
+    private fun setTextListener(message: IncomingChatMessageEntity?, listener: TextIncomingListener?) {
         binding.tvMessage.setOnClickListener {
             listener?.onTextClick(message)
         }
@@ -66,6 +68,12 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
         binding.tvMessage.setOnLongClickListener {
             listener?.onTextLongClick(message)
             true
+        }
+    }
+
+    private fun setAIListener(message: IncomingChatMessageEntity?, listener: AIListener?) {
+        binding.ivAI.setOnClickListener {
+            listener?.onIconClick(message)
         }
     }
 
@@ -87,8 +95,20 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
         binding.tvTime.setTextColor(color)
     }
 
+    fun setShowAIIcon(show: Boolean) {
+        if (show){
+            binding.ivAI.visibility = View.VISIBLE
+        } else {
+            binding.ivAI.visibility = View.GONE
+        }
+    }
+
     interface TextIncomingListener {
         fun onTextClick(message: IncomingChatMessageEntity?)
         fun onTextLongClick(message: IncomingChatMessageEntity?)
+    }
+
+    interface AIListener {
+        fun onIconClick(message: IncomingChatMessageEntity?)
     }
 }

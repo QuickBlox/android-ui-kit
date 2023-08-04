@@ -18,7 +18,6 @@ import com.quickblox.android_ui_kit.presentation.components.messages.viewholders
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.ImageIncomingViewHolder.ImageIncomingListener
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.ImageOutgoingViewHolder.ImageOutgoingListener
 import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponent
-import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponent.MessageComponentStates.CHAT_MESSAGE
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 
@@ -93,6 +92,22 @@ class MessagesComponentImpl : ConstraintLayout, MessagesComponent {
         return adapter?.getTextIncomingListener()
     }
 
+    override fun enableAI() {
+
+    }
+
+    override fun disableAI() {
+
+    }
+
+    override fun setAIListener(listener: TextIncomingViewHolder.AIListener) {
+        adapter?.setAIListener(listener)
+    }
+
+    override fun getAIListener(): TextIncomingViewHolder.AIListener? {
+        return adapter?.getAIListener()
+    }
+
     override fun setTextOutgoingListener(listener: TextOutgoingViewHolder.TextOutgoingListener?) {
         adapter?.setTextOutgoingListener(listener)
     }
@@ -134,7 +149,7 @@ class MessagesComponentImpl : ConstraintLayout, MessagesComponent {
     }
 
     override fun setAudioOutgoingListener(listener: AudioOutgoingViewHolder.AudioOutgoingListener?) {
-         adapter?.setAudioOutgoingListener(listener)
+        adapter?.setAudioOutgoingListener(listener)
     }
 
     override fun getAudioOutgoingListener(): AudioOutgoingViewHolder.AudioOutgoingListener? {
