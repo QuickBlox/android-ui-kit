@@ -41,4 +41,7 @@
     <string name="file">File</string>
     <string name="send_attachment">Send attachment</string>
     <string name="new_group_dialog">New group dialog</string>
+    <string name="menu_item_ai_answer_assistant">AI Assist Answer</string>
+    <string name="error_init_ai">The AI Assist Answer has not been configured. \nPlease setup AI Assist Answer by
+        adding OpenAIToken or ProxyServer</string>
 </resources>

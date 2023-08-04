@@ -34,4 +34,8 @@ open class UsersRepositoryStub : BaseStub(), UsersRepository {
     override fun getLoggedUserId(): Int {
         throw buildRuntimeException()
     }
+
+    override fun getUserSessionToken(): String {
+        throw buildRuntimeException()
+    }
 }

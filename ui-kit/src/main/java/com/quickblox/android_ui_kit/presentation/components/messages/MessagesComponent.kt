@@ -8,13 +8,13 @@ package com.quickblox.android_ui_kit.presentation.components.messages
 
 import androidx.recyclerview.widget.RecyclerView
 import com.quickblox.android_ui_kit.presentation.components.Component
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.AudioIncomingViewHolder
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.AudioIncomingViewHolder.AudioIncomingListener
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.AudioOutgoingViewHolder.AudioOutgoingListener
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.FileIncomingViewHolder.FileIncomingListener
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.FileOutgoingViewHolder.FileOutgoingListener
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.ImageIncomingViewHolder.ImageIncomingListener
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.ImageOutgoingViewHolder.ImageOutgoingListener
+import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.TextIncomingViewHolder.AIListener
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.TextIncomingViewHolder.TextIncomingListener
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.TextOutgoingViewHolder.TextOutgoingListener
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.VideoIncomingViewHolder.VideoIncomingListener
@@ -35,6 +35,12 @@ interface MessagesComponent : Component {
 
     fun setTextIncomingListener(listener: TextIncomingListener?)
     fun getTextIncomingListener(): TextIncomingListener?
+
+    fun setAIListener(lisAIListener: AIListener)
+    fun getAIListener(): AIListener?
+
+    fun enableAI()
+    fun disableAI()
 
     fun setTextOutgoingListener(listener: TextOutgoingListener?)
     fun getTextOutgoingListener(): TextOutgoingListener?

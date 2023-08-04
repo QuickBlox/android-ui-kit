@@ -59,6 +59,9 @@ interface RemoteDataSource {
     fun getLoggedUserId(): Int
 
     @Throws(RemoteDataSourceException::class)
+    fun getUserSessionToken(): String
+
+    @Throws(RemoteDataSourceException::class)
     fun getUser(dto: RemoteUserDTO): RemoteUserDTO
 
     @Throws(RemoteDataSourceException::class)

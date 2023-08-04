@@ -21,6 +21,7 @@ import com.quickblox.android_ui_kit.presentation.components.messages.viewholders
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.FileOutgoingViewHolder.FileOutgoingListener
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.ImageIncomingViewHolder.ImageIncomingListener
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.ImageOutgoingViewHolder.ImageOutgoingListener
+import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.TextIncomingViewHolder.AIListener
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.TextIncomingViewHolder.TextIncomingListener
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.TextOutgoingViewHolder.TextOutgoingListener
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.VideoIncomingViewHolder.VideoIncomingListener
@@ -54,6 +55,7 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
     private var imageOutgoingListener: ImageOutgoingListener? = null
     private var imageIncomingListener: ImageIncomingListener? = null
     private var textIncomingListener: TextIncomingListener? = null
+    private var aiListener: AIListener? = null
     private var textOutgoingListener: TextOutgoingListener? = null
     private var videoOutgoingListener: VideoOutgoingListener? = null
     private var videoIncomingListener: VideoIncomingListener? = null
@@ -61,6 +63,8 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
     private var fileIncomingListener: FileIncomingListener? = null
     private var audioOutgoingListener: AudioOutgoingListener? = null
     private var audioIncomingListener: AudioIncomingListener? = null
+
+    private var enabledAI: Boolean = false
 
     init {
         setHasStableIds(true)
@@ -95,7 +99,8 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
 
             is TextIncomingViewHolder -> {
                 message as IncomingChatMessageEntity
-                holder.bind(message, textIncomingListener)
+                holder.bind(message, textIncomingListener, aiListener)
+                holder.setShowAIIcon(enabledAI)
             }
 
             is TextOutgoingViewHolder -> {
@@ -179,6 +184,18 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
 
     fun setTextIncomingListener(listener: TextIncomingListener?) {
         this.textIncomingListener = listener
+    }
+
+    fun setAIListener(aiListener: AIListener?) {
+        this.aiListener = aiListener
+    }
+
+    fun getAIListener(): AIListener? {
+        return aiListener
+    }
+
+    fun enabledAI(enabled: Boolean) {
+        enabledAI = enabled
     }
 
     fun getTextOutgoingListener(): TextOutgoingListener? {

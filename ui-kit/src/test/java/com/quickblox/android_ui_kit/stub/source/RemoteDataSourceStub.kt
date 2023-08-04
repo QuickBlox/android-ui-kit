@@ -73,6 +73,10 @@ open class RemoteDataSourceStub : BaseStub(), RemoteDataSource {
         throw buildRuntimeException()
     }
 
+    override fun getUserSessionToken(): String {
+        throw buildRuntimeException()
+    }
+
     override fun getUser(dto: RemoteUserDTO): RemoteUserDTO {
         throw buildRuntimeException()
     }
