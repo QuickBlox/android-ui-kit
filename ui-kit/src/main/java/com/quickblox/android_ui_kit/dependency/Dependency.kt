@@ -14,4 +14,5 @@ interface Dependency {
     fun getMessagesRepository(): MessagesRepository
     fun getUsersRepository(): UsersRepository
     fun getEventsRepository(): EventsRepository
+    fun getAIRepository(): AIRepository
 }

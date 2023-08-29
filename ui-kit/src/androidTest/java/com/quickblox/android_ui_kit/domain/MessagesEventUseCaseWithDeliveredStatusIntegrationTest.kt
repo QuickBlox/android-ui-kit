@@ -112,7 +112,7 @@ class MessagesEventUseCaseWithDeliveredStatusIntegrationTest : BaseTest() {
 
         assertEquals(0, receivedMessageLatch.count)
         assertEquals(OutgoingChatMessageEntity.OutgoingStates.DELIVERED, loadedMessage!!.getOutgoingState())
-        assertEquals(sentQBChatMessage.id, loadedMessage!!.geMessageId())
+        assertEquals(sentQBChatMessage.id, loadedMessage!!.getMessageId())
     }
 
     private suspend fun createGroupDialog() {
@@ -206,7 +206,7 @@ class MessagesEventUseCaseWithDeliveredStatusIntegrationTest : BaseTest() {
 
         assertEquals(0, receivedMessageLatch.count)
         assertEquals(OutgoingChatMessageEntity.OutgoingStates.DELIVERED, loadedMessage!!.getOutgoingState())
-        assertEquals(sentQBChatMessage.id, loadedMessage!!.geMessageId())
+        assertEquals(sentQBChatMessage.id, loadedMessage!!.getMessageId())
     }
 
     private suspend fun createPrivateDialog() {

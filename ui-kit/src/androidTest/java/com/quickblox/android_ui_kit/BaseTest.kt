@@ -18,21 +18,21 @@ import com.quickblox.core.exception.QBResponseException
 import com.quickblox.users.QBUsers
 import com.quickblox.users.model.QBUser
 
-const val APP_ID = "75949"
-const val AUTH_KEY = "DdS7zxMEm5Q7DaS"
-const val AUTH_SECRET = "g88RhdOjnDOqFkv"
-const val ACCOUNT_KEY = "uK_8uinNyz8-npTNB6tx"
+const val APP_ID = ""
+const val AUTH_KEY = ""
+const val AUTH_SECRET = ""
+const val ACCOUNT_KEY = ""
 
-const val USER_LOGIN = "qwe11"
-const val USER_ID = 109364779
-const val USER_PASSWORD = "quickblox"
+const val USER_LOGIN = ""
+const val USER_ID = 0
+const val USER_PASSWORD = ""
 
-const val OPPONENT_LOGIN = "qwe22"
-const val OPPONENT_ID = 109364799
-const val OPPONENT_PASSWORD = "quickblox"
+const val OPPONENT_LOGIN = ""
+const val OPPONENT_ID = 0
+const val OPPONENT_PASSWORD = ""
 
-const val USER_OPPONENT_ID_1 = 109364799
-const val USER_OPPONENT_ID_2 = 131163237
+const val USER_OPPONENT_ID_1 = 0
+const val USER_OPPONENT_ID_2 = 0
 
 open class BaseTest {
     private var loggedUser: QBUser? = null
@@ -134,6 +134,10 @@ open class BaseTest {
         }
 
         override fun getEventsRepository(): EventsRepository {
+            throw RuntimeException("expected: override, actual: not override")
+        }
+
+        override fun getAIRepository(): AIRepository {
             throw RuntimeException("expected: override, actual: not override")
         }
     }

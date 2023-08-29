@@ -71,6 +71,10 @@ open class IncomingChatMessageEntityImpl(
         sender = userEntity
     }
 
+    override fun getLoggedUserId(): Int? {
+        return loggedUserId
+    }
+
     override fun getSenderId(): Int? {
         return senderId
     }
@@ -81,6 +85,10 @@ open class IncomingChatMessageEntityImpl(
 
     override fun setLoggedUserId(id: Int?) {
         loggedUserId = id
+    }
+
+    override fun getReadIds(): Collection<Int>? {
+        return readIds
     }
 
     override fun getContent(): String? {
@@ -95,7 +103,7 @@ open class IncomingChatMessageEntityImpl(
         return MessageEntity.MessageTypes.CHAT
     }
 
-    override fun geMessageId(): String? {
+    override fun getMessageId(): String? {
         return messageId
     }
 
@@ -113,6 +121,10 @@ open class IncomingChatMessageEntityImpl(
 
     override fun setReadIds(ids: Collection<Int>?) {
         readIds = ids
+    }
+
+    override fun getDeliveredIds(): Collection<Int>? {
+        return deliveredIds
     }
 
     override fun setDeliveredIds(ids: Collection<Int>?) {
@@ -133,7 +145,7 @@ open class IncomingChatMessageEntityImpl(
 
     override fun equals(other: Any?): Boolean {
         return if (other is MessageEntity) {
-            messageId != null && messageId == other.geMessageId()
+            messageId != null && messageId == other.getMessageId()
         } else {
             false
         }

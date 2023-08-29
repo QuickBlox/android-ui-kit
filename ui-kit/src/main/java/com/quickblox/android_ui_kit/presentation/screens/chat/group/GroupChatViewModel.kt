@@ -15,6 +15,7 @@ import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.entity.FileEntity
 import com.quickblox.android_ui_kit.domain.entity.PaginationEntity
 import com.quickblox.android_ui_kit.domain.entity.implementation.PaginationEntityImpl
+import com.quickblox.android_ui_kit.domain.entity.implementation.message.AITranslateIncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity.ContentTypes
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
@@ -437,35 +438,76 @@ class GroupChatViewModel : BaseViewModel() {
     }
 
     fun executeAIAnswerAssistant(dialogId: String, message: IncomingChatMessageEntity) {
-        showLoading()
-
         if (QuickBloxUiKit.isAIAnswerAssistantEnabledByOpenAIToken()) {
             viewModelScope.launch {
                 try {
+                    showLoading()
                     val answers = LoadAIAnswerAssistantByOpenAITokenUseCase(dialogId, message).execute()
-                    hideLoading()
                     if (answers.isNotEmpty()) {
                         _aiAnswer.postValue(answers[0])
                     }
                 } catch (exception: DomainException) {
-                    hideLoading()
                     showError(exception.message)
+                } finally {
+                    hideLoading()
                 }
             }
         }
         if (QuickBloxUiKit.isAIAnswerAssistantEnabledByQuickBloxToken()) {
             viewModelScope.launch {
                 try {
+                    showLoading()
                     val answers = LoadAIAnswerAssistantByQuickBloxTokenUseCase(dialogId, message).execute()
-                    hideLoading()
                     if (answers.isNotEmpty()) {
                         _aiAnswer.postValue(answers[0])
                     }
                 } catch (exception: DomainException) {
-                    hideLoading()
                     showError(exception.message)
+                } finally {
+                    hideLoading()
                 }
             }
+        }
+    }
+
+    fun executeAITranslationAssistant(message: IncomingChatMessageEntity) {
+        if (message is AITranslateIncomingChatMessageEntity) {
+            addOrUpdateMessage(message)
+            return
+        }
+
+        if (QuickBloxUiKit.isAITranslateEnabledByOpenAIToken()) {
+            viewModelScope.launch {
+                try {
+                    showLoading()
+                    val entity = LoadAITranslateByOpenAITokenUseCase(message).execute()
+                    updateTranslatedMessage(entity)
+                } catch (exception: DomainException) {
+                    showError(exception.message)
+                } finally {
+                    hideLoading()
+                }
+            }
+        }
+        if (QuickBloxUiKit.isAITranslateEnabledByQuickBloxToken()) {
+            viewModelScope.launch {
+                try {
+                    showLoading()
+                    val entity = LoadAITranslateByQuickBloxTokenUseCase(message).execute()
+                    updateTranslatedMessage(entity)
+                } catch (exception: DomainException) {
+                    showError(exception.message)
+                } finally {
+                    hideLoading()
+                }
+            }
+        }
+    }
+
+    private fun updateTranslatedMessage(entity: AITranslateIncomingChatMessageEntity?) {
+        if (entity?.getTranslations()?.isNotEmpty() == true) {
+            entity.setTranslated(true)
+            addOrUpdateMessage(entity)
         }
     }
 

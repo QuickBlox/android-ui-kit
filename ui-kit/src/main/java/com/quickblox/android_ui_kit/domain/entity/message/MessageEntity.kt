@@ -9,7 +9,7 @@ interface MessageEntity {
 
     fun getMessageType(): MessageTypes
 
-    fun geMessageId(): String?
+    fun getMessageId(): String?
     fun setMessageId(messageId: String?)
 
     fun getDialogId(): String?

@@ -41,7 +41,7 @@ open class EventMessageEntityImpl : EventMessageEntity {
         return MessageEntity.MessageTypes.EVENT
     }
 
-    override fun geMessageId(): String? {
+    override fun getMessageId(): String? {
         return messageId
     }
 
@@ -107,7 +107,7 @@ open class EventMessageEntityImpl : EventMessageEntity {
 
     override fun equals(other: Any?): Boolean {
         return if (other is MessageEntity) {
-            messageId != null && messageId == other.geMessageId()
+            messageId != null && messageId == other.getMessageId()
         } else {
             false
         }

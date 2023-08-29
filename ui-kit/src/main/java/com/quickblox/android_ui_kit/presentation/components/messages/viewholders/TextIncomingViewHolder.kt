@@ -14,6 +14,7 @@ import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import com.quickblox.android_ui_kit.R
 import com.quickblox.android_ui_kit.databinding.TextIncomingMessageItemBinding
+import com.quickblox.android_ui_kit.domain.entity.implementation.message.AITranslateIncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
 import com.quickblox.android_ui_kit.presentation.base.BaseViewHolder
 import com.quickblox.android_ui_kit.presentation.screens.convertToStringTime
@@ -24,6 +25,7 @@ import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
     BaseViewHolder<TextIncomingMessageItemBinding>(binding) {
     private var theme: UiKitTheme = LightUIKitTheme()
+    private var isEnabledAITranslate = true
 
     companion object {
         fun newInstance(parent: ViewGroup): TextIncomingViewHolder {
@@ -38,7 +40,12 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
     }
 
     fun bind(message: IncomingChatMessageEntity?, textListener: TextIncomingListener?, aiListener: AIListener?) {
-        binding.tvMessage.text = message?.getContent()
+        if (isEnabledAITranslate && message is AITranslateIncomingChatMessageEntity) {
+            updateTranslatedContent(message)
+        } else {
+            binding.tvMessage.text = message?.getContent()
+        }
+
         binding.tvMessage.setTextColor(theme.getMainTextColor())
 
         binding.tvTime.text = message?.getTime()?.convertToStringTime()
@@ -54,10 +61,24 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
 
         setTextListener(message, textListener)
         setAIListener(message, aiListener)
+        setTranslateListener(message, aiListener)
 
         binding.tvName.text = sender?.getName() ?: sender?.getLogin()
 
         applyTheme(theme)
+    }
+
+    private fun updateTranslatedContent(message: AITranslateIncomingChatMessageEntity) {
+        val context = binding.tvAITranslate.context
+        if (message.isTranslated() == true) {
+            message.setTranslated(false)
+            binding.tvMessage.text = message.getTranslations()?.get(0)
+            binding.tvAITranslate.text = context.getString(R.string.show_original)
+        } else {
+            message.setTranslated(true)
+            binding.tvMessage.text = message.getContent()
+            binding.tvAITranslate.text = context.getString(R.string.show_translate)
+        }
     }
 
     private fun setTextListener(message: IncomingChatMessageEntity?, listener: TextIncomingListener?) {
@@ -74,6 +95,12 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
     private fun setAIListener(message: IncomingChatMessageEntity?, listener: AIListener?) {
         binding.ivAI.setOnClickListener {
             listener?.onIconClick(message)
+        }
+    }
+
+    private fun setTranslateListener(message: IncomingChatMessageEntity?, listener: AIListener?) {
+        binding.tvAITranslate.setOnClickListener {
+            listener?.onTranslateClick(message)
         }
     }
 
@@ -96,10 +123,20 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
     }
 
     fun setShowAIIcon(show: Boolean) {
-        if (show){
+        if (show) {
             binding.ivAI.visibility = View.VISIBLE
         } else {
             binding.ivAI.visibility = View.GONE
+        }
+    }
+
+    fun setShowAITranslate(show: Boolean) {
+        isEnabledAITranslate = show
+
+        if (show) {
+            binding.tvAITranslate.visibility = View.VISIBLE
+        } else {
+            binding.tvAITranslate.visibility = View.GONE
         }
     }
 
@@ -110,5 +147,6 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
 
     interface AIListener {
         fun onIconClick(message: IncomingChatMessageEntity?)
+        fun onTranslateClick(message: IncomingChatMessageEntity?)
     }
 }

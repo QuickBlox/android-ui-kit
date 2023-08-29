@@ -52,7 +52,7 @@ class CreateMessageIntegrationTest : BaseTest() {
 
         val receivedMessageLatch = CountDownLatch(1)
         CreateMessageUseCase(contentType, dialogId, content).execute().collect { createdMessage ->
-            assertTrue(createdMessage?.geMessageId()!!.isNotEmpty())
+            assertTrue(createdMessage?.getMessageId()!!.isNotEmpty())
             assertEquals(contentType, createdMessage.getContentType())
             assertEquals(dialogId, createdMessage.getDialogId())
             assertEquals(content, createdMessage.getContent())
@@ -77,7 +77,7 @@ class CreateMessageIntegrationTest : BaseTest() {
 
         val receivedMessageLatch = CountDownLatch(2)
         CreateMessageUseCase(contentType, dialogId, content, buildFileEntity()).execute().collect { createdMessage ->
-            assertTrue(createdMessage?.geMessageId()!!.isNotEmpty())
+            assertTrue(createdMessage?.getMessageId()!!.isNotEmpty())
             assertEquals(contentType, createdMessage.getContentType())
             assertEquals(dialogId, createdMessage.getDialogId())
 

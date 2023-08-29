@@ -23,7 +23,7 @@ open class IncomingChatMessageEntitySpy : IncomingChatMessageEntityStub() {
     private var readIds: Collection<Int>? = null
     private var deliveredIds: Collection<Int>? = null
 
-    override fun geMessageId(): String? {
+    override fun getMessageId(): String? {
         return messageId
     }
 

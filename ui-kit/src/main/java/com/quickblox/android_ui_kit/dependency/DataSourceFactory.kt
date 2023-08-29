@@ -5,6 +5,7 @@
 
 package com.quickblox.android_ui_kit.dependency
 
+import com.quickblox.android_ui_kit.data.source.ai.AIDataSource
 import com.quickblox.android_ui_kit.data.source.local.LocalDataSource
 import com.quickblox.android_ui_kit.data.source.local.LocalFileDataSource
 import com.quickblox.android_ui_kit.data.source.remote.RemoteDataSource
@@ -13,4 +14,5 @@ interface DataSourceFactory {
     fun createRemote(): RemoteDataSource
     fun createLocal(): LocalDataSource
     fun createLocalFile(): LocalFileDataSource
+    fun createAi(): AIDataSource
 }

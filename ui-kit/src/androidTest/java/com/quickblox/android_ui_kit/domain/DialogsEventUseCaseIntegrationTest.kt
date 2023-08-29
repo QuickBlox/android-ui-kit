@@ -10,6 +10,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.quickblox.android_ui_kit.BaseTest
 import com.quickblox.android_ui_kit.QuickBloxUiKit
+import com.quickblox.android_ui_kit.data.repository.ai.AIRepositoryImpl
 import com.quickblox.android_ui_kit.data.repository.connection.ConnectionRepositoryImpl
 import com.quickblox.android_ui_kit.data.repository.dialog.DialogsRepositoryImpl
 import com.quickblox.android_ui_kit.data.repository.event.EventsRepositoryImpl
@@ -113,6 +114,7 @@ class DialogsEventUseCaseIntegrationTest : BaseTest() {
         val messageRepository = MessagesRepositoryImpl(remoteDataSource)
         val usersRepository = UsersRepositoryImpl(remoteDataSource, localDataSource)
         val eventsRepository = EventsRepositoryImpl(remoteDataSource, localDataSource)
+        val aiRepository = AIRepositoryImpl(aiDataSource)
 
         val dependency = object : Dependency {
             override fun getConnectionRepository(): ConnectionRepository {
@@ -137,6 +139,10 @@ class DialogsEventUseCaseIntegrationTest : BaseTest() {
 
             override fun getEventsRepository(): EventsRepository {
                 return eventsRepository
+            }
+
+            override fun getAIRepository(): AIRepository {
+              return aiRepository
             }
         }
 

@@ -12,7 +12,7 @@ open class MessageEntityStub : BaseStub(), MessageEntity {
         throw buildRuntimeException()
     }
 
-    override fun geMessageId(): String? {
+    override fun getMessageId(): String? {
         throw buildRuntimeException()
     }
 

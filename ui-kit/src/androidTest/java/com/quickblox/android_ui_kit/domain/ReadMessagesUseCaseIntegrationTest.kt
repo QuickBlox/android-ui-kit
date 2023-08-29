@@ -288,7 +288,7 @@ class ReadMessagesUseCaseIntegrationTest : BaseTest() {
         }
 
         override fun processMessageRead(messageId: String, dialogId: String, senderId: Int) {
-            assertEquals(loadedMessage!!.geMessageId(), messageId)
+            assertEquals(loadedMessage!!.getMessageId(), messageId)
             messageReadLatch.countDown()
         }
     }

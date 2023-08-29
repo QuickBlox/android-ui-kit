@@ -136,7 +136,7 @@ class IncomingChatMessageEntityTest {
         assertEquals(participantId, entity.getParticipantId())
         assertEquals(senderId, entity.getSenderId())
         assertEquals(dialogId, entity.getDialogId())
-        assertEquals(messageId, entity.geMessageId())
+        assertEquals(messageId, entity.getMessageId())
         assertEquals(sender, entity.getSender())
         assertEquals(ChatMessageEntity.ChatMessageTypes.FROM_OPPONENT, entity.getChatMessageType())
     }

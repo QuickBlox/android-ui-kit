@@ -25,27 +25,27 @@ class AIMenuDialog private constructor(
     override fun collectViewsTemplateMethod(): List<View?> {
         val views = mutableListOf<View?>()
 
-        val liveItem = buildLeaveItem()
-        views.add(liveItem)
+        val answerItem = buildAnswerItem()
+        views.add(answerItem)
         return views
     }
 
-    private fun buildLeaveItem(): View {
-        val liveItem = MenuItem(context)
+    private fun buildAnswerItem(): View {
+        val answerItem = MenuItem(context)
 
         themeDialog?.getMainTextColor()?.let {
-            liveItem.setColorText(it)
+            answerItem.setColorText(it)
         }
         themeDialog?.getMainElementsColor()?.let {
-            liveItem.setRipple(it)
+            answerItem.setRipple(it)
         }
-        liveItem.setText(context.getString(R.string.menu_item_ai_answer_assistant))
-        liveItem.setItemClickListener {
+        answerItem.setText(context.getString(R.string.menu_item_ai_answer_assistant))
+        answerItem.setItemClickListener {
             listener.onAiAnswerAssistantClicked(message)
             dismiss()
         }
 
-        return liveItem
+        return answerItem
     }
 
     interface IncomingMessageMenuListener {

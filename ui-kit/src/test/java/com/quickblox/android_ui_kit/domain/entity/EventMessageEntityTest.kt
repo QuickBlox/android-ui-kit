@@ -132,7 +132,7 @@ class EventMessageEntityTest {
         assertEquals(participantId, entity.getParticipantId())
         assertEquals(senderId, entity.getSenderId())
         assertEquals(dialogId, entity.getDialogId())
-        assertEquals(messageId, entity.geMessageId())
+        assertEquals(messageId, entity.getMessageId())
         assertEquals(time, entity.getTime())
         assertEquals(text, entity.getText())
     }

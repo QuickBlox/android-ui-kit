@@ -68,7 +68,7 @@ class LoadAIAnswerAssistantByOpenAITokenUseCase(
 
                 paginationResult = receivedPagination
 
-                val isEqualsMessages = receivedMessage?.geMessageId() == incomingMessage.geMessageId()
+                val isEqualsMessages = receivedMessage?.getMessageId() == incomingMessage.getMessageId()
                 if (isNotFoundPagination && isEqualsMessages) {
                     isNotFoundPagination = false
                     return@collect
@@ -81,7 +81,7 @@ class LoadAIAnswerAssistantByOpenAITokenUseCase(
         }
 
         if (isNotFoundPagination) {
-            throw DomainException("Didn't find message with id: ${incomingMessage.geMessageId()}")
+            throw DomainException("Didn't find message with id: ${incomingMessage.getMessageId()}")
         }
 
         return paginationResult
