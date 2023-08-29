@@ -7,39 +7,39 @@
     android:layout_marginTop="8dp"
     android:paddingBottom="4dp">
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/ivAvatar"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginStart="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:src="@drawable/private_holder" />
-
-    <androidx.appcompat.widget.AppCompatTextView
-        android:id="@+id/tvName"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginEnd="8dp"
-        android:ellipsize="end"
-        android:fontFamily="@font/roboto_500"
-        android:lines="1"
-        android:textSize="12sp"
-        app:layout_constraintBottom_toTopOf="@+id/clMessage"
-        app:layout_constraintEnd_toEndOf="@id/clMessage"
-        app:layout_constraintHorizontal_bias="0"
-        app:layout_constraintStart_toStartOf="@+id/clMessage"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:text="name" />
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/clMessage"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toStartOf="@id/guideline"
-        app:layout_constraintStart_toEndOf="@+id/ivAvatar"
-        app:layout_constraintTop_toBottomOf="@+id/tvName">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/ivAvatar"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="16dp"
+            app:layout_constraintBottom_toBottomOf="@+id/tvMessage"
+            app:layout_constraintStart_toStartOf="parent"
+            tools:src="@drawable/private_holder" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvName"
+            android:layout_width="0dp"
+            android:layout_height="20dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:ellipsize="end"
+            android:fontFamily="@font/roboto_500"
+            android:lines="1"
+            android:textSize="12sp"
+            app:layout_constrainedWidth="true"
+            app:layout_constraintEnd_toEndOf="@id/tvMessage"
+            app:layout_constraintHorizontal_bias="0"
+            app:layout_constraintStart_toStartOf="@+id/tvMessage"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="name" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/tvMessage"
@@ -49,16 +49,30 @@
             android:autoLink="web"
             android:background="@drawable/bg_ingoing_message"
             android:gravity="center_vertical"
+            android:minWidth="100dp"
             android:minHeight="36dp"
             android:paddingHorizontal="14dp"
             android:paddingVertical="4dp"
             android:textColorLink="#1748FA"
             app:layout_constrainedWidth="true"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/tvAITranslate"
             app:layout_constraintEnd_toStartOf="@id/tvTime"
             app:layout_constraintHorizontal_bias="0"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/ivAvatar"
+            app:layout_constraintTop_toBottomOf="@+id/tvName"
             tools:text="Message..." />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/tvAITranslate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:fontFamily="@font/roboto_500"
+            android:text="@string/show_translate"
+            android:textSize="11sp"
+            app:layout_constraintEnd_toEndOf="@+id/tvMessage"
+            app:layout_constraintTop_toBottomOf="@+id/tvMessage" />
 
         <androidx.constraintlayout.widget.Barrier
             android:id="@+id/barrier"
@@ -71,13 +85,13 @@
             android:id="@+id/ivAI"
             android:layout_width="36dp"
             android:layout_height="36dp"
-            android:layout_marginStart="16dp"
+            android:layout_marginStart="12dp"
             android:src="@drawable/ic_ai_robot"
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="@+id/clMessage"
             app:layout_constraintStart_toEndOf="@+id/barrier"
             app:layout_constraintTop_toTopOf="@+id/clMessage"
-            tools:visibility="visible"/>
+            tools:visibility="visible" />
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/tvTime"

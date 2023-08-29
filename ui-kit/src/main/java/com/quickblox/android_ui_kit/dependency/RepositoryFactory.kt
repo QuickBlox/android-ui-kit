@@ -14,4 +14,5 @@ interface RepositoryFactory {
     fun createMessages(): MessagesRepository
     fun createUsers(): UsersRepository
     fun createEvents(): EventsRepository
+    fun createAI(): AIRepository
 }

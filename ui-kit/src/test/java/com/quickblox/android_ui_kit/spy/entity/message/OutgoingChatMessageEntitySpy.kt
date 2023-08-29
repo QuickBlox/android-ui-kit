@@ -25,7 +25,7 @@ open class OutgoingChatMessageEntitySpy : OutgoingChatMessageEntityStub() {
     private var mediaContent: MediaContentEntity? =
         MediaContentEntityImpl("temp_song", "https://test.com/temp_song.mp3", "audio/mpeg")
 
-    override fun geMessageId(): String? {
+    override fun getMessageId(): String? {
         return messageId
     }
 

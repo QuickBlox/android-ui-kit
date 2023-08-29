@@ -4,7 +4,6 @@
  */
 package com.quickblox.android_ui_kit.data.repository.event
 
-import com.quickblox.android_ui_kit.domain.exception.repository.DialogsRepositoryException
 import com.quickblox.android_ui_kit.domain.exception.repository.EventsRepositoryException
 
 interface EventsRepositoryExceptionFactory {

@@ -21,6 +21,7 @@ object QuickBloxUiKit {
     private var screenFactory: ScreenFactory = DefaultScreenFactory()
     private var theme: UiKitTheme = LightUIKitTheme()
     private var enabledAIAnswerAssistant = true
+    private var enabledAITranslate = true
     private var openAIToken: String = ""
     private var proxyServerURL: String = ""
 
@@ -81,8 +82,6 @@ object QuickBloxUiKit {
     }
 
     fun disableAIAnswerAssistant() {
-        this.openAIToken = ""
-        this.proxyServerURL = ""
         enabledAIAnswerAssistant = false
     }
 
@@ -112,6 +111,54 @@ object QuickBloxUiKit {
         return proxyServerURL.isNotBlank()
     }
 
+    fun enableAITranslateWithOpenAIToken(openAIToken: String) {
+        if (openAIToken.isBlank()) {
+            throw RuntimeException("The openAIToken shouldn't be empty")
+        }
+        this.openAIToken = openAIToken
+        this.proxyServerURL = ""
+        enabledAITranslate = true
+    }
+
+    fun enableAITranslateWithQuickBloxToken(proxyServerURL: String) {
+        if (proxyServerURL.isBlank()) {
+            throw RuntimeException("The proxyServerURL shouldn't be empty")
+        }
+        this.openAIToken = ""
+        this.proxyServerURL = proxyServerURL
+        enabledAITranslate = true
+    }
+
+    fun disableAITranslate() {
+        enabledAITranslate = false
+    }
+
+    fun isAITranslateEnabledByOpenAIToken(): Boolean {
+        val isNotEnabledAITranslate = !isEnabledAITranslate()
+        if (isNotEnabledAITranslate) {
+            throw RuntimeException("The AI Translate is disabled")
+        }
+
+        if (openAIToken.isNotBlank() && proxyServerURL.isNotBlank()) {
+            throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Translate should be initialized by Open AI Token or QuickBlox Token")
+        }
+
+        return openAIToken.isNotBlank()
+    }
+
+    fun isAITranslateEnabledByQuickBloxToken(): Boolean {
+        val isNotEnabledAITranslate = !isEnabledAITranslate()
+        if (isNotEnabledAITranslate) {
+            throw RuntimeException("The AI Translate is disabled")
+        }
+
+        if (openAIToken.isNotBlank() && proxyServerURL.isNotBlank()) {
+            throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Translate should be initialized by Open AI Token or QuickBlox Token")
+        }
+
+        return proxyServerURL.isNotBlank()
+    }
+
     fun getProxyServerURL(): String {
         return proxyServerURL
     }
@@ -122,5 +169,9 @@ object QuickBloxUiKit {
 
     fun isEnabledAIAnswerAssistant(): Boolean {
         return enabledAIAnswerAssistant
+    }
+
+    fun isEnabledAITranslate(): Boolean {
+        return enabledAITranslate
     }
 }

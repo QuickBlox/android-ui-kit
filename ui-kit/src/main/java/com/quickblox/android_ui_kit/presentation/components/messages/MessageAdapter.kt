@@ -65,6 +65,7 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
     private var audioIncomingListener: AudioIncomingListener? = null
 
     private var enabledAI: Boolean = false
+    private var enabledAITranslation: Boolean = false
 
     init {
         setHasStableIds(true)
@@ -99,6 +100,7 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
 
             is TextIncomingViewHolder -> {
                 message as IncomingChatMessageEntity
+                holder.setShowAITranslate(enabledAITranslation)
                 holder.bind(message, textIncomingListener, aiListener)
                 holder.setShowAIIcon(enabledAI)
             }
@@ -198,6 +200,10 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
         enabledAI = enabled
     }
 
+    fun enabledAITranslate(enabled: Boolean) {
+        enabledAITranslation = enabled
+    }
+
     fun getTextOutgoingListener(): TextOutgoingListener? {
         return textOutgoingListener
     }
@@ -272,7 +278,7 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
     }
 
     override fun getItemId(position: Int): Long {
-        return items?.get(position)?.geMessageId().hashCode().toLong()
+        return items?.get(position)?.getMessageId().hashCode().toLong()
     }
 
     override fun getItemCount(): Int {

@@ -32,4 +32,8 @@ open class DependencyStub : Dependency {
     override fun getEventsRepository(): EventsRepository {
         throw RuntimeException()
     }
+
+    override fun getAIRepository(): AIRepository {
+        throw RuntimeException()
+    }
 }

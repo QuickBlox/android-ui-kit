@@ -145,7 +145,7 @@ object MessageMapper {
 
     fun remoteDTOFromChatMessage(entity: ChatMessageEntity): RemoteMessageDTO {
         val dto = RemoteMessageDTO()
-        dto.id = entity.geMessageId()
+        dto.id = entity.getMessageId()
         dto.dialogId = entity.getDialogId()
         dto.text = entity.getContent()
         dto.outgoing = true
@@ -176,7 +176,7 @@ object MessageMapper {
 
     fun remoteDTOFromEventMessage(entity: EventMessageEntity): RemoteMessageDTO {
         val dto = RemoteMessageDTO()
-        dto.id = entity.geMessageId()
+        dto.id = entity.getMessageId()
         dto.dialogId = entity.getDialogId()
         dto.text = entity.getText()
         dto.participantId = entity.getParticipantId()
@@ -188,7 +188,7 @@ object MessageMapper {
 
     fun remoteDTOFromMessageEntity(entity: MessageEntity): RemoteMessageDTO {
         val dto = RemoteMessageDTO()
-        dto.id = entity.geMessageId()
+        dto.id = entity.getMessageId()
         dto.dialogId = entity.getDialogId()
         dto.senderId = entity.getSenderId()
         dto.time = entity.getTime()

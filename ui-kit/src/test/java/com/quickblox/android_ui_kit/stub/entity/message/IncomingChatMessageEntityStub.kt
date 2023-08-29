@@ -18,6 +18,10 @@ open class IncomingChatMessageEntityStub : MessageEntityStub(), IncomingChatMess
         throw buildRuntimeException()
     }
 
+    override fun getLoggedUserId(): Int? {
+        throw buildRuntimeException()
+    }
+
     override fun getSenderId(): Int? {
         throw buildRuntimeException()
     }
@@ -30,7 +34,15 @@ open class IncomingChatMessageEntityStub : MessageEntityStub(), IncomingChatMess
         throw buildRuntimeException()
     }
 
+    override fun getReadIds(): Collection<Int>? {
+        throw buildRuntimeException()
+    }
+
     override fun setReadIds(ids: Collection<Int>?) {
+        throw buildRuntimeException()
+    }
+
+    override fun getDeliveredIds(): Collection<Int>? {
         throw buildRuntimeException()
     }
 

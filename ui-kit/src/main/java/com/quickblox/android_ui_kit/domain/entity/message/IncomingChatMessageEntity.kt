@@ -11,10 +11,13 @@ interface IncomingChatMessageEntity : ChatMessageEntity {
     fun getSender(): UserEntity?
     fun setSender(userEntity: UserEntity?)
 
+    fun getLoggedUserId(): Int?
     fun setLoggedUserId(id: Int?)
 
+    fun getReadIds(): Collection<Int>?
     fun setReadIds(ids: Collection<Int>?)
 
+    fun getDeliveredIds(): Collection<Int>?
     fun setDeliveredIds(ids: Collection<Int>?)
 
     fun isNotRead(): Boolean

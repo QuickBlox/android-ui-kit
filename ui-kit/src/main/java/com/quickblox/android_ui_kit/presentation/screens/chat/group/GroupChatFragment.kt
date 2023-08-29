@@ -310,6 +310,12 @@ open class GroupChatFragment : BaseFragment() {
                         OkDialog.show(requireContext(), getString(R.string.error_init_ai), screenSettings?.getTheme())
                     }
                 }
+
+                override fun onTranslateClick(message: IncomingChatMessageEntity?) {
+                    if (message != null) {
+                        viewModel.executeAITranslationAssistant(message)
+                    }
+                }
             })
         }
     }
@@ -437,6 +443,7 @@ open class GroupChatFragment : BaseFragment() {
         subscribeToAIAnswer()
 
         enableAI()
+        enableAITranslation()
 
         return binding?.root
     }
@@ -519,6 +526,11 @@ open class GroupChatFragment : BaseFragment() {
     private fun enableAI() {
         val enabledAI = QuickBloxUiKit.isEnabledAIAnswerAssistant()
         screenSettings?.getMessagesComponent()?.getAdapter()?.enabledAI(enabledAI)
+    }
+
+    private fun enableAITranslation() {
+        val enabled = QuickBloxUiKit.isEnabledAITranslate()
+        screenSettings?.getMessagesComponent()?.getAdapter()?.enabledAITranslate(enabled)
     }
 
     override fun collectViewsTemplateMethod(context: Context): List<View?> {

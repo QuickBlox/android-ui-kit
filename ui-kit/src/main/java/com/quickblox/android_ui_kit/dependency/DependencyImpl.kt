@@ -16,7 +16,8 @@ open class DependencyImpl constructor(context: Context) : Dependency {
         RepositoryFactoryImpl(
             dataSourceFactory.createRemote(),
             dataSourceFactory.createLocal(),
-            dataSourceFactory.createLocalFile()
+            dataSourceFactory.createLocalFile(),
+            dataSourceFactory.createAi()
         )
 
     private val connectionRepository = repositoryFactory.createConnection()
@@ -25,6 +26,7 @@ open class DependencyImpl constructor(context: Context) : Dependency {
     private val messageRepository = repositoryFactory.createMessages()
     private val usersRepository = repositoryFactory.createUsers()
     private val eventsRepository = repositoryFactory.createEvents()
+    private val aiRepository = repositoryFactory.createAI()
 
     override fun getConnectionRepository(): ConnectionRepository {
         return connectionRepository
@@ -48,5 +50,9 @@ open class DependencyImpl constructor(context: Context) : Dependency {
 
     override fun getEventsRepository(): EventsRepository {
         return eventsRepository
+    }
+
+    override fun getAIRepository(): AIRepository {
+        return aiRepository
     }
 }

@@ -273,7 +273,7 @@ class DeliverMessagesUseCaseIntegrationTest : BaseTest() {
     private inner class StatusMessageListenerImpl(private val deliverReadLatch: CountDownLatch) :
         QBMessageStatusListener {
         override fun processMessageDelivered(messageId: String, dialogId: String, senderId: Int) {
-            assertEquals(loadedMessage!!.geMessageId(), messageId)
+            assertEquals(loadedMessage!!.getMessageId(), messageId)
             deliverReadLatch.countDown()
         }
 

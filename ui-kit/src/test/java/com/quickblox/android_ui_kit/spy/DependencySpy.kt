@@ -5,11 +5,11 @@
 
 package com.quickblox.android_ui_kit.spy
 
-import com.quickblox.android_ui_kit.dependency.Dependency
 import com.quickblox.android_ui_kit.domain.repository.*
 import com.quickblox.android_ui_kit.spy.repository.*
+import com.quickblox.android_ui_kit.stub.DependencyStub
 
-open class DependencySpy : Dependency {
+open class DependencySpy : DependencyStub() {
     private val connectionRepository = ConnectionRepositorySpy();
     private val dialogRepository = DialogsRepositorySpy();
     private val fileRepository = FileRepositorySpy();
