@@ -77,7 +77,7 @@ Then need to add implementation of QuickBlox UIKit and QuickBlox SDK to dependen
 
 ```
 dependencies {
-    implementation "com.quickblox:android-ui-kit:0.2.1"
+    implementation "com.quickblox:android-ui-kit:0.2.2"
     implementation "com.quickblox:android-ai-answer-assistant:1.0.1"
     implementation "com.quickblox:android-ai-translate:1.0.0"
 

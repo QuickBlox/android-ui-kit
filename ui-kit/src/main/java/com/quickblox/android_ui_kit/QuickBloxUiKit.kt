@@ -6,6 +6,9 @@ package com.quickblox.android_ui_kit
 
 import android.content.Context
 import android.util.Log
+import com.quickblox.android_ai_translate.Languages
+import com.quickblox.android_ai_translate.QBAITranslate
+import com.quickblox.android_ai_translate.exception.QBAITranslateException
 import com.quickblox.android_ui_kit.dependency.Dependency
 import com.quickblox.android_ui_kit.dependency.DependencyImpl
 import com.quickblox.android_ui_kit.lifecycle.AppLifecycleManager
@@ -13,6 +16,7 @@ import com.quickblox.android_ui_kit.presentation.factory.DefaultScreenFactory
 import com.quickblox.android_ui_kit.presentation.factory.ScreenFactory
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
+import java.util.*
 
 @ExcludeFromCoverage
 object QuickBloxUiKit {
@@ -45,6 +49,28 @@ object QuickBloxUiKit {
             dependency = DependencyImpl(context)
         }
         AppLifecycleManager.init()
+
+        setupDefaultLanguageToAITranslate()
+    }
+
+    private fun setupDefaultLanguageToAITranslate() {
+        val systemLanguageName = getSystemLanguageName()
+        var defaultLanguage: Languages
+
+        try {
+            defaultLanguage = QBAITranslate.findLanguageBy(systemLanguageName)
+        } catch (exception: QBAITranslateException) {
+            defaultLanguage = Languages.ENGLISH
+        }
+
+        QBAITranslate.setLanguage(defaultLanguage)
+    }
+
+    private fun getSystemLanguageName(): String {
+        val defaultLocale: Locale = Locale.getDefault()
+        val englishLocale = Locale("en")
+
+        return defaultLocale.getDisplayLanguage(englishLocale)
     }
 
     fun getScreenFactory(): ScreenFactory {
