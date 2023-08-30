@@ -36,7 +36,7 @@ class LoadAIAnswerAssistantByQuickBloxTokenUseCase(
 
         withContext(Dispatchers.IO) {
             val pagination = searchStartPagination(dialogId, message)
-            val messagesFromUIKit = loadMessages(dialogId, pagination)
+            val messagesFromUIKit = loadMessages(dialogId, message, pagination)
             val messagesFromAI = convertUIKitMessagesToAIMessages(messagesFromUIKit)
 
             val proxyServerURL = QuickBloxUiKit.getProxyServerURL()
@@ -90,6 +90,7 @@ class LoadAIAnswerAssistantByQuickBloxTokenUseCase(
 
     private suspend fun loadMessages(
         dialogId: String,
+        startMessage: IncomingChatMessageEntity,
         paginationEntity: PaginationEntity
     ): List<MessageEntity> {
         val messages = mutableListOf<MessageEntity>()
@@ -97,7 +98,10 @@ class LoadAIAnswerAssistantByQuickBloxTokenUseCase(
         var pagination = paginationEntity
         pagination.setHasNextPage(true)
 
-        if (pagination.hasNextPage() && pagination.getCurrentPage() < 5) {
+        var foundStartMessage = false
+
+        val MAX_PAGES_COUNT = 5
+        if (pagination.hasNextPage() && pagination.getCurrentPage() < MAX_PAGES_COUNT) {
             messagesRepository.getMessagesFromRemote(dialogId, pagination).collect { pairResult ->
                 val receivedMessage = pairResult.getOrThrow().first
                 val receivedPagination = pairResult.getOrThrow().second
@@ -105,7 +109,13 @@ class LoadAIAnswerAssistantByQuickBloxTokenUseCase(
                 pagination = receivedPagination
 
                 receivedMessage?.let {
-                    if (receivedMessage is ChatMessageEntity && receivedMessage.getContentType() == ChatMessageEntity.ContentTypes.TEXT) {
+                    if (receivedMessage.getMessageId() == startMessage.getMessageId()) {
+                        foundStartMessage = true
+                    }
+
+                    val isTextMessage =
+                        receivedMessage is ChatMessageEntity && receivedMessage.getContentType() == ChatMessageEntity.ContentTypes.TEXT
+                    if (foundStartMessage && isTextMessage) {
                         messages.add(receivedMessage)
                     }
                 }
