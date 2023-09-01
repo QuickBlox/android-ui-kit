@@ -470,7 +470,7 @@ class GroupChatViewModel : BaseViewModel() {
         }
     }
 
-    fun executeAITranslationAssistant(message: IncomingChatMessageEntity) {
+    fun executeAITranslation(message: IncomingChatMessageEntity) {
         if (message is AITranslateIncomingChatMessageEntity) {
             addOrUpdateMessage(message)
             return

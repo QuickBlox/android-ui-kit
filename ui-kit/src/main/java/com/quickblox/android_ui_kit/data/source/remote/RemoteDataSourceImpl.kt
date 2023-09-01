@@ -714,6 +714,10 @@ open class RemoteDataSourceImpl : RemoteDataSource {
                 val qbChat = getQBChatFromManager(dialogDTO)
                 qbChat.sendMessage(qbChatMessage)
             }
+
+            qbChatMessage.removeQBChatUnMarkedMessageExtension()
+            qbChatMessage.setSaveToHistory(false)
+
             val participantIds = dialogDTO.participantIds ?: return
             for (recipientId in participantIds) {
                 qbChatMessage.recipientId = recipientId

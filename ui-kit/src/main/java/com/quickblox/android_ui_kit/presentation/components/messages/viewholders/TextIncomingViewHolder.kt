@@ -108,6 +108,7 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
         setBackgroundMessageColor(theme.getIncomingMessageColor())
         setNameColor(theme.getTertiaryElementsColor())
         setTimeTextColor(theme.getTertiaryElementsColor())
+        binding.tvAITranslate.setTextColor(theme.getTertiaryElementsColor())
     }
 
     fun setBackgroundMessageColor(@ColorInt color: Int) {

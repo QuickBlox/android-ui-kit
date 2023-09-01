@@ -307,13 +307,19 @@ open class GroupChatFragment : BaseFragment() {
                                 }
                             })
                     } else {
-                        OkDialog.show(requireContext(), getString(R.string.error_init_ai), screenSettings?.getTheme())
+                        OkDialog.show(requireContext(), getString(R.string.error_init_ai_answer_assistant), screenSettings?.getTheme())
                     }
                 }
 
                 override fun onTranslateClick(message: IncomingChatMessageEntity?) {
-                    if (message != null) {
-                        viewModel.executeAITranslationAssistant(message)
+                    if (message == null) {
+                        return
+                    }
+
+                    if (isConfiguredAITranslate()) {
+                        viewModel.executeAITranslation(message)
+                    } else {
+                        OkDialog.show(requireContext(), getString(R.string.error_init_ai_translate), screenSettings?.getTheme())
                     }
                 }
             })
@@ -327,6 +333,15 @@ open class GroupChatFragment : BaseFragment() {
         val enabledByOpenAITokenOrQuickBloxToken = enabledByOpenAIToken || enabledByQuickBloxToken
 
         return QuickBloxUiKit.isEnabledAIAnswerAssistant() && enabledByOpenAITokenOrQuickBloxToken
+    }
+
+    private fun isConfiguredAITranslate(): Boolean {
+        val enabledByOpenAIToken = QuickBloxUiKit.isAITranslateEnabledByOpenAIToken()
+        val enabledByQuickBloxToken = QuickBloxUiKit.isAITranslateEnabledByQuickBloxToken()
+
+        val enabledByOpenAITokenOrQuickBloxToken = enabledByOpenAIToken || enabledByQuickBloxToken
+
+        return QuickBloxUiKit.isEnabledAITranslate() && enabledByOpenAITokenOrQuickBloxToken
     }
 
     private fun openChooserToShowFileFrom(message: ChatMessageEntity?) {

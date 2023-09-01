@@ -50,10 +50,11 @@ object QuickBloxUiKit {
         }
         AppLifecycleManager.init()
 
-        setupDefaultLanguageToAITranslate()
+        val defaultLanguage = getDefaultLanguage()
+        setupLanguageToAITranslate(defaultLanguage)
     }
 
-    private fun setupDefaultLanguageToAITranslate() {
+    private fun getDefaultLanguage(): Languages {
         val systemLanguageName = getSystemLanguageName()
         var defaultLanguage: Languages
 
@@ -63,7 +64,11 @@ object QuickBloxUiKit {
             defaultLanguage = Languages.ENGLISH
         }
 
-        QBAITranslate.setLanguage(defaultLanguage)
+        return defaultLanguage
+    }
+
+    fun setupLanguageToAITranslate(language: Languages) {
+        QBAITranslate.setLanguage(language)
     }
 
     private fun getSystemLanguageName(): String {

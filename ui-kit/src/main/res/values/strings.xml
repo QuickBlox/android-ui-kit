@@ -42,7 +42,9 @@
     <string name="send_attachment">Send attachment</string>
     <string name="new_group_dialog">New group dialog</string>
     <string name="menu_item_ai_answer_assistant">AI Assist Answer</string>
-    <string name="error_init_ai">The AI Assist Answer has not been configured. \nPlease setup AI Assist Answer by
+    <string name="error_init_ai_answer_assistant">The AI Assist Answer has not been configured. \nPlease setup AI Assist Answer by
+        adding OpenAIToken or ProxyServer</string>
+    <string name="error_init_ai_translate">The AI Translate has not been configured. \nPlease setup AI Translate by
         adding OpenAIToken or ProxyServer</string>
     <string name="show_translate">Show translation</string>
     <string name="show_original">Show original</string>
