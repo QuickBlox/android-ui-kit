@@ -5,6 +5,7 @@
 
 package com.quickblox.android_ui_kit.presentation.components.send
 
+import com.quickblox.android_ui_kit.domain.entity.AIRephraseToneEntity
 import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponentImpl.SendMessageComponentListener
 
 open class SendMessageComponentListenerImpl : SendMessageComponentListener {
@@ -19,4 +20,5 @@ open class SendMessageComponentListenerImpl : SendMessageComponentListener {
 
     override fun onStartedTyping() {}
     override fun onStoppedTyping() {}
+    override fun onClickedTone(tone: AIRephraseToneEntity) {}
 }

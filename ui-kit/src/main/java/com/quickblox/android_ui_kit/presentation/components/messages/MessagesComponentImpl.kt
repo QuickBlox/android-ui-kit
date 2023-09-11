@@ -53,7 +53,6 @@ class MessagesComponentImpl : ConstraintLayout, MessagesComponent {
         binding?.rvMessages?.itemAnimator = null
         binding?.rvMessages?.adapter = adapter
         binding?.progressBar?.indeterminateTintList = ColorStateList.valueOf(theme.getMainElementsColor())
-
     }
 
     override fun getSendMessageComponent(): SendMessageComponent? {

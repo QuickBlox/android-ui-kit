@@ -6,10 +6,15 @@
 
 package com.quickblox.android_ui_kit.data.source.ai
 
+import com.quickblox.android_ai_editing_assistant.QBAIRephrase
+import com.quickblox.android_ai_editing_assistant.exception.QBAIRephraseException
+import com.quickblox.android_ai_editing_assistant.model.QBAIRephraseToneImpl
 import com.quickblox.android_ai_translate.QBAITranslate
 import com.quickblox.android_ai_translate.exception.QBAITranslateException
 import com.quickblox.android_ui_kit.QuickBloxUiKit
+import com.quickblox.android_ui_kit.data.dto.ai.AIRephraseDTO
 import com.quickblox.android_ui_kit.data.dto.ai.AITranslateDTO
+import com.quickblox.android_ui_kit.data.source.ai.mapper.AIRephraseDTOMapper
 import com.quickblox.android_ui_kit.data.source.exception.AIDataSourceException
 import com.quickblox.android_ui_kit.domain.exception.repository.MappingException
 
@@ -53,6 +58,53 @@ class AIDataSourceImpl : AIDataSource {
 
             return translateDTO
         } catch (exception: QBAITranslateException) {
+            throw AIDataSourceException(exception.message)
+        } catch (exception: MappingException) {
+            throw AIDataSourceException(exception.message)
+        }
+    }
+
+    override fun rephraseByOpenAIToken(rephraseDTO: AIRephraseDTO): AIRephraseDTO {
+        val openAIToken = QuickBloxUiKit.getOpenAIToken()
+        try {
+            val tone = QBAIRephraseToneImpl(rephraseDTO.toneName, rephraseDTO.smileCode)
+            val text = rephraseDTO.originalText
+            val results = QBAIRephrase.executeByOpenAITokenSync(openAIToken, tone, text)
+
+            val resultDTO = AIRephraseDTOMapper.dtoToDtoWithRephrasedText(rephraseDTO, results[0])
+
+            return resultDTO
+        } catch (exception: QBAIRephraseException) {
+            throw AIDataSourceException(exception.message)
+        } catch (exception: MappingException) {
+            throw AIDataSourceException(exception.message)
+        }
+    }
+
+    override fun rephraseByQuickBloxToken(rephraseDTO: AIRephraseDTO, token: String): AIRephraseDTO {
+        try {
+            val serverUrl = QuickBloxUiKit.getProxyServerURL()
+            val tone = QBAIRephraseToneImpl(rephraseDTO.toneName, rephraseDTO.smileCode)
+            val text = rephraseDTO.originalText
+
+            AIRephraseDTOMapper
+            val results = QBAIRephrase.executeByQBTokenSync(token, serverUrl, tone, text, true)
+
+            val resultDTO = AIRephraseDTOMapper.dtoToDtoWithRephrasedText(rephraseDTO, results[0])
+
+            return resultDTO
+        } catch (exception: QBAIRephraseException) {
+            throw AIDataSourceException(exception.message)
+        } catch (exception: MappingException) {
+            throw AIDataSourceException(exception.message)
+        }
+    }
+
+    override fun getAllRephraseTones(): List<AIRephraseDTO> {
+        try {
+            val tones = QBAIRephrase.getAllTones()
+            return AIRephraseDTOMapper.tonesToDtos(tones)
+        } catch (exception: QBAIRephraseException) {
             throw AIDataSourceException(exception.message)
         } catch (exception: MappingException) {
             throw AIDataSourceException(exception.message)

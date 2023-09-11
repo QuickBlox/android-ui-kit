@@ -6,6 +6,7 @@
 
 package com.quickblox.android_ui_kit.data.source.ai
 
+import com.quickblox.android_ui_kit.data.dto.ai.AIRephraseDTO
 import com.quickblox.android_ui_kit.data.dto.ai.AITranslateDTO
 
 interface AIDataSource {
@@ -14,4 +15,8 @@ interface AIDataSource {
         translateDTO: AITranslateDTO,
         token: String,
     ): AITranslateDTO
+
+    fun rephraseByOpenAIToken(rephraseDTO: AIRephraseDTO): AIRephraseDTO
+    fun rephraseByQuickBloxToken(rephraseDTO: AIRephraseDTO, token: String): AIRephraseDTO
+    fun getAllRephraseTones(): List<AIRephraseDTO>
 }

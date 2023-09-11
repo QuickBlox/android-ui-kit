@@ -21,8 +21,10 @@ import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.constraintlayout.widget.ConstraintLayout
+import com.google.android.material.chip.Chip
 import com.quickblox.android_ui_kit.R
 import com.quickblox.android_ui_kit.databinding.SendMessageComponentBinding
+import com.quickblox.android_ui_kit.domain.entity.AIRephraseToneEntity
 import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponent.MessageComponentStates
 import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponent.MessageComponentStates.CHAT_MESSAGE
 import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponent.MessageComponentStates.VOICE_MESSAGE
@@ -231,6 +233,7 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
             CHAT_MESSAGE -> {
                 setChatState()
             }
+
             VOICE_MESSAGE -> {
                 setVoiceState()
             }
@@ -328,6 +331,44 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
         binding?.root?.setBackgroundColor(color)
     }
 
+    override fun setRephraseTones(tones: List<AIRephraseToneEntity>) {
+        tones.forEach { tone ->
+            val chip = Chip(context)
+            chip.text = buildChipText(tone)
+            chip.setTextColor(theme.getMainTextColor())
+            chip.chipBackgroundColor = ColorStateList.valueOf(theme.getOutgoingMessageColor())
+            chip.setOnClickListener {
+                listener?.onClickedTone(tone)
+            }
+
+            binding?.chipGroup?.addView(chip)
+        }
+    }
+
+    private fun buildChipText(tone: AIRephraseToneEntity): String {
+        val stringBuilder = StringBuilder()
+
+        val smileCode = tone.getSmileCode()
+        if (smileCode.isNotBlank()) {
+            stringBuilder.append(smileCode)
+            stringBuilder.append(" ")
+        }
+
+        stringBuilder.append(tone.getName())
+        stringBuilder.append(" ")
+        stringBuilder.append(resources.getString(R.string.tone))
+
+        return stringBuilder.toString()
+    }
+
+    override fun showRephraseTones(show: Boolean) {
+        if (show) {
+            binding?.horizontalScrollView?.visibility = View.VISIBLE
+        } else {
+            binding?.horizontalScrollView?.visibility = View.GONE
+        }
+    }
+
     override fun setTheme(theme: UiKitTheme) {
         this.theme = theme
         applyTheme()
@@ -349,6 +390,8 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
 
         fun onStartedTyping()
         fun onStoppedTyping()
+
+        fun onClickedTone(tone: AIRephraseToneEntity)
     }
 
     private inner class AttachmentsDialogListenerImpl : AttachmentsDialog.AttachmentsDialogListener {

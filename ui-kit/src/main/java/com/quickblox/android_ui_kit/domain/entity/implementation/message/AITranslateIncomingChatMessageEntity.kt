@@ -8,7 +8,7 @@ package com.quickblox.android_ui_kit.domain.entity.implementation.message
 
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
 
-class AITranslateIncomingChatMessageEntity(private var contentType: ChatMessageEntity.ContentTypes) :
+class AITranslateIncomingChatMessageEntity(contentType: ChatMessageEntity.ContentTypes) :
     IncomingChatMessageEntityImpl(contentType) {
     private var translations: List<String>? = null
     private var isTranslated: Boolean? = false
@@ -27,5 +27,9 @@ class AITranslateIncomingChatMessageEntity(private var contentType: ChatMessageE
 
     fun isTranslated(): Boolean? {
         return isTranslated
+    }
+
+    override fun getContentType(): ChatMessageEntity.ContentTypes {
+        return super.getContentType()
     }
 }

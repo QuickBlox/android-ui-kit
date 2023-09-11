@@ -10,6 +10,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.quickblox.android_ui_kit.QuickBloxUiKit
+import com.quickblox.android_ui_kit.domain.entity.AIRephraseToneEntity
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.entity.FileEntity
 import com.quickblox.android_ui_kit.domain.entity.PaginationEntity
@@ -67,6 +68,14 @@ class PrivateChatViewModel : BaseViewModel() {
     private val _loadedDialogEntity = MutableLiveData<DialogEntity?>()
     val loadedDialogEntity: LiveData<DialogEntity?>
         get() = _loadedDialogEntity
+
+    private val _rephrasedToneEntity = MutableLiveData<AIRephraseToneEntity>()
+    val rephrasedText: LiveData<AIRephraseToneEntity>
+        get() = _rephrasedToneEntity
+
+    private val _allTones = MutableLiveData<List<AIRephraseToneEntity>>()
+    val allTones: LiveData<List<AIRephraseToneEntity>>
+        get() = _allTones
 
     private var subscribeMessagesEventUseCase: MessagesEventUseCase? = null
     private var getMessagesUseCase: GetAllMessagesUseCase? = null
@@ -482,6 +491,7 @@ class PrivateChatViewModel : BaseViewModel() {
         }
 
         if (QuickBloxUiKit.isAITranslateEnabledByOpenAIToken()) {
+            showLoading()
             viewModelScope.launch {
                 try {
                     showLoading()
@@ -495,6 +505,7 @@ class PrivateChatViewModel : BaseViewModel() {
             }
         }
         if (QuickBloxUiKit.isAITranslateEnabledByQuickBloxToken()) {
+            showLoading()
             viewModelScope.launch {
                 try {
                     showLoading()
@@ -516,7 +527,60 @@ class PrivateChatViewModel : BaseViewModel() {
         }
     }
 
-    private fun isNeedSendDelivered(message: MessageEntity): Boolean {
+    fun executeAIRephrase(toneEntity: AIRephraseToneEntity) {
+        if (QuickBloxUiKit.isAIRephraseEnabledByOpenAIToken()) {
+            executeAIRephraseByOpenAIToken(toneEntity)
+        }
+
+        if (QuickBloxUiKit.isAIRephraseEnabledByQuickBloxToken()) {
+            executeAIRephraseByQuickBloxToken(toneEntity)
+        }
+    }
+
+    private fun executeAIRephraseByQuickBloxToken(toneEntity: AIRephraseToneEntity) {
+        showLoading()
+        viewModelScope.launch {
+            try {
+                val resultEntity = LoadAIRephraseByQuickBloxTokenUseCase(toneEntity).execute()
+                resultEntity?.let {
+                    _rephrasedToneEntity.postValue(resultEntity)
+                }
+            } catch (exception: DomainException) {
+                showError(exception.message)
+            } finally {
+                hideLoading()
+            }
+        }
+    }
+
+    private fun executeAIRephraseByOpenAIToken(toneEntity: AIRephraseToneEntity) {
+        showLoading()
+        viewModelScope.launch {
+            try {
+                val resultEntity = LoadAIRephraseByOpenAITokenUseCase(toneEntity).execute()
+                resultEntity?.let {
+                    _rephrasedToneEntity.postValue(it)
+                }
+            } catch (exception: DomainException) {
+                showError(exception.message)
+            } finally {
+                hideLoading()
+            }
+        }
+    }
+
+    fun getAllTones() {
+        viewModelScope.launch {
+            try {
+                val result = LoadAIRephraseTonesUseCase().execute()
+                _allTones.postValue(result)
+            } catch (exception: DomainException) {
+                showError(exception.message)
+            }
+        }
+    }
+
+    fun isNeedSendDelivered(message: MessageEntity): Boolean {
         if (message is IncomingChatMessageEntity && message.isNotDelivered()) {
             return true
         }
