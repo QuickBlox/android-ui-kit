@@ -125,7 +125,7 @@ class GroupChatInfoViewModel : BaseViewModel() {
         showLoading()
         try {
             val remoteEntity = UploadFileUseCase(fileEntity).execute()
-            updatingDialogEntity.setPhoto(remoteEntity?.getUrl())
+            updatingDialogEntity.setPhoto(remoteEntity?.getUid())
 
             updateDialog()
         } catch (exception: DomainException) {

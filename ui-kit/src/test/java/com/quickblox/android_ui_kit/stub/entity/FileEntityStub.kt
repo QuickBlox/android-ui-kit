@@ -38,6 +38,13 @@ open class FileEntityStub : BaseStub(), FileEntity {
         throw buildRuntimeException()
     }
 
+    override fun setUid(uid: String?) {
+        throw buildRuntimeException()
+    }
+
+    override fun getUid(): String? {
+        throw buildRuntimeException()    }
+
     override fun setMimeType(type: String?) {
         throw buildRuntimeException()
     }

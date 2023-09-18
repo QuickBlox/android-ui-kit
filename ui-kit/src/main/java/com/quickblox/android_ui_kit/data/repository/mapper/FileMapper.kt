@@ -28,6 +28,7 @@ object FileMapper {
         dto.url = entity.getUrl()
         dto.uri = entity.getUri()
         dto.id = entity.getId()
+        dto.uid = entity.getUid()
 
         return dto
     }
@@ -43,6 +44,7 @@ object FileMapper {
         entity.setMimeType(dto.mimeType)
         entity.setUri(dto.uri)
         entity.setId(dto.id)
+        entity.setUid(dto.uid)
 
         return entity
     }

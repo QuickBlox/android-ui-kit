@@ -13,7 +13,7 @@ object RemoteFileDTOMapper {
         val dto = RemoteFileDTO()
         dto.id = qbFile.id
         dto.uid = qbFile.uid
-        dto.url = qbFile.publicUrl
+        dto.url = QBFile.getPrivateUrlForUID(dto.uid)
         dto.mimeType = getMimeTypeFrom(qbFile)
         dto.id = qbFile.id
 

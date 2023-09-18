@@ -9,6 +9,7 @@ import com.quickblox.android_ui_kit.data.dto.remote.message.RemoteMessageDTO
 import com.quickblox.android_ui_kit.data.source.remote.parser.EventMessageParser
 import com.quickblox.chat.model.QBAttachment
 import com.quickblox.chat.model.QBChatMessage
+import com.quickblox.content.model.QBFile
 
 object RemoteMessageDTOMapper {
     fun messageDTOFrom(qbChatMessage: QBChatMessage, loggedUserId: Int): RemoteMessageDTO {
@@ -29,8 +30,14 @@ object RemoteMessageDTOMapper {
         if (messageHasAttachment) {
             val attachment = qbChatMessage.attachments.toList()[0]
             dto.fileName = attachment.name
-            dto.fileUrl = attachment.url
-            dto.mimeType = attachment.contentType
+
+            if (qbChatMessage.body == null) {
+                dto.fileUrl = attachment.url
+            } else {
+                dto.fileUrl = parseBody(qbChatMessage.body)
+            }
+
+            dto.mimeType = attachment.contentType ?: attachment.type
         }
 
         if (dto.outgoing == true) {
@@ -40,7 +47,20 @@ object RemoteMessageDTOMapper {
         return dto
     }
 
-    private fun parseOutgoingState(qbChatMessage: QBChatMessage, loggedUserId: Int): RemoteMessageDTO.OutgoingMessageStates {
+    private fun parseBody(body: String?): String? {
+        return try {
+            val splitUrl = body?.split("|")
+            val uid = splitUrl?.get(2)
+            QBFile.getPrivateUrlForUID(uid)
+        } catch (e: IndexOutOfBoundsException) {
+            ""
+        }
+    }
+
+    private fun parseOutgoingState(
+        qbChatMessage: QBChatMessage,
+        loggedUserId: Int,
+    ): RemoteMessageDTO.OutgoingMessageStates {
         val readIds = qbChatMessage.readIds
         val deliveredIds = qbChatMessage.deliveredIds
 
@@ -136,7 +156,6 @@ object RemoteMessageDTOMapper {
 
     fun qbSystemMessageFrom(dto: RemoteMessageDTO): QBChatMessage {
         var qbChatMessage = QBChatMessage()
-        qbChatMessage.id = dto.id
         qbChatMessage.dialogId = dto.dialogId
         qbChatMessage.body = dto.text
         qbChatMessage.senderId = dto.senderId

@@ -85,8 +85,8 @@ open class RemoteDataSourceImpl : RemoteDataSource {
             val dialogDTO = RemoteDialogDTOMapper.toDTOFrom(qbCreatedDialog, getLoggedUserId())
 
             if (qbCreatedDialog.isPrivate) {
-                val opponentAvatarUrl = getOpponentAvatarUrl(qbCreatedDialog)
-                dialogDTO.photo = opponentAvatarUrl
+                val opponentAvatarUid = getOpponentAvatarUid(qbCreatedDialog)
+                dialogDTO.photo = opponentAvatarUid
             }
 
             return dialogDTO
@@ -126,7 +126,13 @@ open class RemoteDataSourceImpl : RemoteDataSource {
                 qbChatDialog.join(DiscussionHistory())
             }
 
-            return RemoteDialogDTOMapper.toDTOFrom(qbChatDialog, getLoggedUserId())
+            val dialogDTO = RemoteDialogDTOMapper.toDTOFrom(qbChatDialog, getLoggedUserId())
+            if (qbChatDialog.isPrivate) {
+                val opponentAvatarUid = getOpponentAvatarUid(qbChatDialog)
+                dialogDTO.photo = opponentAvatarUid
+            }
+
+            return dialogDTO
         } catch (exception: QBResponseException) {
             throw exceptionFactory.makeBy(exception.httpStatusCode, exception.message.toString())
         } catch (exception: MappingException) {
@@ -159,7 +165,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
                     val dialogDTO = RemoteDialogDTOMapper.toDTOFrom(qbChatDialog, getLoggedUserId())
 
                     if (qbChatDialog.isPrivate) {
-                        val opponentAvatarUrl = getOpponentAvatarUrl(qbChatDialog)
+                        val opponentAvatarUrl = getOpponentAvatarUid(qbChatDialog)
                         dialogDTO.photo = opponentAvatarUrl
                     }
 
@@ -200,6 +206,19 @@ open class RemoteDataSourceImpl : RemoteDataSource {
             Log.e(TAG, exception.message.toString())
         }
         return opponentAvatarUrl
+    }
+
+    private fun getOpponentAvatarUid(dialog: QBChatDialog): String? {
+        var opponentAvatarUid: String? = null
+
+        try {
+            val opponentId = getOpponentIdFromPrivate(dialog)
+            val opponent = loadUserById(opponentId)
+            opponentAvatarUid = loadUserAvatarUid(opponent?.fileId)
+        } catch (exception: RuntimeException) {
+            Log.e(TAG, exception.message.toString())
+        }
+        return opponentAvatarUid
     }
 
     private fun getOpponentIdFromPrivate(dialog: QBChatDialog): Int? {
@@ -577,6 +596,18 @@ open class RemoteDataSourceImpl : RemoteDataSource {
         return null
     }
 
+    private fun loadUserAvatarUid(blobId: Int?): String? {
+        blobId?.let { id ->
+            try {
+                val file = QBContent.getFile(id).perform()
+                return file.uid
+            } catch (exception: QBResponseException) {
+                Log.e(TAG, exception.message.toString())
+            }
+        }
+        return null
+    }
+
     override fun getAllMessages(
         messageDTO: RemoteMessageDTO,
         paginationDTO: RemoteMessagePaginationDTO,
@@ -847,7 +878,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
 
     override fun createFile(dto: RemoteFileDTO): RemoteFileDTO {
         try {
-            val qbFile = QBContent.uploadFileTask(dto.file, true, null, null).perform()
+            val qbFile = QBContent.uploadFileTask(dto.file, false, null, null).perform()
             return RemoteFileDTOMapper.toDTOFrom(qbFile)
         } catch (exception: QBResponseException) {
             throw exceptionFactory.makeBy(exception.httpStatusCode, exception.message.toString())

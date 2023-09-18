@@ -16,6 +16,7 @@ import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MediaContentEntity
 import com.quickblox.android_ui_kit.domain.exception.repository.MappingException
+import com.quickblox.content.model.QBFile
 
 object DialogMapper {
     fun dtoLocalFrom(remoteDialogDTO: RemoteDialogDTO): LocalDialogDTO {
@@ -158,7 +159,10 @@ object DialogMapper {
         val lastMessageEntity = buildsLastMessageFrom(dto)
         entity.setLastMessage(lastMessageEntity)
         entity.setUnreadMessagesCount(dto.unreadMessageCount)
-        entity.setPhoto(dto.photo)
+        if (dto.photo?.isNotEmpty() == true) {
+            val fileUrl = QBFile.getPrivateUrlForUID(dto.photo)
+            entity.setPhoto(fileUrl)
+        }
         entity.setIsOwner(dto.isOwner)
         return entity
     }
@@ -220,13 +224,18 @@ object DialogMapper {
     }
 
     private fun isContainsMediaIn(messageText: String?): Boolean {
-        return messageText?.contains(MediaContentEntity::class.java.simpleName) == true
+        return messageText?.contains(MediaContentEntity::class.java.simpleName) == true || messageText?.contains("[Attachment]") == true
     }
 
     private fun parseMediaContentFrom(messageText: String?): MediaContentEntity {
         val splitText = messageText?.split("|")
         val fileName = splitText?.get(1) ?: ""
-        val fileUrl = splitText?.get(2) ?: ""
+        var fileUrl = ""
+        try {
+            fileUrl = QBFile.getPrivateUrlForUID(splitText?.get(2)) ?: ""
+        } catch (e: IndexOutOfBoundsException) {
+            // empty
+        }
         val fileMimeType = splitText?.get(3) ?: ""
 
         return MediaContentEntityImpl(fileName, fileUrl, fileMimeType)

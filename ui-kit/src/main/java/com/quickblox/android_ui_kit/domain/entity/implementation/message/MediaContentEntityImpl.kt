@@ -64,8 +64,11 @@ class MediaContentEntityImpl(
 
     @VisibleForTesting
     fun getFileExtensionFrom(mimeType: String): String {
-        val fileExtension = getSpitTypesFrom(mimeType)[1]
-        return fileExtension
+        return try {
+            getSpitTypesFrom(mimeType)[1]
+        }catch (e: IndexOutOfBoundsException){
+            mimeType
+        }
     }
 
     @VisibleForTesting

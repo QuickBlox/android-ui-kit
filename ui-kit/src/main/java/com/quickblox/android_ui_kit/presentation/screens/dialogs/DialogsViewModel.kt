@@ -150,7 +150,9 @@ class DialogsViewModel : BaseViewModel() {
     private fun subscribeToDialogsEvents() {
         viewModelScope.launch {
             DialogsEventUseCase().execute().collect { dialogEntity ->
-                if (isNotExistDialog(dialogEntity, dialogs)) {
+                if (isNotExistDialog(dialogEntity, dialogs) && dialogEntity != null) {
+                    dialogs.add(0, dialogEntity)
+                    _updatedDialogs.value = Pair(DialogChangeType.ADDED, dialogs.lastIndex)
                     return@collect
                 }
 

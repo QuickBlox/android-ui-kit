@@ -65,7 +65,7 @@ class DialogNameViewModel : BaseViewModel() {
         showLoading()
         try {
             val remoteEntity = UploadFileUseCase(fileEntity).execute()
-            dialogEntity?.setPhoto(remoteEntity?.getUrl())
+            dialogEntity?.setPhoto(remoteEntity?.getUid())
             hideLoading()
         } catch (exception: DomainException) {
             hideLoading()

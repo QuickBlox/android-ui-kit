@@ -21,6 +21,9 @@ interface FileEntity {
     fun setUrl(url: String?)
     fun getUrl(): String?
 
+    fun setUid(uid: String?)
+    fun getUid(): String?
+
     fun getMimeType(): String?
     fun setMimeType(type: String?)
 

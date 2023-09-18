@@ -200,6 +200,14 @@ open class DialogsRepositoryImpl(
             dialogDTOFromRemote?.let {
                 val dialogDTOFromLocal = getDialogFromLocalBy(dialogId)
                 if (dialogDTOFromLocal != null) {
+                    try {
+                        val splitUrl = dialogDTOFromLocal.photo?.split("/")
+                        val uid = splitUrl?.get(4)?.split("?")?.get(0)
+                        dialogDTOFromRemote.photo = uid
+                    } catch (e: IndexOutOfBoundsException) {
+                        // empty
+                    }
+
                     deleteDialogInLocal(dialogDTOFromLocal)
                 }
 
