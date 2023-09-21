@@ -106,7 +106,7 @@ object QuickBloxUiKit {
         enabledAIAnswerAssistant = true
     }
 
-    fun enableAIAnswerAssistantWithQuickBloxToken(proxyServerURL: String) {
+    fun enableAIAnswerAssistantWithProxyServer(proxyServerURL: String) {
         if (proxyServerURL.isBlank()) {
             throw RuntimeException("The proxyServerURL shouldn't be empty")
         }
@@ -119,27 +119,27 @@ object QuickBloxUiKit {
         enabledAIAnswerAssistant = false
     }
 
-    fun isAIAnswerAssistantEnabledByOpenAIToken(): Boolean {
+    fun isAIAnswerAssistantEnabledWithOpenAIToken(): Boolean {
         val isNotEnabledAIAnswerAssistant = !isEnabledAIAnswerAssistant()
         if (isNotEnabledAIAnswerAssistant) {
             throw RuntimeException("The AI Answer assistant is disabled")
         }
 
         if (isExistAITokenAndProxyServer()) {
-            throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Answer Assistant should be initialized by Open AI Token or QuickBlox Token")
+            throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Answer Assistant should be initialized with Open AI Token or Proxy server")
         }
 
         return openAIToken.isNotBlank()
     }
 
-    fun isAIAnswerAssistantEnabledByQuickBloxToken(): Boolean {
+    fun isAIAnswerAssistantEnabledWithProxyServer(): Boolean {
         val isNotEnabledAIAnswerAssistant = !isEnabledAIAnswerAssistant()
         if (isNotEnabledAIAnswerAssistant) {
             throw RuntimeException("The AI Answer assistant is disabled")
         }
 
         if (isExistAITokenAndProxyServer()) {
-            throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Answer Assistant should be initialized by Open AI Token or QuickBlox Token")
+            throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Answer Assistant should be initialized with Open AI Token or Proxy server")
         }
 
         return proxyServerURL.isNotBlank()
@@ -154,7 +154,7 @@ object QuickBloxUiKit {
         enabledAIRephrase = true
     }
 
-    fun enableAIRephraseWithQuickBloxToken(proxyServerURL: String) {
+    fun enableAIRephraseWithProxyServer(proxyServerURL: String) {
         if (proxyServerURL.isBlank()) {
             throw RuntimeException("The proxyServerURL shouldn't be empty")
         }
@@ -167,27 +167,27 @@ object QuickBloxUiKit {
         enabledAIRephrase = false
     }
 
-    fun isAIRephraseEnabledByOpenAIToken(): Boolean {
+    fun isAIRephraseEnabledWithOpenAIToken(): Boolean {
         val isNotEnabledAIRephrase = !isEnabledAIRephrase()
         if (isNotEnabledAIRephrase) {
             throw RuntimeException("The AI Answer assistant is disabled")
         }
 
         if (isExistAITokenAndProxyServer()) {
-            throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Rephrase should be initialized by Open AI Token or QuickBlox Token")
+            throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Rephrase should be initialized with Open AI Token or Proxy server")
         }
 
         return openAIToken.isNotBlank()
     }
 
-    fun isAIRephraseEnabledByQuickBloxToken(): Boolean {
+    fun isAIRephraseEnabledWithProxyServer(): Boolean {
         val isNotEnabledAIRephrase = !isEnabledAIRephrase()
         if (isNotEnabledAIRephrase) {
             throw RuntimeException("The AI Answer assistant is disabled")
         }
 
         if (isExistAITokenAndProxyServer()) {
-            throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Answer Assistant should be initialized by Open AI Token or QuickBlox Token")
+            throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Answer Assistant should be initialized with Open AI Token or Proxy server")
         }
 
         return proxyServerURL.isNotBlank()
@@ -202,7 +202,7 @@ object QuickBloxUiKit {
         enabledAITranslate = true
     }
 
-    fun enableAITranslateWithQuickBloxToken(proxyServerURL: String) {
+    fun enableAITranslateWithProxyServer(proxyServerURL: String) {
         if (proxyServerURL.isBlank()) {
             throw RuntimeException("The proxyServerURL shouldn't be empty")
         }
@@ -215,27 +215,27 @@ object QuickBloxUiKit {
         enabledAITranslate = false
     }
 
-    fun isAITranslateEnabledByOpenAIToken(): Boolean {
+    fun isAITranslateEnabledWithOpenAIToken(): Boolean {
         val isNotEnabledAITranslate = !isEnabledAITranslate()
         if (isNotEnabledAITranslate) {
             throw RuntimeException("The AI Translate is disabled")
         }
 
         if (isExistAITokenAndProxyServer()) {
-            throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Translate should be initialized by Open AI Token or QuickBlox Token")
+            throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Translate should be initialized with Open AI Token or Proxy server")
         }
 
         return openAIToken.isNotBlank()
     }
 
-    fun isAITranslateEnabledByQuickBloxToken(): Boolean {
+    fun isAITranslateEnabledWithProxyServer(): Boolean {
         val isNotEnabledAITranslate = !isEnabledAITranslate()
         if (isNotEnabledAITranslate) {
             throw RuntimeException("The AI Translate is disabled")
         }
 
         if (isExistAITokenAndProxyServer()) {
-            throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Translate should be initialized by Open AI Token or QuickBlox Token")
+            throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Translate should be initialized with Open AI Token or Proxy server")
         }
 
         return proxyServerURL.isNotBlank()

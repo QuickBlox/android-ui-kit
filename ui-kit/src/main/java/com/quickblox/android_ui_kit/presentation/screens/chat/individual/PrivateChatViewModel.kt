@@ -452,7 +452,7 @@ class PrivateChatViewModel : BaseViewModel() {
     }
 
     fun executeAIAnswerAssistant(dialogId: String, message: IncomingChatMessageEntity) {
-        if (QuickBloxUiKit.isAIAnswerAssistantEnabledByOpenAIToken()) {
+        if (QuickBloxUiKit.isAIAnswerAssistantEnabledWithOpenAIToken()) {
             viewModelScope.launch {
                 try {
                     showLoading()
@@ -467,7 +467,7 @@ class PrivateChatViewModel : BaseViewModel() {
                 }
             }
         }
-        if (QuickBloxUiKit.isAIAnswerAssistantEnabledByQuickBloxToken()) {
+        if (QuickBloxUiKit.isAIAnswerAssistantEnabledWithProxyServer()) {
             viewModelScope.launch {
                 try {
                     showLoading()
@@ -490,31 +490,25 @@ class PrivateChatViewModel : BaseViewModel() {
             return
         }
 
-        if (QuickBloxUiKit.isAITranslateEnabledByOpenAIToken()) {
-            showLoading()
+        if (QuickBloxUiKit.isAITranslateEnabledWithOpenAIToken()) {
             viewModelScope.launch {
                 try {
-                    showLoading()
                     val entity = LoadAITranslateByOpenAITokenUseCase(message).execute()
                     updateTranslatedMessage(entity)
                 } catch (exception: DomainException) {
                     showError(exception.message)
-                } finally {
-                    hideLoading()
+                    addOrUpdateMessage(message)
                 }
             }
         }
-        if (QuickBloxUiKit.isAITranslateEnabledByQuickBloxToken()) {
-            showLoading()
+        if (QuickBloxUiKit.isAITranslateEnabledWithProxyServer()) {
             viewModelScope.launch {
                 try {
-                    showLoading()
                     val entity = LoadAITranslateByQuickBloxTokenUseCase(message).execute()
                     updateTranslatedMessage(entity)
                 } catch (exception: DomainException) {
                     showError(exception.message)
-                } finally {
-                    hideLoading()
+                    addOrUpdateMessage(message)
                 }
             }
         }
@@ -528,11 +522,11 @@ class PrivateChatViewModel : BaseViewModel() {
     }
 
     fun executeAIRephrase(toneEntity: AIRephraseToneEntity) {
-        if (QuickBloxUiKit.isAIRephraseEnabledByOpenAIToken()) {
+        if (QuickBloxUiKit.isAIRephraseEnabledWithOpenAIToken()) {
             executeAIRephraseByOpenAIToken(toneEntity)
         }
 
-        if (QuickBloxUiKit.isAIRephraseEnabledByQuickBloxToken()) {
+        if (QuickBloxUiKit.isAIRephraseEnabledWithProxyServer()) {
             executeAIRephraseByQuickBloxToken(toneEntity)
         }
     }
@@ -543,7 +537,7 @@ class PrivateChatViewModel : BaseViewModel() {
             try {
                 val resultEntity = LoadAIRephraseByQuickBloxTokenUseCase(toneEntity).execute()
                 resultEntity?.let {
-                    _rephrasedToneEntity.postValue(resultEntity)
+                    _rephrasedToneEntity.postValue(it)
                 }
             } catch (exception: DomainException) {
                 showError(exception.message)

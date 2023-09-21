@@ -337,8 +337,8 @@ open class GroupChatFragment : BaseFragment() {
     }
 
     private fun isConfiguredAIAnswerAssistant(): Boolean {
-        val enabledByOpenAIToken = QuickBloxUiKit.isAIAnswerAssistantEnabledByOpenAIToken()
-        val enabledByQuickBloxToken = QuickBloxUiKit.isAIAnswerAssistantEnabledByQuickBloxToken()
+        val enabledByOpenAIToken = QuickBloxUiKit.isAIAnswerAssistantEnabledWithOpenAIToken()
+        val enabledByQuickBloxToken = QuickBloxUiKit.isAIAnswerAssistantEnabledWithProxyServer()
 
         val enabledByOpenAITokenOrQuickBloxToken = enabledByOpenAIToken || enabledByQuickBloxToken
 
@@ -346,8 +346,8 @@ open class GroupChatFragment : BaseFragment() {
     }
 
     private fun isConfiguredAIRephrase(): Boolean {
-        val enabledByOpenAIToken = QuickBloxUiKit.isAIRephraseEnabledByOpenAIToken()
-        val enabledByQuickBloxToken = QuickBloxUiKit.isAIRephraseEnabledByQuickBloxToken()
+        val enabledByOpenAIToken = QuickBloxUiKit.isAIRephraseEnabledWithOpenAIToken()
+        val enabledByQuickBloxToken = QuickBloxUiKit.isAIRephraseEnabledWithProxyServer()
 
         val enabledByOpenAITokenOrQuickBloxToken = enabledByOpenAIToken || enabledByQuickBloxToken
 
@@ -355,8 +355,8 @@ open class GroupChatFragment : BaseFragment() {
     }
 
     private fun isConfiguredAITranslate(): Boolean {
-        val enabledByOpenAIToken = QuickBloxUiKit.isAITranslateEnabledByOpenAIToken()
-        val enabledByQuickBloxToken = QuickBloxUiKit.isAITranslateEnabledByQuickBloxToken()
+        val enabledByOpenAIToken = QuickBloxUiKit.isAITranslateEnabledWithOpenAIToken()
+        val enabledByQuickBloxToken = QuickBloxUiKit.isAITranslateEnabledWithProxyServer()
 
         val enabledByOpenAITokenOrQuickBloxToken = enabledByOpenAIToken || enabledByQuickBloxToken
 

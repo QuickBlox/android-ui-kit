@@ -81,17 +81,37 @@
             app:barrierDirection="right"
             app:constraint_referenced_ids="tvMessage" />
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/ivAI"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
+        <FrameLayout
+            android:id="@+id/flAi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
-            android:src="@drawable/ic_ai_robot"
-            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="@+id/clMessage"
             app:layout_constraintStart_toEndOf="@+id/barrier"
-            app:layout_constraintTop_toTopOf="@+id/clMessage"
-            tools:visibility="visible" />
+            app:layout_constraintTop_toTopOf="@+id/clMessage">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivAI"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@drawable/ic_ai_robot"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="@+id/clMessage"
+                app:layout_constraintStart_toEndOf="@+id/barrier"
+                app:layout_constraintTop_toTopOf="@+id/clMessage"
+                tools:visibility="visible" />
+
+            <ProgressBar
+                android:id="@+id/progressAI"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:visibility="gone"
+                android:layout_gravity="center"
+                app:layout_constraintBottom_toBottomOf="@+id/clMessage"
+                app:layout_constraintStart_toEndOf="@+id/barrier"
+                app:layout_constraintTop_toTopOf="@+id/clMessage"
+                tools:visibility="visible" />
+        </FrameLayout>
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/tvTime"
@@ -105,7 +125,7 @@
             app:layout_constraintBottom_toBottomOf="@+id/tvMessage"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0"
-            app:layout_constraintStart_toEndOf="@+id/ivAI"
+            app:layout_constraintStart_toEndOf="@+id/flAi"
             tools:text="20:00" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 

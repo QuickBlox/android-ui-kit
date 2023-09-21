@@ -26,6 +26,7 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
     BaseViewHolder<TextIncomingMessageItemBinding>(binding) {
     private var theme: UiKitTheme = LightUIKitTheme()
     private var isEnabledAITranslate = true
+    private var isEnabledAIAnswerAssistant = true
 
     companion object {
         fun newInstance(parent: ViewGroup): TextIncomingViewHolder {
@@ -64,6 +65,7 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
         setTranslateListener(message, aiListener)
 
         binding.tvName.text = sender?.getName() ?: sender?.getLogin()
+        binding.progressAI.visibility = View.GONE
 
         applyTheme(theme)
     }
@@ -101,6 +103,16 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
     private fun setTranslateListener(message: IncomingChatMessageEntity?, listener: AIListener?) {
         binding.tvAITranslate.setOnClickListener {
             listener?.onTranslateClick(message)
+
+            if (message is AITranslateIncomingChatMessageEntity) {
+                return@setOnClickListener
+            }
+
+            binding.progressAI.visibility = View.VISIBLE
+
+            if (isEnabledAIAnswerAssistant) {
+                setShowAIIcon(false)
+            }
         }
     }
 
@@ -109,6 +121,7 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
         setNameColor(theme.getTertiaryElementsColor())
         setTimeTextColor(theme.getTertiaryElementsColor())
         binding.tvAITranslate.setTextColor(theme.getTertiaryElementsColor())
+        binding.progressAI.indeterminateTintList = ColorStateList.valueOf(theme.getMainElementsColor())
     }
 
     fun setBackgroundMessageColor(@ColorInt color: Int) {
@@ -124,6 +137,8 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
     }
 
     fun setShowAIIcon(show: Boolean) {
+        isEnabledAIAnswerAssistant = show
+
         if (show) {
             binding.ivAI.visibility = View.VISIBLE
         } else {
