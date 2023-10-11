@@ -24,7 +24,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.google.android.material.chip.Chip
 import com.quickblox.android_ui_kit.R
 import com.quickblox.android_ui_kit.databinding.SendMessageComponentBinding
-import com.quickblox.android_ui_kit.domain.entity.AIRephraseToneEntity
+import com.quickblox.android_ui_kit.domain.entity.AIRephraseEntity
 import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponent.MessageComponentStates
 import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponent.MessageComponentStates.CHAT_MESSAGE
 import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponent.MessageComponentStates.VOICE_MESSAGE
@@ -42,6 +42,7 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
     private var listener: SendMessageComponentListener? = null
     private var textWatcher: TextWatcher? = null
     private var typingTimer = TypingTimer()
+    private var enabledAIRephrase: Boolean = true
 
     constructor(context: Context) : super(context) {
         init(context)
@@ -136,10 +137,15 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
         return object : SimpleTextWatcher() {
             override fun onTextChanged(charSequence: CharSequence?, start: Int, before: Int, count: Int) {
                 val text = charSequence.toString()
+                listener?.onChangedRephraseText()
                 if (text.isEmpty()) {
                     setVoiceState()
+                    showRephraseTones(false)
+                    listener?.onClearRephraseOriginalText()
                     return
                 }
+
+                showRephraseTones(true)
                 setChatState()
             }
 
@@ -281,6 +287,10 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
         return binding?.etMessage
     }
 
+    override fun enableRephrase(enable: Boolean) {
+        enabledAIRephrase = enable
+    }
+
     override fun setSendMessageComponentListener(listener: SendMessageComponentListener?) {
         this.listener = listener
     }
@@ -331,7 +341,7 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
         binding?.root?.setBackgroundColor(color)
     }
 
-    override fun setRephraseTones(tones: List<AIRephraseToneEntity>) {
+    override fun setRephraseTones(tones: List<AIRephraseEntity>) {
         tones.forEach { tone ->
             val chip = Chip(context)
             chip.text = buildChipText(tone)
@@ -345,23 +355,30 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
         }
     }
 
-    private fun buildChipText(tone: AIRephraseToneEntity): String {
+    private fun buildChipText(rephraseEntity: AIRephraseEntity): String {
         val stringBuilder = StringBuilder()
 
-        val smileCode = tone.getSmileCode()
-        if (smileCode.isNotBlank()) {
-            stringBuilder.append(smileCode)
+        val icon = rephraseEntity.getRephraseTone().getIcon()
+        if (icon.isNotBlank()) {
+            stringBuilder.append(icon)
             stringBuilder.append(" ")
         }
 
-        stringBuilder.append(tone.getName())
-        stringBuilder.append(" ")
-        stringBuilder.append(resources.getString(R.string.tone))
+        stringBuilder.append(rephraseEntity.getRephraseTone().getName())
+        val isNeedAddTone = !rephraseEntity.getRephraseTone().getName().contains("Back to original text")
+        if (isNeedAddTone) {
+            stringBuilder.append(" ")
+            stringBuilder.append(resources.getString(R.string.tone))
+        }
 
         return stringBuilder.toString()
     }
 
     override fun showRephraseTones(show: Boolean) {
+        val isNotEnabledAIRephrase = !enabledAIRephrase
+        if (isNotEnabledAIRephrase) {
+            return
+        }
         if (show) {
             binding?.horizontalScrollView?.visibility = View.VISIBLE
         } else {
@@ -391,7 +408,9 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
         fun onStartedTyping()
         fun onStoppedTyping()
 
-        fun onClickedTone(tone: AIRephraseToneEntity)
+        fun onClickedTone(rephraseEntity: AIRephraseEntity)
+        fun onClearRephraseOriginalText()
+        fun onChangedRephraseText()
     }
 
     private inner class AttachmentsDialogListenerImpl : AttachmentsDialog.AttachmentsDialogListener {

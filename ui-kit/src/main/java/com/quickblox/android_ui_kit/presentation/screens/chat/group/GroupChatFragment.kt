@@ -29,7 +29,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.R
 import com.quickblox.android_ui_kit.databinding.ContainerFragmentBinding
-import com.quickblox.android_ui_kit.domain.entity.AIRephraseToneEntity
+import com.quickblox.android_ui_kit.domain.entity.AIRephraseEntity
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity.ContentTypes
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
@@ -87,6 +87,7 @@ open class GroupChatFragment : BaseFragment() {
     private var fileLauncher = registerFileLauncher()
 
     private var originalText: String = ""
+    private var needToSetText = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,7 +99,8 @@ open class GroupChatFragment : BaseFragment() {
         initHeaderComponentListeners()
         initMessagesComponentListeners()
         initSendMessagesComponentListeners()
-        initAIRephrase()
+
+        viewModel.getAllTones()
     }
 
     override fun onResume() {
@@ -324,16 +326,15 @@ open class GroupChatFragment : BaseFragment() {
                     if (isConfiguredAITranslate()) {
                         viewModel.executeAITranslation(message)
                     } else {
-                        OkDialog.show(requireContext(), getString(R.string.error_init_ai_translate), screenSettings?.getTheme())
+                        OkDialog.show(
+                            requireContext(),
+                            getString(R.string.error_init_ai_translate),
+                            screenSettings?.getTheme()
+                        )
                     }
                 }
             })
         }
-    }
-
-    private fun initAIRephrase() {
-        viewModel.getAllTones()
-        screenSettings?.getMessagesComponent()?.getSendMessageComponent()?.showRephraseTones(true)
     }
 
     private fun isConfiguredAIAnswerAssistant(): Boolean {
@@ -431,7 +432,7 @@ open class GroupChatFragment : BaseFragment() {
                     viewModel.sendStoppedTyping()
                 }
 
-                override fun onClickedTone(tone: AIRephraseToneEntity) {
+                override fun onClickedTone(rephraseEntity: AIRephraseEntity) {
                     val notConfiguredAIRephrase = !isConfiguredAIRephrase()
                     if (notConfiguredAIRephrase) {
                         val errorText = getString(R.string.error_init_ai_rephrase)
@@ -442,19 +443,32 @@ open class GroupChatFragment : BaseFragment() {
                     val messageEditText =
                         screenSettings?.getMessagesComponent()?.getSendMessageComponent()?.getMessageEditText()
 
-                    val needToSetOriginalText = originalText.isBlank() && messageEditText?.text.toString().isNotBlank()
+                    val needToSetOriginalText = originalText.isBlank()
                     if (needToSetOriginalText) {
                         originalText = messageEditText?.text.toString()
                     }
 
-                    if (tone.isOriginal()) {
+                    if (rephraseEntity.isOriginal()) {
                         messageEditText?.setText(originalText)
                         return
                     }
 
-                    if (originalText.isNotBlank()) {
-                        tone.setOriginalText(originalText)
-                        viewModel.executeAIRephrase(tone)
+                    val text = messageEditText?.text.toString()
+                    if (text.isNotBlank()) {
+                        rephraseEntity.setOriginalText(text)
+                        viewModel.executeAIRephrase(rephraseEntity)
+                    }
+                }
+
+                override fun onClearRephraseOriginalText() {
+                    originalText = ""
+                }
+
+                override fun onChangedRephraseText() {
+                    if (needToSetText && originalText.isNotBlank()) {
+                        val messageEditText =
+                            screenSettings?.getMessagesComponent()?.getSendMessageComponent()?.getMessageEditText()
+                        originalText = messageEditText?.text.toString()
                     }
                 }
             })
@@ -592,7 +606,9 @@ open class GroupChatFragment : BaseFragment() {
 
         viewModel.rephrasedText.observe(viewLifecycleOwner) { entity ->
             val editText = sendMessageComponent?.getMessageEditText()
+            needToSetText = false
             editText?.setText(entity.getRephrasedText())
+            needToSetText = true
         }
 
         viewModel.allTones.observe(viewLifecycleOwner) { tones ->
@@ -612,7 +628,7 @@ open class GroupChatFragment : BaseFragment() {
 
     private fun enableAIRephrase() {
         val enabled = QuickBloxUiKit.isEnabledAIRephrase()
-        screenSettings?.getMessagesComponent()?.getSendMessageComponent()?.showRephraseTones(enabled)
+        screenSettings?.getMessagesComponent()?.getSendMessageComponent()?.enableRephrase(enabled)
     }
 
     override fun collectViewsTemplateMethod(context: Context): List<View?> {

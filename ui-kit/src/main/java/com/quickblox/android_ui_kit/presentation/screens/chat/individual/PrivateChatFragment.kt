@@ -24,11 +24,10 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
-import com.quickblox.android_ai_editing_assistant.QBAIRephrase
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.R
 import com.quickblox.android_ui_kit.databinding.ContainerFragmentBinding
-import com.quickblox.android_ui_kit.domain.entity.AIRephraseToneEntity
+import com.quickblox.android_ui_kit.domain.entity.AIRephraseEntity
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
@@ -82,6 +81,7 @@ open class PrivateChatFragment : BaseFragment() {
     private var fileLauncher = registerFileLauncher()
 
     private var originalText: String = ""
+    private var needToSetText = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,7 +93,9 @@ open class PrivateChatFragment : BaseFragment() {
         initHeaderComponentListeners()
         initMessagesComponentListeners()
         initSendMessagesComponentListeners()
-        initAIRephrase()
+
+        val notConfiguredAIRephrase = !isConfiguredAIRephrase()
+        viewModel.getAllTones()
     }
 
     override fun onResume() {
@@ -319,21 +321,14 @@ open class PrivateChatFragment : BaseFragment() {
                     if (isConfiguredAITranslate()) {
                         viewModel.executeAITranslate(message)
                     } else {
-                        OkDialog.show(requireContext(), getString(R.string.error_init_ai_translate), screenSettings?.getTheme())
+                        OkDialog.show(
+                            requireContext(),
+                            getString(R.string.error_init_ai_translate),
+                            screenSettings?.getTheme()
+                        )
                     }
                 }
             })
-        }
-    }
-
-    private fun initAIRephrase() {
-        val sendMessageComponent = screenSettings?.getMessagesComponent()?.getSendMessageComponent()
-        if (isConfiguredAIRephrase()) {
-            QBAIRephrase.init(requireContext())
-            viewModel.getAllTones()
-            sendMessageComponent?.showRephraseTones(true)
-        } else {
-            sendMessageComponent?.showRephraseTones(false)
         }
     }
 
@@ -347,12 +342,7 @@ open class PrivateChatFragment : BaseFragment() {
     }
 
     private fun isConfiguredAIRephrase(): Boolean {
-        val enabledByOpenAIToken = QuickBloxUiKit.isAIRephraseEnabledWithOpenAIToken()
-        val enabledByQuickBloxToken = QuickBloxUiKit.isAIRephraseEnabledWithProxyServer()
-
-        val enabledByOpenAITokenOrQuickBloxToken = enabledByOpenAIToken || enabledByQuickBloxToken
-
-        return QuickBloxUiKit.isEnabledAIRephrase() && enabledByOpenAITokenOrQuickBloxToken
+        return QuickBloxUiKit.isEnabledAIRephrase()
     }
 
     private fun isConfiguredAITranslate(): Boolean {
@@ -432,7 +422,7 @@ open class PrivateChatFragment : BaseFragment() {
                     viewModel.sendStoppedTyping()
                 }
 
-                override fun onClickedTone(tone: AIRephraseToneEntity) {
+                override fun onClickedTone(rephraseEntity: AIRephraseEntity) {
                     val notConfiguredAIRephrase = !isConfiguredAIRephrase()
                     if (notConfiguredAIRephrase) {
                         val errorText = getString(R.string.error_init_ai_rephrase)
@@ -448,14 +438,27 @@ open class PrivateChatFragment : BaseFragment() {
                         originalText = messageEditText?.text.toString()
                     }
 
-                    if (tone.isOriginal()) {
+                    if (rephraseEntity.isOriginal()) {
                         messageEditText?.setText(originalText)
                         return
                     }
 
-                    if (originalText.isNotBlank()) {
-                        tone.setOriginalText(originalText)
-                        viewModel.executeAIRephrase(tone)
+                    val text = messageEditText?.text.toString()
+                    if (text.isNotBlank()) {
+                        rephraseEntity.setOriginalText(text)
+                        viewModel.executeAIRephrase(rephraseEntity)
+                    }
+                }
+
+                override fun onClearRephraseOriginalText() {
+                    originalText = ""
+                }
+
+                override fun onChangedRephraseText() {
+                    if (needToSetText && originalText.isNotBlank()) {
+                        val messageEditText =
+                            screenSettings?.getMessagesComponent()?.getSendMessageComponent()?.getMessageEditText()
+                        originalText = messageEditText?.text.toString()
                     }
                 }
             })
@@ -593,7 +596,9 @@ open class PrivateChatFragment : BaseFragment() {
 
         viewModel.rephrasedText.observe(viewLifecycleOwner) { entity ->
             val editText = sendMessageComponent?.getMessageEditText()
+            needToSetText = false
             editText?.setText(entity.getRephrasedText())
+            needToSetText = true
         }
 
         viewModel.allTones.observe(viewLifecycleOwner) { tones ->
@@ -613,7 +618,7 @@ open class PrivateChatFragment : BaseFragment() {
 
     private fun enableAIRephrase() {
         val enabled = QuickBloxUiKit.isEnabledAIRephrase()
-        screenSettings?.getMessagesComponent()?.getSendMessageComponent()?.showRephraseTones(enabled)
+        screenSettings?.getMessagesComponent()?.getSendMessageComponent()?.enableRephrase(enabled)
     }
 
     override fun collectViewsTemplateMethod(context: Context): List<View?> {

@@ -11,7 +11,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.quickblox.android_ui_kit.QuickBloxUiKit
-import com.quickblox.android_ui_kit.domain.entity.AIRephraseToneEntity
+import com.quickblox.android_ui_kit.domain.entity.AIRephraseEntity
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.entity.FileEntity
 import com.quickblox.android_ui_kit.domain.entity.PaginationEntity
@@ -70,12 +70,12 @@ class GroupChatViewModel : BaseViewModel() {
     val loadedDialogEntity: LiveData<DialogEntity?>
         get() = _loadedDialogEntity
 
-    private val _rephrasedToneEntity = MutableLiveData<AIRephraseToneEntity>()
-    val rephrasedText: LiveData<AIRephraseToneEntity>
+    private val _rephrasedToneEntity = MutableLiveData<AIRephraseEntity>()
+    val rephrasedText: LiveData<AIRephraseEntity>
         get() = _rephrasedToneEntity
 
-    private val _allTones = MutableLiveData<List<AIRephraseToneEntity>>()
-    val allTones: LiveData<List<AIRephraseToneEntity>>
+    private val _allTones = MutableLiveData<List<AIRephraseEntity>>()
+    val allTones: LiveData<List<AIRephraseEntity>>
         get() = _allTones
 
     private var subscribeMessagesEventUseCase: MessagesEventUseCase? = null
@@ -516,23 +516,23 @@ class GroupChatViewModel : BaseViewModel() {
         }
     }
 
-    fun executeAIRephrase(toneEntity: AIRephraseToneEntity) {
-        if (QuickBloxUiKit.isAIRephraseEnabledWithOpenAIToken()) {
-            executeAIRephraseByOpenAIToken(toneEntity)
+    fun executeAIRephrase(toneEntity: AIRephraseEntity) {
+        if (QuickBloxUiKit.isAIRephraseEnabledWithProxyServer()) {
+            executeAIRephraseWithProxyServer(toneEntity)
         }
 
-        if (QuickBloxUiKit.isAIRephraseEnabledWithProxyServer()) {
-            executeAIRephraseByQuickBloxToken(toneEntity)
+        if (QuickBloxUiKit.isAIRephraseEnabledWithOpenAIToken()) {
+            executeAIRephraseWithOpenAIToken(toneEntity)
         }
     }
 
-    private fun executeAIRephraseByQuickBloxToken(toneEntity: AIRephraseToneEntity) {
+    private fun executeAIRephraseWithProxyServer(toneEntity: AIRephraseEntity) {
         showLoading()
         viewModelScope.launch {
             try {
-                val resultEntity = LoadAIRephraseByQuickBloxTokenUseCase(toneEntity).execute()
+                val resultEntity = LoadAIRephraseWithProxyServerUseCase(dialog?.getDialogId(), toneEntity).execute()
                 resultEntity?.let {
-                    _rephrasedToneEntity.postValue(resultEntity)
+                    _rephrasedToneEntity.postValue(it)
                 }
             } catch (exception: DomainException) {
                 showError(exception.message)
@@ -542,11 +542,11 @@ class GroupChatViewModel : BaseViewModel() {
         }
     }
 
-    private fun executeAIRephraseByOpenAIToken(toneEntity: AIRephraseToneEntity) {
+    private fun executeAIRephraseWithOpenAIToken(toneEntity: AIRephraseEntity) {
         showLoading()
         viewModelScope.launch {
             try {
-                val resultEntity = LoadAIRephraseByOpenAITokenUseCase(toneEntity).execute()
+                val resultEntity = LoadAIRephraseWithApiKeyUseCase(dialog?.getDialogId(), toneEntity).execute()
                 resultEntity?.let {
                     _rephrasedToneEntity.postValue(it)
                 }
@@ -561,7 +561,7 @@ class GroupChatViewModel : BaseViewModel() {
     fun getAllTones() {
         viewModelScope.launch {
             try {
-                val result = LoadAIRephraseTonesUseCase().execute()
+                val result = LoadAIRephrasesUseCase().execute()
                 _allTones.postValue(result)
             } catch (exception: DomainException) {
                 showError(exception.message)

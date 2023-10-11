@@ -77,7 +77,7 @@ Then need to add implementation of QuickBlox UIKit and QuickBlox SDK to dependen
 
 ```
 dependencies {
-    implementation "com.quickblox:android-ui-kit:0.3.0"
+    implementation "com.quickblox:android-ui-kit:0.4.0"
 
     implementation 'com.quickblox:quickblox-android-sdk-messages:4.1.1'
     implementation 'com.quickblox:quickblox-android-sdk-chat:4.1.1'

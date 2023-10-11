@@ -6,9 +6,7 @@
 
 package com.quickblox.android_ui_kit.data.dto.ai
 
-class AIRephraseDTO {
-    var toneName: String = ""
-    var smileCode: String = ""
+class AIRephraseDTO(var tone: AIRephraseToneDTO) {
     var originalText = ""
     var rephrasedText = ""
 }

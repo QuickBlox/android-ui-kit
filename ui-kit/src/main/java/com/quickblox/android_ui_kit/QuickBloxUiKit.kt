@@ -7,11 +7,13 @@ package com.quickblox.android_ui_kit
 import android.content.Context
 import android.util.Log
 import com.quickblox.android_ai_editing_assistant.QBAIRephrase
+import com.quickblox.android_ai_editing_assistant.settings.SettingsImpl.Model
 import com.quickblox.android_ai_translate.Languages
 import com.quickblox.android_ai_translate.QBAITranslate
 import com.quickblox.android_ai_translate.exception.QBAITranslateException
 import com.quickblox.android_ui_kit.dependency.Dependency
 import com.quickblox.android_ui_kit.dependency.DependencyImpl
+import com.quickblox.android_ui_kit.domain.entity.AIRephraseToneEntity
 import com.quickblox.android_ui_kit.lifecycle.AppLifecycleManager
 import com.quickblox.android_ui_kit.presentation.factory.DefaultScreenFactory
 import com.quickblox.android_ui_kit.presentation.factory.ScreenFactory
@@ -28,8 +30,17 @@ object QuickBloxUiKit {
     private var enabledAIAnswerAssistant = true
     private var enabledAITranslate = true
     private var enabledAIRephrase = true
+
     private var openAIToken: String = ""
     private var proxyServerURL: String = ""
+
+    private var rephraseOpenAIToken: String = ""
+    private var rephraseProxyServerURL: String = ""
+    private var rephraseMaxRequestTokens: Int = 3000
+    private var rephraseOpenAIModel: Model = Model.GPT_3_5_TURBO
+    private var rephraseOrganization: String? = null
+    private var rephraseMaxResponseTokens: Int? = null
+    private var rephraseTemperature: Float = 0.5f
 
     @Volatile
     private var dependency: Dependency? = null
@@ -50,7 +61,7 @@ object QuickBloxUiKit {
         if (dependency == null) {
             dependency = DependencyImpl(context)
         }
-        QBAIRephrase.init(context)
+        QBAIRephrase.init()
         AppLifecycleManager.init()
 
         val defaultLanguage = getDefaultLanguage()
@@ -149,8 +160,8 @@ object QuickBloxUiKit {
         if (openAIToken.isBlank()) {
             throw RuntimeException("The openAIToken shouldn't be empty")
         }
-        this.openAIToken = openAIToken
-        this.proxyServerURL = ""
+        this.rephraseOpenAIToken = openAIToken
+        this.rephraseProxyServerURL = ""
         enabledAIRephrase = true
     }
 
@@ -158,9 +169,65 @@ object QuickBloxUiKit {
         if (proxyServerURL.isBlank()) {
             throw RuntimeException("The proxyServerURL shouldn't be empty")
         }
-        this.openAIToken = ""
-        this.proxyServerURL = proxyServerURL
+        this.rephraseOpenAIToken = ""
+        this.rephraseProxyServerURL = proxyServerURL
         enabledAIRephrase = true
+    }
+
+    fun setMaxRequestTokensForAIRephrase(maxTokens: Int) {
+        rephraseMaxRequestTokens = maxTokens
+    }
+
+    fun setOpenAIModelForAIRephrase(openAIModel: Model) {
+        this.rephraseOpenAIModel = openAIModel
+    }
+
+    fun getOpenAIModelForAIRephrase(): Model {
+        return rephraseOpenAIModel
+    }
+
+    fun getMaxRequestTokensForAIRephrase(): Int {
+        return rephraseMaxRequestTokens
+    }
+
+    fun setOrganizationForAIRephrase(organization: String) {
+        this.rephraseOrganization = organization
+    }
+
+    fun getOrganizationForAIRephrase(): String? {
+        return rephraseOrganization
+    }
+
+    fun setMaxResponseTokensForAIRephrase(maxTokens: Int) {
+        rephraseMaxResponseTokens = maxTokens
+    }
+
+    fun getMaxResponseTokensForAIRephrase(): Int? {
+        return rephraseMaxResponseTokens
+    }
+
+    fun setTemperatureForAIRephrase(temperature: Float) {
+        rephraseTemperature = temperature
+    }
+
+    fun getTemperatureForAIRephrase(): Float {
+        return rephraseTemperature
+    }
+
+    fun setRephraseTones(rephraseTones: List<AIRephraseToneEntity>) {
+        if (dependency == null) {
+            Log.e(TAG, "The dependency hasn't initiated. You need first call QuickBloxUiKit.init(context)")
+            throw RuntimeException("The dependency hasn't initiated. You need first call QuickBloxUiKit.init(context)")
+        }
+        dependency?.getAIRepository()?.setAllRephraseTones(rephraseTones)
+    }
+
+    fun getRephraseTones(): List<AIRephraseToneEntity> {
+        if (dependency == null) {
+            Log.e(TAG, "The dependency hasn't initiated. You need first call QuickBloxUiKit.init(context)")
+            throw RuntimeException("The dependency hasn't initiated. You need first call QuickBloxUiKit.init(context)")
+        }
+        return dependency?.getAIRepository()?.getAllRephraseTones()!!
     }
 
     fun disableAIRephrase() {
@@ -170,27 +237,27 @@ object QuickBloxUiKit {
     fun isAIRephraseEnabledWithOpenAIToken(): Boolean {
         val isNotEnabledAIRephrase = !isEnabledAIRephrase()
         if (isNotEnabledAIRephrase) {
-            throw RuntimeException("The AI Answer assistant is disabled")
+            throw RuntimeException("The AI Rephrase is disabled")
         }
 
         if (isExistAITokenAndProxyServer()) {
             throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Rephrase should be initialized with Open AI Token or Proxy server")
         }
 
-        return openAIToken.isNotBlank()
+        return rephraseOpenAIToken.isNotBlank()
     }
 
     fun isAIRephraseEnabledWithProxyServer(): Boolean {
         val isNotEnabledAIRephrase = !isEnabledAIRephrase()
         if (isNotEnabledAIRephrase) {
-            throw RuntimeException("The AI Answer assistant is disabled")
+            throw RuntimeException("The AI Rephrase is disabled")
         }
 
         if (isExistAITokenAndProxyServer()) {
             throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Answer Assistant should be initialized with Open AI Token or Proxy server")
         }
 
-        return proxyServerURL.isNotBlank()
+        return rephraseProxyServerURL.isNotBlank()
     }
 
     fun enableAITranslateWithOpenAIToken(openAIToken: String) {
@@ -251,6 +318,14 @@ object QuickBloxUiKit {
 
     fun getOpenAIToken(): String {
         return openAIToken
+    }
+
+    fun getRephraseProxyServerURL(): String {
+        return rephraseProxyServerURL
+    }
+
+    fun getRephraseOpenAIToken(): String {
+        return rephraseOpenAIToken
     }
 
     fun isEnabledAIAnswerAssistant(): Boolean {

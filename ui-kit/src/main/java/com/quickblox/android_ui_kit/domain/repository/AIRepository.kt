@@ -6,9 +6,11 @@
 
 package com.quickblox.android_ui_kit.domain.repository
 
+import com.quickblox.android_ui_kit.domain.entity.AIRephraseEntity
 import com.quickblox.android_ui_kit.domain.entity.AIRephraseToneEntity
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.AITranslateIncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 
 interface AIRepository {
     fun translateIncomingMessageByOpenAIToken(messageEntity: IncomingChatMessageEntity): AITranslateIncomingChatMessageEntity
@@ -16,7 +18,17 @@ interface AIRepository {
         messageEntity: IncomingChatMessageEntity, token: String,
     ): AITranslateIncomingChatMessageEntity
 
-    fun rephraseByOpenAIToken(toneEntity: AIRephraseToneEntity): AIRephraseToneEntity
-    fun rephraseByQuickBloxToken(toneEntity: AIRephraseToneEntity, token: String): AIRephraseToneEntity
+    fun rephraseWithApiKE(
+        toneEntity: AIRephraseEntity,
+        messagesFromUIKit: List<MessageEntity>,
+    ): AIRephraseEntity
+
+    fun rephraseWithProxyServer(
+        toneEntity: AIRephraseEntity,
+        token: String,
+        messagesFromUIKit: List<MessageEntity>,
+    ): AIRephraseEntity
+
     fun getAllRephraseTones(): List<AIRephraseToneEntity>
+    fun setAllRephraseTones(rephraseTones: List<AIRephraseToneEntity>)
 }

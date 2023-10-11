@@ -9,7 +9,7 @@ import android.text.TextWatcher
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.appcompat.widget.AppCompatEditText
-import com.quickblox.android_ui_kit.domain.entity.AIRephraseToneEntity
+import com.quickblox.android_ui_kit.domain.entity.AIRephraseEntity
 import com.quickblox.android_ui_kit.presentation.components.Component
 import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponentImpl.SendMessageComponentListener
 
@@ -49,6 +49,7 @@ interface SendMessageComponent : Component {
     fun setBackground(@ColorInt color: Int)
     fun getMessageEditText(): AppCompatEditText?
 
-    fun setRephraseTones(tones: List<AIRephraseToneEntity>)
+    fun enableRephrase(enable: Boolean)
+    fun setRephraseTones(tones: List<AIRephraseEntity>)
     fun showRephraseTones(show: Boolean)
 }
