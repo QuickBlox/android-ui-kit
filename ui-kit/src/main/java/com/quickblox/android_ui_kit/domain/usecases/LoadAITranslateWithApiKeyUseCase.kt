@@ -1,61 +1,57 @@
 /*
- * Created by Injoit on 8.4.2023.
+ * Created by Injoit on 8.8.2023.
  * Copyright © 2023 Quickblox. All rights reserved.
+ *
  */
 
 package com.quickblox.android_ui_kit.domain.usecases
 
-import com.quickblox.android_ai_answer_assistant.QBAIAnswerAssistant
-import com.quickblox.android_ai_answer_assistant.exception.QBAIAnswerAssistantException
-import com.quickblox.android_ai_answer_assistant.message.OpponentMessage
-import com.quickblox.android_ai_answer_assistant.message.OwnerMessage
 import com.quickblox.android_ui_kit.ExcludeFromCoverage
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.domain.entity.PaginationEntity
 import com.quickblox.android_ui_kit.domain.entity.implementation.PaginationEntityImpl
+import com.quickblox.android_ui_kit.domain.entity.implementation.message.AITranslateIncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
-import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.exception.DomainException
+import com.quickblox.android_ui_kit.domain.exception.repository.AIRepositoryException
+import com.quickblox.android_ui_kit.domain.exception.repository.MessagesRepositoryException
 import com.quickblox.android_ui_kit.domain.usecases.base.BaseUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @ExcludeFromCoverage
-class LoadAIAnswerAssistantByQuickBloxTokenUseCase(
-    private val dialogId: String,
-    private val message: IncomingChatMessageEntity
-) :
-    BaseUseCase<List<String>>() {
-    private val messagesRepository = QuickBloxUiKit.getDependency().getMessagesRepository()
-    private val usersRepository = QuickBloxUiKit.getDependency().getUsersRepository()
+class LoadAITranslateWithApiKeyUseCase(private val dialogId: String?, private val message: IncomingChatMessageEntity) :
+    BaseUseCase<AITranslateIncomingChatMessageEntity?>() {
+    private val aiRepository = QuickBloxUiKit.getDependency().getAIRepository()
+    private val messageRepository = QuickBloxUiKit.getDependency().getMessagesRepository()
 
-    override suspend fun execute(): List<String> {
-        val receivedAnswers = mutableListOf<String>()
+    override suspend fun execute(): AITranslateIncomingChatMessageEntity? {
+        var entity: AITranslateIncomingChatMessageEntity? = null
 
         withContext(Dispatchers.IO) {
-            val pagination = searchStartPagination(dialogId, message)
-            val messagesFromUIKit = loadMessages(dialogId, message, pagination)
-            val messagesFromAI = convertUIKitMessagesToAIMessages(messagesFromUIKit)
-
-            val proxyServerURL = QuickBloxUiKit.getProxyServerURL()
-            val token = usersRepository.getUserSessionToken()
-
+            var messagesFromUIKit = listOf<MessageEntity>()
             try {
-                val answers = QBAIAnswerAssistant.executeByQBTokenSync(token, proxyServerURL, messagesFromAI, true)
-                receivedAnswers.addAll(answers)
-            } catch (exception: QBAIAnswerAssistantException) {
+                dialogId?.let {
+                    val pagination = searchStartPagination(dialogId, message)
+                    messagesFromUIKit = loadMessages(dialogId, message, pagination)
+                }
+
+                entity = aiRepository.translateIncomingMessageWithApiKey(message, messagesFromUIKit)
+            } catch (exception: AIRepositoryException) {
+                throw DomainException(exception.message ?: "Unexpected Exception")
+            } catch (exception: MessagesRepositoryException) {
                 throw DomainException(exception.message ?: "Unexpected Exception")
             }
         }
 
-        return receivedAnswers
+        return entity
     }
 
     private suspend fun searchStartPagination(
         dialogId: String,
-        incomingMessage: IncomingChatMessageEntity
+        incomingMessage: IncomingChatMessageEntity,
     ): PaginationEntity {
         var paginationResult: PaginationEntity = PaginationEntityImpl()
         paginationResult.setHasNextPage(true)
@@ -63,7 +59,7 @@ class LoadAIAnswerAssistantByQuickBloxTokenUseCase(
         var isNotFoundPagination = true
 
         while (paginationResult.hasNextPage()) {
-            messagesRepository.getMessagesFromRemote(dialogId, paginationResult).collect { pairResult ->
+            messageRepository.getMessagesFromRemote(dialogId, paginationResult).collect { pairResult ->
                 val receivedMessage = pairResult.getOrThrow().first
                 val receivedPagination = pairResult.getOrThrow().second
 
@@ -91,7 +87,7 @@ class LoadAIAnswerAssistantByQuickBloxTokenUseCase(
     private suspend fun loadMessages(
         dialogId: String,
         startMessage: IncomingChatMessageEntity,
-        paginationEntity: PaginationEntity
+        paginationEntity: PaginationEntity,
     ): List<MessageEntity> {
         val messages = mutableListOf<MessageEntity>()
 
@@ -102,7 +98,7 @@ class LoadAIAnswerAssistantByQuickBloxTokenUseCase(
 
         val MAX_PAGES_COUNT = 5
         if (pagination.hasNextPage() && pagination.getCurrentPage() < MAX_PAGES_COUNT) {
-            messagesRepository.getMessagesFromRemote(dialogId, pagination).collect { pairResult ->
+            messageRepository.getMessagesFromRemote(dialogId, pagination).collect { pairResult ->
                 val receivedMessage = pairResult.getOrThrow().first
                 val receivedPagination = pairResult.getOrThrow().second
 
@@ -123,26 +119,5 @@ class LoadAIAnswerAssistantByQuickBloxTokenUseCase(
         }
 
         return messages
-    }
-
-    private fun convertUIKitMessagesToAIMessages(uiKitMessages: List<MessageEntity>): List<com.quickblox.android_ai_answer_assistant.message.Message> {
-        val aiMessages = mutableListOf<com.quickblox.android_ai_answer_assistant.message.Message>()
-
-        uiKitMessages.forEach { messageEntity ->
-            if (messageEntity is IncomingChatMessageEntity) {
-                messageEntity.getContent()?.let {
-                    val aiMessage = OpponentMessage(it)
-                    aiMessages.add(aiMessage)
-                }
-            }
-            if (messageEntity is OutgoingChatMessageEntity) {
-                messageEntity.getContent()?.let {
-                    val aiMessage = OwnerMessage(it)
-                    aiMessages.add(aiMessage)
-                }
-            }
-        }
-
-        return aiMessages
     }
 }

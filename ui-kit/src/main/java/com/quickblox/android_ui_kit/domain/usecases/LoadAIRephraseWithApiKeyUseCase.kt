@@ -13,6 +13,7 @@ import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.exception.DomainException
 import com.quickblox.android_ui_kit.domain.exception.repository.AIRepositoryException
+import com.quickblox.android_ui_kit.domain.exception.repository.MessagesRepositoryException
 import com.quickblox.android_ui_kit.domain.usecases.base.BaseUseCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -28,13 +29,15 @@ class LoadAIRephraseWithApiKeyUseCase(private val dialogId: String?, private val
 
         withContext(Dispatchers.IO) {
             var messagesFromUIKit = listOf<MessageEntity>()
-            dialogId?.let {
-                messagesFromUIKit = loadMessages(it)
-            }
-
             try {
+                dialogId?.let {
+                    messagesFromUIKit = loadMessages(it)
+                }
+
                 resultEntity = aiRepository.rephraseWithApiKE(toneEntity, messagesFromUIKit)
             } catch (exception: AIRepositoryException) {
+                throw DomainException(exception.message ?: "Unexpected Exception")
+            } catch (exception: MessagesRepositoryException) {
                 throw DomainException(exception.message ?: "Unexpected Exception")
             }
         }

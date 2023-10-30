@@ -6,11 +6,13 @@ package com.quickblox.android_ui_kit
 
 import android.content.Context
 import android.util.Log
-import com.quickblox.android_ai_editing_assistant.QBAIRephrase
-import com.quickblox.android_ai_editing_assistant.settings.SettingsImpl.Model
+import com.quickblox.android_ai_answer_assistant.settings.AnswerAssistantSettingsImpl
+import com.quickblox.android_ai_editing_assistant.settings.RephraseSettingsImpl
 import com.quickblox.android_ai_translate.Languages
 import com.quickblox.android_ai_translate.QBAITranslate
 import com.quickblox.android_ai_translate.exception.QBAITranslateException
+import com.quickblox.android_ai_translate.settings.TranslateSettingsImpl
+import com.quickblox.android_ai_translate.settings.TranslateSettingsImpl.Model.GPT_3_5_TURBO
 import com.quickblox.android_ui_kit.dependency.Dependency
 import com.quickblox.android_ui_kit.dependency.DependencyImpl
 import com.quickblox.android_ui_kit.domain.entity.AIRephraseToneEntity
@@ -31,16 +33,31 @@ object QuickBloxUiKit {
     private var enabledAITranslate = true
     private var enabledAIRephrase = true
 
-    private var openAIToken: String = ""
-    private var proxyServerURL: String = ""
+    private var answerAssistantOpenAIToken: String = ""
+    private var answerAssistantProxyServerURL: String = ""
+    private var answerAssistantMaxRequestTokens: Int = 3000
+    private var answerAssistantOpenAIModel: AnswerAssistantSettingsImpl.Model =
+        AnswerAssistantSettingsImpl.Model.GPT_3_5_TURBO
+    private var answerAssistantOrganization: String? = null
+    private var answerAssistantMaxResponseTokens: Int? = null
+    private var answerAssistantTemperature: Float = 0.5f
 
     private var rephraseOpenAIToken: String = ""
     private var rephraseProxyServerURL: String = ""
     private var rephraseMaxRequestTokens: Int = 3000
-    private var rephraseOpenAIModel: Model = Model.GPT_3_5_TURBO
+    private var rephraseOpenAIModel: RephraseSettingsImpl.Model = RephraseSettingsImpl.Model.GPT_3_5_TURBO
     private var rephraseOrganization: String? = null
     private var rephraseMaxResponseTokens: Int? = null
     private var rephraseTemperature: Float = 0.5f
+
+    private var translateOpenAIToken: String = ""
+    private var translateProxyServerURL: String = ""
+    private var translateMaxRequestTokens: Int = 3000
+    private var translateOpenAIModel: TranslateSettingsImpl.Model = GPT_3_5_TURBO
+    private var translateOrganization: String? = null
+    private var translateMaxResponseTokens: Int? = null
+    private var translateTemperature: Float = 0.5f
+    private var translateLanguage: Languages = Languages.ENGLISH
 
     @Volatile
     private var dependency: Dependency? = null
@@ -61,7 +78,7 @@ object QuickBloxUiKit {
         if (dependency == null) {
             dependency = DependencyImpl(context)
         }
-        QBAIRephrase.init()
+
         AppLifecycleManager.init()
 
         val defaultLanguage = getDefaultLanguage()
@@ -73,7 +90,7 @@ object QuickBloxUiKit {
         var defaultLanguage: Languages
 
         try {
-            defaultLanguage = QBAITranslate.findLanguageBy(systemLanguageName)
+            defaultLanguage = QBAITranslate.findLanguageByName(systemLanguageName)
         } catch (exception: QBAITranslateException) {
             defaultLanguage = Languages.ENGLISH
         }
@@ -82,7 +99,11 @@ object QuickBloxUiKit {
     }
 
     fun setupLanguageToAITranslate(language: Languages) {
-        QBAITranslate.setLanguage(language)
+        translateLanguage = language
+    }
+
+    fun getAITranslateLanguage(): Languages {
+        return translateLanguage
     }
 
     private fun getSystemLanguageName(): String {
@@ -112,8 +133,8 @@ object QuickBloxUiKit {
         if (openAIToken.isBlank()) {
             throw RuntimeException("The openAIToken shouldn't be empty")
         }
-        this.openAIToken = openAIToken
-        this.proxyServerURL = ""
+        this.answerAssistantOpenAIToken = openAIToken
+        this.answerAssistantProxyServerURL = ""
         enabledAIAnswerAssistant = true
     }
 
@@ -121,8 +142,8 @@ object QuickBloxUiKit {
         if (proxyServerURL.isBlank()) {
             throw RuntimeException("The proxyServerURL shouldn't be empty")
         }
-        this.openAIToken = ""
-        this.proxyServerURL = proxyServerURL
+        this.answerAssistantOpenAIToken = ""
+        this.answerAssistantProxyServerURL = proxyServerURL
         enabledAIAnswerAssistant = true
     }
 
@@ -136,11 +157,11 @@ object QuickBloxUiKit {
             throw RuntimeException("The AI Answer assistant is disabled")
         }
 
-        if (isExistAITokenAndProxyServer()) {
+        if (isExistAITokenAndProxyServer(answerAssistantOpenAIToken, answerAssistantProxyServerURL)) {
             throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Answer Assistant should be initialized with Open AI Token or Proxy server")
         }
 
-        return openAIToken.isNotBlank()
+        return answerAssistantOpenAIToken.isNotBlank()
     }
 
     fun isAIAnswerAssistantEnabledWithProxyServer(): Boolean {
@@ -149,11 +170,11 @@ object QuickBloxUiKit {
             throw RuntimeException("The AI Answer assistant is disabled")
         }
 
-        if (isExistAITokenAndProxyServer()) {
+        if (isExistAITokenAndProxyServer(answerAssistantOpenAIToken, answerAssistantProxyServerURL)) {
             throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Answer Assistant should be initialized with Open AI Token or Proxy server")
         }
 
-        return proxyServerURL.isNotBlank()
+        return answerAssistantProxyServerURL.isNotBlank()
     }
 
     fun enableAIRephraseWithOpenAIToken(openAIToken: String) {
@@ -178,16 +199,16 @@ object QuickBloxUiKit {
         rephraseMaxRequestTokens = maxTokens
     }
 
-    fun setOpenAIModelForAIRephrase(openAIModel: Model) {
+    fun getMaxRequestTokensForAIRephrase(): Int {
+        return rephraseMaxRequestTokens
+    }
+
+    fun setOpenAIModelForAIRephrase(openAIModel: RephraseSettingsImpl.Model) {
         this.rephraseOpenAIModel = openAIModel
     }
 
-    fun getOpenAIModelForAIRephrase(): Model {
+    fun getOpenAIModelForAIRephrase(): RephraseSettingsImpl.Model {
         return rephraseOpenAIModel
-    }
-
-    fun getMaxRequestTokensForAIRephrase(): Int {
-        return rephraseMaxRequestTokens
     }
 
     fun setOrganizationForAIRephrase(organization: String) {
@@ -240,7 +261,7 @@ object QuickBloxUiKit {
             throw RuntimeException("The AI Rephrase is disabled")
         }
 
-        if (isExistAITokenAndProxyServer()) {
+        if (isExistAITokenAndProxyServer(rephraseOpenAIToken, rephraseProxyServerURL)) {
             throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Rephrase should be initialized with Open AI Token or Proxy server")
         }
 
@@ -253,7 +274,7 @@ object QuickBloxUiKit {
             throw RuntimeException("The AI Rephrase is disabled")
         }
 
-        if (isExistAITokenAndProxyServer()) {
+        if (isExistAITokenAndProxyServer(rephraseOpenAIToken, rephraseProxyServerURL)) {
             throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Answer Assistant should be initialized with Open AI Token or Proxy server")
         }
 
@@ -264,8 +285,8 @@ object QuickBloxUiKit {
         if (openAIToken.isBlank()) {
             throw RuntimeException("The openAIToken shouldn't be empty")
         }
-        this.openAIToken = openAIToken
-        this.proxyServerURL = ""
+        this.translateOpenAIToken = openAIToken
+        this.translateProxyServerURL = ""
         enabledAITranslate = true
     }
 
@@ -273,9 +294,49 @@ object QuickBloxUiKit {
         if (proxyServerURL.isBlank()) {
             throw RuntimeException("The proxyServerURL shouldn't be empty")
         }
-        this.openAIToken = ""
-        this.proxyServerURL = proxyServerURL
+        this.translateOpenAIToken = ""
+        this.translateProxyServerURL = proxyServerURL
         enabledAITranslate = true
+    }
+
+    fun setMaxRequestTokensForAITranslate(maxTokens: Int) {
+        translateMaxRequestTokens = maxTokens
+    }
+
+    fun getMaxRequestTokensForAITranslate(): Int {
+        return translateMaxRequestTokens
+    }
+
+    fun setOpenAIModelForAITranslate(openAIModel: TranslateSettingsImpl.Model) {
+        this.translateOpenAIModel = openAIModel
+    }
+
+    fun getOpenAIModelForAITranslate(): TranslateSettingsImpl.Model {
+        return translateOpenAIModel
+    }
+
+    fun setOrganizationForAITranslate(organization: String) {
+        this.translateOrganization = organization
+    }
+
+    fun getOrganizationForAITranslate(): String? {
+        return translateOrganization
+    }
+
+    fun setMaxResponseTokensForAITranslate(maxTokens: Int) {
+        translateMaxResponseTokens = maxTokens
+    }
+
+    fun getMaxResponseTokensForAITranslate(): Int? {
+        return translateMaxResponseTokens
+    }
+
+    fun setTemperatureForAITranslate(temperature: Float) {
+        translateTemperature = temperature
+    }
+
+    fun getTemperatureForAITranslate(): Float {
+        return translateTemperature
     }
 
     fun disableAITranslate() {
@@ -288,11 +349,11 @@ object QuickBloxUiKit {
             throw RuntimeException("The AI Translate is disabled")
         }
 
-        if (isExistAITokenAndProxyServer()) {
+        if (isExistAITokenAndProxyServer(translateOpenAIToken, translateProxyServerURL)) {
             throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Translate should be initialized with Open AI Token or Proxy server")
         }
 
-        return openAIToken.isNotBlank()
+        return translateOpenAIToken.isNotBlank()
     }
 
     fun isAITranslateEnabledWithProxyServer(): Boolean {
@@ -301,23 +362,23 @@ object QuickBloxUiKit {
             throw RuntimeException("The AI Translate is disabled")
         }
 
-        if (isExistAITokenAndProxyServer()) {
+        if (isExistAITokenAndProxyServer(translateOpenAIToken, translateProxyServerURL)) {
             throw RuntimeException("Error initialization. There are Open AI Token and Proxy Server Url. The AI Translate should be initialized with Open AI Token or Proxy server")
         }
 
-        return proxyServerURL.isNotBlank()
+        return translateProxyServerURL.isNotBlank()
     }
 
-    private fun isExistAITokenAndProxyServer(): Boolean {
+    private fun isExistAITokenAndProxyServer(openAIToken: String, proxyServerURL: String): Boolean {
         return openAIToken.isNotBlank() && proxyServerURL.isNotBlank()
     }
 
-    fun getProxyServerURL(): String {
-        return proxyServerURL
+    fun getAnswerAssistantProxyServerURL(): String {
+        return answerAssistantProxyServerURL
     }
 
-    fun getOpenAIToken(): String {
-        return openAIToken
+    fun getAnswerAssistantOpenAIToken(): String {
+        return answerAssistantOpenAIToken
     }
 
     fun getRephraseProxyServerURL(): String {
@@ -326,6 +387,54 @@ object QuickBloxUiKit {
 
     fun getRephraseOpenAIToken(): String {
         return rephraseOpenAIToken
+    }
+
+    fun getTranslateProxyServerURL(): String {
+        return translateProxyServerURL
+    }
+
+    fun getTranslateOpenAIToken(): String {
+        return translateOpenAIToken
+    }
+
+    fun setMaxRequestTokensForAIAnswerAssistant(maxTokens: Int) {
+        answerAssistantMaxRequestTokens = maxTokens
+    }
+
+    fun getMaxRequestTokensForAIAnswerAssistant(): Int {
+        return answerAssistantMaxRequestTokens
+    }
+
+    fun setOpenAIModelForAIAnswerAssistant(openAIModel: AnswerAssistantSettingsImpl.Model) {
+        this.answerAssistantOpenAIModel = openAIModel
+    }
+
+    fun getOpenAIModelForAIAnswerAssistant(): AnswerAssistantSettingsImpl.Model {
+        return answerAssistantOpenAIModel
+    }
+
+    fun setOrganizationForAIAnswerAssistant(organization: String) {
+        this.answerAssistantOrganization = organization
+    }
+
+    fun getOrganizationForAIAnswerAssistant(): String? {
+        return answerAssistantOrganization
+    }
+
+    fun setMaxResponseTokensForAIAnswerAssistant(maxTokens: Int) {
+        answerAssistantMaxResponseTokens = maxTokens
+    }
+
+    fun getMaxResponseTokensForAIAnswerAssistant(): Int? {
+        return answerAssistantMaxResponseTokens
+    }
+
+    fun setTemperatureForAIAnswerAssistant(temperature: Float) {
+        answerAssistantTemperature = temperature
+    }
+
+    fun getTemperatureForAIAnswerAssistant(): Float {
+        return answerAssistantTemperature
     }
 
     fun isEnabledAIAnswerAssistant(): Boolean {

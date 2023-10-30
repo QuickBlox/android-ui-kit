@@ -6,37 +6,59 @@
 
 package com.quickblox.android_ui_kit.data.source.ai
 
+import com.quickblox.android_ai_answer_assistant.QBAIAnswerAssistant
+import com.quickblox.android_ai_answer_assistant.settings.AnswerAssistantSettingsImpl
 import com.quickblox.android_ai_editing_assistant.QBAIRephrase
 import com.quickblox.android_ai_editing_assistant.exception.QBAIRephraseException
 import com.quickblox.android_ai_editing_assistant.model.Tone
 import com.quickblox.android_ai_editing_assistant.model.ToneImpl
-import com.quickblox.android_ai_editing_assistant.settings.SettingsImpl
+import com.quickblox.android_ai_editing_assistant.settings.RephraseSettingsImpl
 import com.quickblox.android_ai_translate.QBAITranslate
 import com.quickblox.android_ai_translate.exception.QBAITranslateException
+import com.quickblox.android_ai_translate.settings.TranslateSettingsImpl
 import com.quickblox.android_ui_kit.QuickBloxUiKit
-import com.quickblox.android_ui_kit.data.dto.ai.AIRephraseDTO
-import com.quickblox.android_ui_kit.data.dto.ai.AIRephraseMessageDTO
-import com.quickblox.android_ui_kit.data.dto.ai.AIRephraseToneDTO
-import com.quickblox.android_ui_kit.data.dto.ai.AITranslateDTO
+import com.quickblox.android_ui_kit.data.dto.ai.*
+import com.quickblox.android_ui_kit.data.source.ai.mapper.AIAnswerAssistantDTOMapper
 import com.quickblox.android_ui_kit.data.source.ai.mapper.AIRephraseDTOMapper
+import com.quickblox.android_ui_kit.data.source.ai.mapper.AITranslateDTOMapper
 import com.quickblox.android_ui_kit.data.source.exception.AIDataSourceException
 import com.quickblox.android_ui_kit.domain.exception.repository.MappingException
 
 class AIDataSourceImpl : AIDataSource {
     val tones: MutableList<Tone> = crateDefaultTones()
 
-    override fun translateIncomingMessageByOpenAIToken(translateDTO: AITranslateDTO): AITranslateDTO {
-        val openAIToken = QuickBloxUiKit.getOpenAIToken()
+    override fun translateIncomingMessageWithApiKey(
+        translateDTO: AITranslateDTO,
+        messagesDTO: List<AITranslateMessageDTO>,
+    ): AITranslateDTO {
+        val openAIToken = QuickBloxUiKit.getTranslateOpenAIToken()
+
+        val text = translateDTO.content
+
+        if (text.isNullOrEmpty()) {
+            throw AIDataSourceException("Content should not be null or empty")
+        }
+        val language = QuickBloxUiKit.getAITranslateLanguage()
+
+        val translateSettings = TranslateSettingsImpl(openAIToken, language)
+
+        val maxRequestTokens = QuickBloxUiKit.getMaxRequestTokensForAITranslate()
+        val openAIModel = QuickBloxUiKit.getOpenAIModelForAITranslate()
+        val maxResponseTokens = QuickBloxUiKit.getMaxResponseTokensForAITranslate()
+        val organization = QuickBloxUiKit.getOrganizationForAITranslate()
+        val temperature = QuickBloxUiKit.getTemperatureForAITranslate()
+
+        translateSettings.setMaxRequestTokens(maxRequestTokens)
+        translateSettings.setModel(openAIModel)
+        translateSettings.setMaxResponseTokens(maxResponseTokens)
+        translateSettings.setOrganization(organization)
+        translateSettings.setTemperature(temperature)
 
         try {
-            val text = translateDTO.content
+            val messages = AITranslateDTOMapper.dtosToMessages(messagesDTO)
 
-            if (text.isNullOrEmpty()) {
-                throw AIDataSourceException("Content should not be null or empty")
-            }
-
-            val translations = QBAITranslate.executeByOpenAITokenSync(openAIToken, text)
-            translateDTO.translations = translations
+            val translation = QBAITranslate.translateSync(text, translateSettings, messages)
+            translateDTO.translation = translation
 
             return translateDTO
         } catch (exception: QBAITranslateException) {
@@ -46,23 +68,98 @@ class AIDataSourceImpl : AIDataSource {
         }
     }
 
-    override fun translateIncomingMessageByQuickBloxToken(
+    override fun translateIncomingMessageWithProxyServer(
         translateDTO: AITranslateDTO,
         token: String,
+        messagesDTO: List<AITranslateMessageDTO>,
     ): AITranslateDTO {
-        val proxyServerURL = QuickBloxUiKit.getProxyServerURL()
+        val proxyServerURL = QuickBloxUiKit.getTranslateProxyServerURL()
+
+        val text = translateDTO.content
+
+        if (text.isNullOrEmpty()) {
+            throw AIDataSourceException("Content should not be null or empty")
+        }
+        val language = QuickBloxUiKit.getAITranslateLanguage()
+
+        val translateSettings = TranslateSettingsImpl(token, proxyServerURL, language, true)
+
+        val maxRequestTokens = QuickBloxUiKit.getMaxRequestTokensForAITranslate()
+        val openAIModel = QuickBloxUiKit.getOpenAIModelForAITranslate()
+        val maxResponseTokens = QuickBloxUiKit.getMaxResponseTokensForAITranslate()
+        val organization = QuickBloxUiKit.getOrganizationForAITranslate()
+        val temperature = QuickBloxUiKit.getTemperatureForAITranslate()
+
+        translateSettings.setMaxRequestTokens(maxRequestTokens)
+        translateSettings.setModel(openAIModel)
+        translateSettings.setMaxResponseTokens(maxResponseTokens)
+        translateSettings.setOrganization(organization)
+        translateSettings.setTemperature(temperature)
 
         try {
-            val text = translateDTO.content
-
-            if (text.isNullOrEmpty()) {
-                throw AIDataSourceException("Content should not be null or empty")
-            }
-
-            val translations = QBAITranslate.executeByQBTokenSync(token, proxyServerURL, text, true)
-            translateDTO.translations = translations
+            val messages = AITranslateDTOMapper.dtosToMessages(messagesDTO)
+            val translation = QBAITranslate.translateSync(text, translateSettings, messages)
+            translateDTO.translation = translation
 
             return translateDTO
+        } catch (exception: QBAITranslateException) {
+            throw AIDataSourceException(exception.message)
+        } catch (exception: MappingException) {
+            throw AIDataSourceException(exception.message)
+        }
+    }
+
+    override fun createAnswerWithApiKey(messagesDTO: List<AIAnswerAssistantMessageDTO>): String {
+        val openAIToken = QuickBloxUiKit.getAnswerAssistantOpenAIToken()
+
+        val answerAssistantSettings = AnswerAssistantSettingsImpl(openAIToken)
+
+        val maxRequestTokens = QuickBloxUiKit.getMaxRequestTokensForAIAnswerAssistant()
+        val openAIModel = QuickBloxUiKit.getOpenAIModelForAIAnswerAssistant()
+        val maxResponseTokens = QuickBloxUiKit.getMaxResponseTokensForAIAnswerAssistant()
+        val organization = QuickBloxUiKit.getOrganizationForAIAnswerAssistant()
+        val temperature = QuickBloxUiKit.getTemperatureForAIAnswerAssistant()
+
+        answerAssistantSettings.setMaxRequestTokens(maxRequestTokens)
+        answerAssistantSettings.setModel(openAIModel)
+        answerAssistantSettings.setMaxResponseTokens(maxResponseTokens)
+        answerAssistantSettings.setOrganization(organization)
+        answerAssistantSettings.setTemperature(temperature)
+
+        try {
+            val messages = AIAnswerAssistantDTOMapper.dtosToMessages(messagesDTO)
+
+            val answer = QBAIAnswerAssistant.createAnswerSync(messages, answerAssistantSettings)
+            return answer
+        } catch (exception: QBAITranslateException) {
+            throw AIDataSourceException(exception.message)
+        } catch (exception: MappingException) {
+            throw AIDataSourceException(exception.message)
+        }
+    }
+
+    override fun createAnswerWithProxyServer(messagesDTO: List<AIAnswerAssistantMessageDTO>, token: String): String {
+        val proxyServerURL = QuickBloxUiKit.getAnswerAssistantProxyServerURL()
+
+        val answerAssistantSettings = AnswerAssistantSettingsImpl(token, proxyServerURL, true)
+
+        val maxRequestTokens = QuickBloxUiKit.getMaxRequestTokensForAIAnswerAssistant()
+        val openAIModel = QuickBloxUiKit.getOpenAIModelForAIAnswerAssistant()
+        val maxResponseTokens = QuickBloxUiKit.getMaxResponseTokensForAIAnswerAssistant()
+        val organization = QuickBloxUiKit.getOrganizationForAIAnswerAssistant()
+        val temperature = QuickBloxUiKit.getTemperatureForAIAnswerAssistant()
+
+        answerAssistantSettings.setMaxRequestTokens(maxRequestTokens)
+        answerAssistantSettings.setModel(openAIModel)
+        answerAssistantSettings.setMaxResponseTokens(maxResponseTokens)
+        answerAssistantSettings.setOrganization(organization)
+        answerAssistantSettings.setTemperature(temperature)
+
+        try {
+            val messages = AIAnswerAssistantDTOMapper.dtosToMessages(messagesDTO)
+
+            val answer = QBAIAnswerAssistant.createAnswerSync(messages, answerAssistantSettings)
+            return answer
         } catch (exception: QBAITranslateException) {
             throw AIDataSourceException(exception.message)
         } catch (exception: MappingException) {
@@ -75,27 +172,28 @@ class AIDataSourceImpl : AIDataSource {
         messagesDTO: List<AIRephraseMessageDTO>,
     ): AIRephraseDTO {
         val openAIToken = QuickBloxUiKit.getRephraseOpenAIToken()
+        val toneName = rephraseDTO.tone.toneName
+        val toneDescription = rephraseDTO.tone.descriptionTone
+        val toneIcon = rephraseDTO.tone.icon
+
+        val tone = ToneImpl(toneName, toneDescription, toneIcon)
+        val rephraseSettings = RephraseSettingsImpl(openAIToken, tone)
+
+        val maxRequestTokens = QuickBloxUiKit.getMaxRequestTokensForAIRephrase()
+        val openAIModel = QuickBloxUiKit.getOpenAIModelForAIRephrase()
+        val maxResponseTokens = QuickBloxUiKit.getMaxResponseTokensForAIRephrase()
+        val organization = QuickBloxUiKit.getOrganizationForAIRephrase()
+        val temperature = QuickBloxUiKit.getTemperatureForAIRephrase()
+
+        rephraseSettings.setMaxRequestTokens(maxRequestTokens)
+        rephraseSettings.setModel(openAIModel)
+        rephraseSettings.setMaxResponseTokens(maxResponseTokens)
+        rephraseSettings.setOrganization(organization)
+        rephraseSettings.setTemperature(temperature)
+
+        val text = rephraseDTO.originalText
+
         try {
-            val toneName = rephraseDTO.tone.toneName
-            val toneDescription = rephraseDTO.tone.descriptionTone
-            val toneIcon = rephraseDTO.tone.icon
-
-            val tone = ToneImpl(toneName, toneDescription, toneIcon)
-            val rephraseSettings = SettingsImpl(openAIToken, tone)
-
-            val maxRequestTokens = QuickBloxUiKit.getMaxRequestTokensForAIRephrase()
-            val openAIModel = QuickBloxUiKit.getOpenAIModelForAIRephrase()
-            val maxResponseTokens = QuickBloxUiKit.getMaxResponseTokensForAIRephrase()
-            val organization = QuickBloxUiKit.getOrganizationForAIRephrase()
-            val temperature = QuickBloxUiKit.getTemperatureForAIRephrase()
-
-            rephraseSettings.setMaxRequestTokens(maxRequestTokens)
-            rephraseSettings.setModel(openAIModel)
-            rephraseSettings.setMaxResponseTokens(maxResponseTokens)
-            rephraseSettings.setOrganization(organization)
-            rephraseSettings.setTemperature(temperature)
-
-            val text = rephraseDTO.originalText
             val messages = AIRephraseDTOMapper.dtosToMessages(messagesDTO)
             val results = QBAIRephrase.rephraseSync(text, rephraseSettings, messages)
 
@@ -115,27 +213,29 @@ class AIDataSourceImpl : AIDataSource {
         messagesDTO: List<AIRephraseMessageDTO>,
     ): AIRephraseDTO {
         val serverPath = QuickBloxUiKit.getRephraseProxyServerURL()
+
+        val toneName = rephraseDTO.tone.toneName
+        val toneDescription = rephraseDTO.tone.descriptionTone
+        val toneIcon = rephraseDTO.tone.icon
+
+        val tone = ToneImpl(toneName, toneDescription, toneIcon)
+        val rephraseSettings = RephraseSettingsImpl(token, serverPath, tone, true)
+
+        val maxRequestTokens = QuickBloxUiKit.getMaxRequestTokensForAIRephrase()
+        val openAIModel = QuickBloxUiKit.getOpenAIModelForAIRephrase()
+        val maxResponseTokens = QuickBloxUiKit.getMaxResponseTokensForAIRephrase()
+        val organization = QuickBloxUiKit.getOrganizationForAIRephrase()
+        val temperature = QuickBloxUiKit.getTemperatureForAIRephrase()
+
+        rephraseSettings.setMaxRequestTokens(maxRequestTokens)
+        rephraseSettings.setModel(openAIModel)
+        rephraseSettings.setMaxResponseTokens(maxResponseTokens)
+        rephraseSettings.setOrganization(organization)
+        rephraseSettings.setTemperature(temperature)
+
+        val text = rephraseDTO.originalText
+
         try {
-            val toneName = rephraseDTO.tone.toneName
-            val toneDescription = rephraseDTO.tone.descriptionTone
-            val toneIcon = rephraseDTO.tone.icon
-
-            val tone = ToneImpl(toneName, toneDescription, toneIcon)
-            val rephraseSettings = SettingsImpl(token, serverPath, tone, true)
-
-            val maxRequestTokens = QuickBloxUiKit.getMaxRequestTokensForAIRephrase()
-            val openAIModel = QuickBloxUiKit.getOpenAIModelForAIRephrase()
-            val maxResponseTokens = QuickBloxUiKit.getMaxResponseTokensForAIRephrase()
-            val organization = QuickBloxUiKit.getOrganizationForAIRephrase()
-            val temperature = QuickBloxUiKit.getTemperatureForAIRephrase()
-
-            rephraseSettings.setMaxRequestTokens(maxRequestTokens)
-            rephraseSettings.setModel(openAIModel)
-            rephraseSettings.setMaxResponseTokens(maxResponseTokens)
-            rephraseSettings.setOrganization(organization)
-            rephraseSettings.setTemperature(temperature)
-
-            val text = rephraseDTO.originalText
             val messages = AIRephraseDTOMapper.dtosToMessages(messagesDTO)
             val results = QBAIRephrase.rephraseSync(text, rephraseSettings, messages)
 

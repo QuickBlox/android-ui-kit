@@ -618,9 +618,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
             }
 
             val requestBuilder = RemotePaginationDTOMapper.getRequestBuilderFrom(paginationDTO)
-
             val pair = loadAllQBMessages(messageDTO.dialogId!!, requestBuilder)
-
             val messages = pair.first
 
             val messagePaginationDTO = RemotePaginationDTOMapper.remoteMessagePaginationDtoFrom(

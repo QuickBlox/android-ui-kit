@@ -6,6 +6,7 @@
 
 package com.quickblox.android_ui_kit.data.repository.ai
 
+import com.quickblox.android_ui_kit.data.repository.mapper.AIAnswerAssistantMapper
 import com.quickblox.android_ui_kit.data.repository.mapper.AIRephraseMapper
 import com.quickblox.android_ui_kit.data.repository.mapper.AITranslateMapper
 import com.quickblox.android_ui_kit.data.source.ai.AIDataSource
@@ -19,10 +20,14 @@ import com.quickblox.android_ui_kit.domain.exception.repository.AIRepositoryExce
 import com.quickblox.android_ui_kit.domain.repository.AIRepository
 
 class AIRepositoryImpl(private val aiDataSource: AIDataSource) : AIRepository {
-    override fun translateIncomingMessageByOpenAIToken(messageEntity: IncomingChatMessageEntity): AITranslateIncomingChatMessageEntity {
+    override fun translateIncomingMessageWithApiKey(
+        messageEntity: IncomingChatMessageEntity,
+        messagesFromUIKit: List<MessageEntity>,
+    ): AITranslateIncomingChatMessageEntity {
         try {
-            val answerDTO = AITranslateMapper.DTOFrom(messageEntity)
-            val responseDTO = aiDataSource.translateIncomingMessageByOpenAIToken(answerDTO)
+            val translateDTO = AITranslateMapper.DTOFrom(messageEntity)
+            val messagesDTO = AITranslateMapper.messagesToDtos(messagesFromUIKit)
+            val responseDTO = aiDataSource.translateIncomingMessageWithApiKey(translateDTO, messagesDTO)
 
             return AITranslateMapper.entityFrom(responseDTO, messageEntity)
         } catch (exception: AIDataSourceException) {
@@ -30,15 +35,39 @@ class AIRepositoryImpl(private val aiDataSource: AIDataSource) : AIRepository {
         }
     }
 
-    override fun translateIncomingMessageByQuickBloxToken(
+    override fun translateIncomingMessageWithProxyServer(
         messageEntity: IncomingChatMessageEntity,
         token: String,
+        messagesFromUIKit: List<MessageEntity>,
     ): AITranslateIncomingChatMessageEntity {
         try {
             val answerDTO = AITranslateMapper.DTOFrom(messageEntity)
-            val responseDTO = aiDataSource.translateIncomingMessageByQuickBloxToken(answerDTO, token)
+            val messagesDTO = AITranslateMapper.messagesToDtos(messagesFromUIKit)
+            val responseDTO = aiDataSource.translateIncomingMessageWithProxyServer(answerDTO, token, messagesDTO)
 
             return AITranslateMapper.entityFrom(responseDTO, messageEntity)
+        } catch (exception: AIDataSourceException) {
+            throw AIRepositoryException(exception.message ?: "Unexpected Exception")
+        }
+    }
+
+    override fun createAnswerWithApiKey(messagesFromUIKit: List<MessageEntity>): String {
+        try {
+            val messagesDTO = AIAnswerAssistantMapper.messagesToDtos(messagesFromUIKit)
+            val answer = aiDataSource.createAnswerWithApiKey(messagesDTO)
+
+            return answer
+        } catch (exception: AIDataSourceException) {
+            throw AIRepositoryException(exception.message ?: "Unexpected Exception")
+        }
+    }
+
+    override fun createAnswerWithProxyServer(messagesFromUIKit: List<MessageEntity>, token: String): String {
+        try {
+            val messagesDTO = AIAnswerAssistantMapper.messagesToDtos(messagesFromUIKit)
+            val answer = aiDataSource.createAnswerWithProxyServer(messagesDTO, token)
+
+            return answer
         } catch (exception: AIDataSourceException) {
             throw AIRepositoryException(exception.message ?: "Unexpected Exception")
         }

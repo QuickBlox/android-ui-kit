@@ -13,10 +13,17 @@ import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEnt
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 
 interface AIRepository {
-    fun translateIncomingMessageByOpenAIToken(messageEntity: IncomingChatMessageEntity): AITranslateIncomingChatMessageEntity
-    fun translateIncomingMessageByQuickBloxToken(
-        messageEntity: IncomingChatMessageEntity, token: String,
+    fun translateIncomingMessageWithApiKey(
+        messageEntity: IncomingChatMessageEntity,
+        messagesFromUIKit: List<MessageEntity>,
     ): AITranslateIncomingChatMessageEntity
+
+    fun translateIncomingMessageWithProxyServer(
+        messageEntity: IncomingChatMessageEntity, token: String, messagesFromUIKit: List<MessageEntity>,
+    ): AITranslateIncomingChatMessageEntity
+
+    fun createAnswerWithApiKey(messagesFromUIKit: List<MessageEntity>): String
+    fun createAnswerWithProxyServer(messagesFromUIKit: List<MessageEntity>, token: String): String
 
     fun rephraseWithApiKE(
         toneEntity: AIRephraseEntity,

@@ -456,9 +456,9 @@ class PrivateChatViewModel : BaseViewModel() {
             viewModelScope.launch {
                 try {
                     showLoading()
-                    val answers = LoadAIAnswerAssistantByOpenAITokenUseCase(dialogId, message).execute()
-                    if (answers.isNotEmpty()) {
-                        _aiAnswer.postValue(answers[0])
+                    val answer = LoadAIAnswerAssistantWithApiKeyUseCase(dialogId, message).execute()
+                    if (answer.isNotEmpty()) {
+                        _aiAnswer.postValue(answer)
                     }
                 } catch (exception: DomainException) {
                     showError(exception.message)
@@ -471,9 +471,9 @@ class PrivateChatViewModel : BaseViewModel() {
             viewModelScope.launch {
                 try {
                     showLoading()
-                    val answers = LoadAIAnswerAssistantByQuickBloxTokenUseCase(dialogId, message).execute()
-                    if (answers.isNotEmpty()) {
-                        _aiAnswer.postValue(answers[0])
+                    val answer = LoadAIAnswerAssistantWithProxyServerUseCase(dialogId, message).execute()
+                    if (answer.isNotEmpty()) {
+                        _aiAnswer.postValue(answer)
                     }
                 } catch (exception: DomainException) {
                     showError(exception.message)
@@ -493,7 +493,7 @@ class PrivateChatViewModel : BaseViewModel() {
         if (QuickBloxUiKit.isAITranslateEnabledWithOpenAIToken()) {
             viewModelScope.launch {
                 try {
-                    val entity = LoadAITranslateByOpenAITokenUseCase(message).execute()
+                    val entity = LoadAITranslateWithApiKeyUseCase(dialog?.getDialogId(), message).execute()
                     updateTranslatedMessage(entity)
                 } catch (exception: DomainException) {
                     showError(exception.message)
@@ -504,7 +504,7 @@ class PrivateChatViewModel : BaseViewModel() {
         if (QuickBloxUiKit.isAITranslateEnabledWithProxyServer()) {
             viewModelScope.launch {
                 try {
-                    val entity = LoadAITranslateByQuickBloxTokenUseCase(message).execute()
+                    val entity = LoadAITranslateWithProxyServerUseCase(dialog?.getDialogId(), message).execute()
                     updateTranslatedMessage(entity)
                 } catch (exception: DomainException) {
                     showError(exception.message)
@@ -515,7 +515,7 @@ class PrivateChatViewModel : BaseViewModel() {
     }
 
     private fun updateTranslatedMessage(entity: AITranslateIncomingChatMessageEntity?) {
-        if (entity?.getTranslations()?.isNotEmpty() == true) {
+        if (entity?.getTranslation()?.isNotEmpty() == true) {
             entity.setTranslated(true)
             addOrUpdateMessage(entity)
         }

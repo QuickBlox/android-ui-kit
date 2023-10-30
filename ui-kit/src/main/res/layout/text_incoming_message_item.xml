@@ -96,6 +96,7 @@
                 android:layout_height="36dp"
                 android:src="@drawable/ic_ai_robot"
                 android:visibility="gone"
+                android:padding="8dp"
                 app:layout_constraintBottom_toBottomOf="@+id/clMessage"
                 app:layout_constraintStart_toEndOf="@+id/barrier"
                 app:layout_constraintTop_toTopOf="@+id/clMessage"

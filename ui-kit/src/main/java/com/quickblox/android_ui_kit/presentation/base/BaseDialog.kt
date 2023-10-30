@@ -27,7 +27,10 @@ abstract class BaseDialog(context: Context, private val title: String?, protecte
 
         applyParams()
 
-        setTitleOrHide(binding, title)
+        val isNotNullAndNotEmptyTitle =  !title.isNullOrEmpty()
+        if (isNotNullAndNotEmptyTitle) {
+            setTitleAndShow(binding, title)
+        }
 
         themeDialog?.getMainBackgroundColor()?.let {
             binding.root.setBackgroundColor(it)
@@ -48,15 +51,13 @@ abstract class BaseDialog(context: Context, private val title: String?, protecte
         )
     }
 
-    private fun setTitleOrHide(binding: BaseDialogBinding, title: String?) {
-        if (title != null) {
-            binding.tvTitle.text = title
-            themeDialog?.getMainTextColor()?.let {
-                binding.tvTitle.setTextColor(it)
-            }
-        } else {
-            binding.tvTitle.visibility = View.GONE
+    private fun setTitleAndShow(binding: BaseDialogBinding, title: String?) {
+        binding.tvTitle.text = title
+        themeDialog?.getMainTextColor()?.let {
+            binding.tvTitle.setTextColor(it)
         }
+        binding.tvTitle.visibility = View.VISIBLE
+
     }
 
     abstract fun collectViewsTemplateMethod(): List<View?>
