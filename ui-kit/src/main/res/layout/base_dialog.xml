@@ -16,8 +16,10 @@
         android:fontFamily="@font/roboto_500"
         android:lines="1"
         android:paddingStart="24dp"
+        android:visibility="gone"
         android:textColor="@color/textColor"
         android:textSize="20sp"
+        android:layout_marginBottom="16dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="Dialog name" />
@@ -26,7 +28,6 @@
         android:id="@+id/llContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
         android:gravity="center_vertical"
         android:orientation="vertical"
         android:textColor="@color/textColor"

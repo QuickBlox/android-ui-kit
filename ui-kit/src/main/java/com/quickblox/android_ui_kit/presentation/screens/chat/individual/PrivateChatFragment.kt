@@ -94,7 +94,6 @@ open class PrivateChatFragment : BaseFragment() {
         initMessagesComponentListeners()
         initSendMessagesComponentListeners()
 
-        val notConfiguredAIRephrase = !isConfiguredAIRephrase()
         viewModel.getAllTones()
     }
 
@@ -342,7 +341,12 @@ open class PrivateChatFragment : BaseFragment() {
     }
 
     private fun isConfiguredAIRephrase(): Boolean {
-        return QuickBloxUiKit.isEnabledAIRephrase()
+        val enabledByOpenAIToken = QuickBloxUiKit.isAIRephraseEnabledWithOpenAIToken()
+        val enabledByQuickBloxToken = QuickBloxUiKit.isAIRephraseEnabledWithProxyServer()
+
+        val enabledByOpenAITokenOrQuickBloxToken = enabledByOpenAIToken || enabledByQuickBloxToken
+
+        return QuickBloxUiKit.isEnabledAIRephrase() && enabledByOpenAITokenOrQuickBloxToken
     }
 
     private fun isConfiguredAITranslate(): Boolean {

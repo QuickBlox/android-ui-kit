@@ -7,6 +7,7 @@
 package com.quickblox.android_ui_kit.presentation.screens.chat.group
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
@@ -451,9 +452,9 @@ class GroupChatViewModel : BaseViewModel() {
             viewModelScope.launch {
                 try {
                     showLoading()
-                    val answers = LoadAIAnswerAssistantByOpenAITokenUseCase(dialogId, message).execute()
-                    if (answers.isNotEmpty()) {
-                        _aiAnswer.postValue(answers[0])
+                    val answer = LoadAIAnswerAssistantWithApiKeyUseCase(dialogId, message).execute()
+                    if (answer.isNotEmpty()) {
+                        _aiAnswer.postValue(answer)
                     }
                 } catch (exception: DomainException) {
                     showError(exception.message)
@@ -466,9 +467,9 @@ class GroupChatViewModel : BaseViewModel() {
             viewModelScope.launch {
                 try {
                     showLoading()
-                    val answers = LoadAIAnswerAssistantByQuickBloxTokenUseCase(dialogId, message).execute()
-                    if (answers.isNotEmpty()) {
-                        _aiAnswer.postValue(answers[0])
+                    val answer = LoadAIAnswerAssistantWithProxyServerUseCase(dialogId, message).execute()
+                    if (answer.isNotEmpty()) {
+                        _aiAnswer.postValue(answer)
                     }
                 } catch (exception: DomainException) {
                     showError(exception.message)
@@ -488,7 +489,7 @@ class GroupChatViewModel : BaseViewModel() {
         if (QuickBloxUiKit.isAITranslateEnabledWithOpenAIToken()) {
             viewModelScope.launch {
                 try {
-                    val entity = LoadAITranslateByOpenAITokenUseCase(message).execute()
+                    val entity = LoadAITranslateWithApiKeyUseCase(dialog?.getDialogId(), message).execute()
                     updateTranslatedMessage(entity)
                 } catch (exception: DomainException) {
                     showError(exception.message)
@@ -499,7 +500,7 @@ class GroupChatViewModel : BaseViewModel() {
         if (QuickBloxUiKit.isAITranslateEnabledWithProxyServer()) {
             viewModelScope.launch {
                 try {
-                    val entity = LoadAITranslateByQuickBloxTokenUseCase(message).execute()
+                    val entity = LoadAITranslateWithProxyServerUseCase(dialog?.getDialogId(), message).execute()
                     updateTranslatedMessage(entity)
                 } catch (exception: DomainException) {
                     showError(exception.message)
@@ -510,7 +511,7 @@ class GroupChatViewModel : BaseViewModel() {
     }
 
     private fun updateTranslatedMessage(entity: AITranslateIncomingChatMessageEntity?) {
-        if (entity?.getTranslations()?.isNotEmpty() == true) {
+        if (entity?.getTranslation()?.isNotEmpty() == true) {
             entity.setTranslated(true)
             addOrUpdateMessage(entity)
         }

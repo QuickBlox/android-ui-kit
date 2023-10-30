@@ -10,7 +10,7 @@ ext {
     qbSdkVersion = '4.1.1'
 
     uiKitVersionCode = 1
-    uiKitVersionName = "0.4.0"
+    uiKitVersionName = "0.5.0"
 }
 
 android {
@@ -69,9 +69,9 @@ dependencies {
     api "com.quickblox:quickblox-android-sdk-content:$qbSdkVersion"
 
     // QuickBlox AI
-    api "com.quickblox:android-ai-answer-assistant:1.0.1"
-    api "com.quickblox:android-ai-translate:1.0.0"
-    api "com.quickblox:android-ai-editing-assistant:2.0.0"
+    api "com.quickblox:android-ai-answer-assistant:2.0.0"
+    api "com.quickblox:android-ai-translate:2.0.0"
+    api "com.quickblox:android-ai-editing-assistant:2.1.0"
 
     implementation 'androidx.fragment:fragment-ktx:1.5.6'
     implementation 'androidx.core:core-ktx:1.9.0'

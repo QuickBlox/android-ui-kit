@@ -6,17 +6,18 @@
 
 package com.quickblox.android_ui_kit.data.source.ai
 
-import com.quickblox.android_ui_kit.data.dto.ai.AIRephraseDTO
-import com.quickblox.android_ui_kit.data.dto.ai.AIRephraseMessageDTO
-import com.quickblox.android_ui_kit.data.dto.ai.AIRephraseToneDTO
-import com.quickblox.android_ui_kit.data.dto.ai.AITranslateDTO
+import com.quickblox.android_ui_kit.data.dto.ai.*
 
 interface AIDataSource {
-    fun translateIncomingMessageByOpenAIToken(translateDTO: AITranslateDTO): AITranslateDTO
-    fun translateIncomingMessageByQuickBloxToken(
+    fun translateIncomingMessageWithApiKey(translateDTO: AITranslateDTO, messagesDTO: List<AITranslateMessageDTO>): AITranslateDTO
+    fun translateIncomingMessageWithProxyServer(
         translateDTO: AITranslateDTO,
         token: String,
+        messagesDTO: List<AITranslateMessageDTO>
     ): AITranslateDTO
+
+    fun createAnswerWithApiKey(messagesDTO: List<AIAnswerAssistantMessageDTO>): String
+    fun createAnswerWithProxyServer(messagesDTO: List<AIAnswerAssistantMessageDTO>, token: String): String
 
     fun rephraseWithApiKey(rephraseDTO: AIRephraseDTO, messagesDTO: List<AIRephraseMessageDTO>): AIRephraseDTO
     fun rephraseWithProxyServer(

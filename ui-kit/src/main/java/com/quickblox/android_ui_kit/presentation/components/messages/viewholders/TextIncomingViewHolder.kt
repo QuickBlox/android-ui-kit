@@ -74,7 +74,7 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
         val context = binding.tvAITranslate.context
         if (message.isTranslated() == true) {
             message.setTranslated(false)
-            binding.tvMessage.text = message.getTranslations()?.get(0)
+            binding.tvMessage.text = message.getTranslation()
             binding.tvAITranslate.text = context.getString(R.string.show_original)
         } else {
             message.setTranslated(true)
@@ -96,6 +96,8 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
 
     private fun setAIListener(message: IncomingChatMessageEntity?, listener: AIListener?) {
         binding.ivAI.setOnClickListener {
+            val text = binding.tvMessage.text.toString()
+            message?.setContent(text)
             listener?.onIconClick(message)
         }
     }
@@ -122,6 +124,8 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
         setTimeTextColor(theme.getTertiaryElementsColor())
         binding.tvAITranslate.setTextColor(theme.getTertiaryElementsColor())
         binding.progressAI.indeterminateTintList = ColorStateList.valueOf(theme.getMainElementsColor())
+
+        binding.ivAI.setColorFilter(theme.getMainElementsColor())
     }
 
     fun setBackgroundMessageColor(@ColorInt color: Int) {
