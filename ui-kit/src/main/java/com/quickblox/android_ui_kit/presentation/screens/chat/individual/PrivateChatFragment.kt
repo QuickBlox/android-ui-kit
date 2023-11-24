@@ -10,14 +10,18 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
+import android.content.res.Resources
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.text.TextUtils
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import android.widget.PopupWindow
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -27,24 +31,28 @@ import androidx.recyclerview.widget.RecyclerView
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.R
 import com.quickblox.android_ui_kit.databinding.ContainerFragmentBinding
+import com.quickblox.android_ui_kit.databinding.PopupChatLayoutBinding
 import com.quickblox.android_ui_kit.domain.entity.AIRephraseEntity
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
-import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.MediaContentEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
-import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
 import com.quickblox.android_ui_kit.presentation.base.BaseFragment
+import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder.MessageListener
 import com.quickblox.android_ui_kit.presentation.components.messages.MessageAdapter
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.*
+import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.TextIncomingViewHolder
 import com.quickblox.android_ui_kit.presentation.components.send.Recorder
 import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponentListenerImpl
 import com.quickblox.android_ui_kit.presentation.dialogs.AIMenuDialog
 import com.quickblox.android_ui_kit.presentation.dialogs.OkDialog
 import com.quickblox.android_ui_kit.presentation.dialogs.PositiveNegativeDialog
+import com.quickblox.android_ui_kit.presentation.makeClickableBackground
 import com.quickblox.android_ui_kit.presentation.screens.chat.CameraResultContract
 import com.quickblox.android_ui_kit.presentation.screens.chat.EXTRA_DATA
 import com.quickblox.android_ui_kit.presentation.screens.chat.PermissionsContract
 import com.quickblox.android_ui_kit.presentation.screens.chat.full_image_screen.FullImageScreenActivity
 import com.quickblox.android_ui_kit.presentation.screens.chat.individual.PrivateChatViewModel.TypingEvents
+import com.quickblox.android_ui_kit.presentation.screens.features.forwarding.messages.MessagesSelectionActivity
 import com.quickblox.android_ui_kit.presentation.screens.info.individual.PrivateChatInfoActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -131,7 +139,69 @@ open class PrivateChatFragment : BaseFragment() {
         setAudioOutgoingListener()
         setAudioIncomingListener()
         setReadMessageListener()
+        setTextOutgoingListener()
+        setTextIncomingListener()
         setAIListener()
+    }
+
+    private fun setTextIncomingListener() {
+        val messageComponent = screenSettings?.getMessagesComponent()
+
+        val textIncomingListener = messageComponent?.getTextIncomingListener()
+        if (textIncomingListener == null) {
+            messageComponent?.setTextIncomingListener(object : MessageListener {
+                override fun onClick(message: ChatMessageEntity?) {
+                    if (message?.getContentType() == ChatMessageEntity.ContentTypes.TEXT) {
+                        return
+                    }
+                    if (message?.getMediaContent()?.getType() == MediaContentEntity.Types.IMAGE) {
+                        FullImageScreenActivity.show(requireContext(), message.getMediaContent()?.getUrl())
+                    } else {
+                        openChooserToShowFileFrom(message)
+                    }
+                }
+
+                override fun onLongClick(
+                    message: ChatMessageEntity?,
+                    position: Int?,
+                    view: View,
+                    xRawTouch: Int,
+                    yRawTouch: Int,
+                ) {
+                    createAndShowChatPopUp(message, position, view, xRawTouch, yRawTouch)
+                }
+            })
+        }
+    }
+
+    private fun setTextOutgoingListener() {
+        val messageComponent = screenSettings?.getMessagesComponent()
+
+        val textOutgoingListener = messageComponent?.getTextOutgoingListener()
+        if (textOutgoingListener == null) {
+            messageComponent?.setTextOutgoingListener(object : MessageListener {
+                override fun onClick(message: ChatMessageEntity?) {
+                    if (message?.getContentType() == ChatMessageEntity.ContentTypes.TEXT) {
+                        return
+                    }
+                    if (message?.getMediaContent()?.getType() == MediaContentEntity.Types.IMAGE) {
+                        FullImageScreenActivity.show(requireContext(), message.getMediaContent()?.getUrl())
+                    } else {
+                        openChooserToShowFileFrom(message)
+                    }
+                }
+
+                override fun onLongClick(
+                    message: ChatMessageEntity?,
+                    position: Int?,
+                    view: View,
+                    xRawTouch: Int,
+                    yRawTouch: Int,
+                ) {
+                    createAndShowChatPopUp(message, position, view, xRawTouch, yRawTouch)
+                }
+            })
+        }
     }
 
     private fun setImageOutgoingListener() {
@@ -139,13 +209,19 @@ open class PrivateChatFragment : BaseFragment() {
 
         val imageOutgoingListener = messageComponent?.getImageOutgoingListener()
         if (imageOutgoingListener == null) {
-            messageComponent?.setImageOutgoingListener(object : ImageOutgoingViewHolder.ImageOutgoingListener {
-                override fun onImageClick(message: OutgoingChatMessageEntity?) {
+            messageComponent?.setImageOutgoingListener(object : MessageListener {
+                override fun onClick(message: ChatMessageEntity?) {
                     FullImageScreenActivity.show(requireContext(), message?.getMediaContent()?.getUrl())
                 }
 
-                override fun onImageLongClick(message: OutgoingChatMessageEntity?) {
-                    // empty
+                override fun onLongClick(
+                    message: ChatMessageEntity?,
+                    position: Int?,
+                    view: View,
+                    xRawTouch: Int,
+                    yRawTouch: Int,
+                ) {
+                    createAndShowChatPopUp(message, position, view, xRawTouch, yRawTouch)
                 }
             })
         }
@@ -156,13 +232,19 @@ open class PrivateChatFragment : BaseFragment() {
 
         val imageIncomingListener = messageComponent?.getImageIncomingListener()
         if (imageIncomingListener == null) {
-            messageComponent?.setImageIncomingListener(object : ImageIncomingViewHolder.ImageIncomingListener {
-                override fun onImageClick(message: IncomingChatMessageEntity?) {
+            messageComponent?.setImageIncomingListener(object : MessageListener {
+                override fun onClick(message: ChatMessageEntity?) {
                     FullImageScreenActivity.show(requireContext(), message?.getMediaContent()?.getUrl())
                 }
 
-                override fun onImageLongClick(message: IncomingChatMessageEntity?) {
-                    // empty
+                override fun onLongClick(
+                    message: ChatMessageEntity?,
+                    position: Int?,
+                    view: View,
+                    xRawTouch: Int,
+                    yRawTouch: Int,
+                ) {
+                    createAndShowChatPopUp(message, position, view, xRawTouch, yRawTouch)
                 }
             })
         }
@@ -173,13 +255,19 @@ open class PrivateChatFragment : BaseFragment() {
 
         val videoOutgoingListener = messageComponent?.getVideoOutgoingListener()
         if (videoOutgoingListener == null) {
-            messageComponent?.setVideoOutgoingListener(object : VideoOutgoingViewHolder.VideoOutgoingListener {
-                override fun onVideoClick(message: OutgoingChatMessageEntity?) {
+            messageComponent?.setVideoOutgoingListener(object : MessageListener {
+                override fun onClick(message: ChatMessageEntity?) {
                     openChooserToShowFileFrom(message)
                 }
 
-                override fun onVideoLongClick(message: OutgoingChatMessageEntity?) {
-                    // empty
+                override fun onLongClick(
+                    message: ChatMessageEntity?,
+                    position: Int?,
+                    view: View,
+                    xRawTouch: Int,
+                    yRawTouch: Int,
+                ) {
+                    createAndShowChatPopUp(message, position, view, xRawTouch, yRawTouch)
                 }
             })
         }
@@ -190,13 +278,19 @@ open class PrivateChatFragment : BaseFragment() {
 
         val videoIncomingListener = messageComponent?.getVideoIncomingListener()
         if (videoIncomingListener == null) {
-            messageComponent?.setVideoIncomingListener(object : VideoIncomingViewHolder.VideoIncomingListener {
-                override fun onVideoClick(message: IncomingChatMessageEntity?) {
+            messageComponent?.setVideoIncomingListener(object : MessageListener {
+                override fun onClick(message: ChatMessageEntity?) {
                     openChooserToShowFileFrom(message)
                 }
 
-                override fun onVideoLongClick(message: IncomingChatMessageEntity?) {
-                    // empty
+                override fun onLongClick(
+                    message: ChatMessageEntity?,
+                    position: Int?,
+                    view: View,
+                    xRawTouch: Int,
+                    yRawTouch: Int,
+                ) {
+                    createAndShowChatPopUp(message, position, view, xRawTouch, yRawTouch)
                 }
             })
         }
@@ -207,13 +301,19 @@ open class PrivateChatFragment : BaseFragment() {
 
         val fileOutgoingListener = messageComponent?.getFileOutgoingListener()
         if (fileOutgoingListener == null) {
-            messageComponent?.setFileOutgoingListener(object : FileOutgoingViewHolder.FileOutgoingListener {
-                override fun onFileClick(message: OutgoingChatMessageEntity?) {
+            messageComponent?.setFileOutgoingListener(object : MessageListener {
+                override fun onClick(message: ChatMessageEntity?) {
                     openChooserToShowFileFrom(message)
                 }
 
-                override fun onFileLongClick(message: OutgoingChatMessageEntity?) {
-                    // empty
+                override fun onLongClick(
+                    message: ChatMessageEntity?,
+                    position: Int?,
+                    view: View,
+                    xRawTouch: Int,
+                    yRawTouch: Int,
+                ) {
+                    createAndShowChatPopUp(message, position, view, xRawTouch, yRawTouch)
                 }
             })
         }
@@ -224,13 +324,19 @@ open class PrivateChatFragment : BaseFragment() {
 
         val fileIngoingListener = messageComponent?.getFileIncomingListener()
         if (fileIngoingListener == null) {
-            messageComponent?.setFileIncomingListener(object : FileIncomingViewHolder.FileIncomingListener {
-                override fun onFileClick(message: IncomingChatMessageEntity?) {
+            messageComponent?.setFileIncomingListener(object : MessageListener {
+                override fun onClick(message: ChatMessageEntity?) {
                     openChooserToShowFileFrom(message)
                 }
 
-                override fun onFileLongClick(message: IncomingChatMessageEntity?) {
-                    // empty
+                override fun onLongClick(
+                    message: ChatMessageEntity?,
+                    position: Int?,
+                    view: View,
+                    xRawTouch: Int,
+                    yRawTouch: Int,
+                ) {
+                    createAndShowChatPopUp(message, position, view, xRawTouch, yRawTouch)
                 }
             })
         }
@@ -241,13 +347,19 @@ open class PrivateChatFragment : BaseFragment() {
 
         val audioOutgoingListener = messageComponent?.getAudioOutgoingListener()
         if (audioOutgoingListener == null) {
-            messageComponent?.setAudioOutgoingListener(object : AudioOutgoingViewHolder.AudioOutgoingListener {
-                override fun onAudioClick(message: OutgoingChatMessageEntity?) {
+            messageComponent?.setAudioOutgoingListener(object : MessageListener {
+                override fun onClick(message: ChatMessageEntity?) {
                     openChooserToShowFileFrom(message)
                 }
 
-                override fun onAudioLongClick(message: OutgoingChatMessageEntity?) {
-                    // empty
+                override fun onLongClick(
+                    message: ChatMessageEntity?,
+                    position: Int?,
+                    view: View,
+                    xRawTouch: Int,
+                    yRawTouch: Int,
+                ) {
+                    createAndShowChatPopUp(message, position, view, xRawTouch, yRawTouch)
                 }
             })
         }
@@ -258,16 +370,66 @@ open class PrivateChatFragment : BaseFragment() {
 
         val audioIncomingListener = messageComponent?.getAudioIncomingListener()
         if (audioIncomingListener == null) {
-            messageComponent?.setAudioIncomingListener(object : AudioIncomingViewHolder.AudioIncomingListener {
-                override fun onAudioClick(message: IncomingChatMessageEntity?) {
+            messageComponent?.setAudioIncomingListener(object : MessageListener {
+                override fun onClick(message: ChatMessageEntity?) {
                     openChooserToShowFileFrom(message)
                 }
 
-                override fun onAudioLongClick(message: IncomingChatMessageEntity?) {
-                    // empty
+                override fun onLongClick(
+                    message: ChatMessageEntity?,
+                    position: Int?,
+                    view: View,
+                    xRawTouch: Int,
+                    yRawTouch: Int,
+                ) {
+                    createAndShowChatPopUp(message, position, view, xRawTouch, yRawTouch)
                 }
             })
         }
+    }
+
+    private fun createAndShowChatPopUp(
+        message: ChatMessageEntity?,
+        position: Int?,
+        view: View,
+        xRawTouch: Int,
+        yRawTouch: Int,
+    ) {
+        val layoutInflater = requireActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val bindingPopUp = PopupChatLayoutBinding.inflate(layoutInflater)
+
+        val scale = Resources.getSystem().displayMetrics.density
+        val width150px = (150 * scale + 0.5f).toInt()
+        val popupWindow = PopupWindow(bindingPopUp.root, width150px, ViewGroup.LayoutParams.WRAP_CONTENT)
+
+        popupWindow.isOutsideTouchable = true
+
+        screenSettings?.getTheme()?.getMainTextColor()?.let {
+            bindingPopUp.tvForward.setTextColor(it)
+            bindingPopUp.root.setBackgroundTintList(ColorStateList.valueOf(it))
+        }
+
+        screenSettings?.getTheme()?.getMainBackgroundColor()?.let {
+            bindingPopUp.clPopUp.setBackgroundTintList(ColorStateList.valueOf(it))
+        }
+
+        screenSettings?.getTheme()?.getMainElementsColor()?.let {
+            bindingPopUp.tvForward.makeClickableBackground(it)
+        }
+
+        bindingPopUp.tvForward.setOnClickListener {
+            MessagesSelectionActivity.show(
+                requireContext(),
+                dialogId,
+                viewModel.messages,
+                message,
+                viewModel.pagination,
+                position, screenSettings?.getTheme()
+            )
+            popupWindow.dismiss()
+        }
+
+        popupWindow.showAtLocation(view, Gravity.NO_GRAVITY, xRawTouch, yRawTouch)
     }
 
     private fun setReadMessageListener() {
@@ -289,7 +451,7 @@ open class PrivateChatFragment : BaseFragment() {
         val aiListener = messageComponent?.getAIListener()
         if (aiListener == null) {
             messageComponent?.setAIListener(object : TextIncomingViewHolder.AIListener {
-                override fun onIconClick(message: IncomingChatMessageEntity?) {
+                override fun onIconClick(message: ForwardedRepliedMessageEntity?) {
                     if (message == null) {
                         return
                     }
@@ -300,7 +462,7 @@ open class PrivateChatFragment : BaseFragment() {
                             message,
                             screenSettings?.getTheme(),
                             object : AIMenuDialog.IncomingMessageMenuListener {
-                                override fun onAiAnswerAssistantClicked(message: IncomingChatMessageEntity?) {
+                                override fun onAiAnswerAssistantClicked(message: ForwardedRepliedMessageEntity?) {
                                     if (dialogId != null && message != null) {
                                         viewModel.executeAIAnswerAssistant(dialogId!!, message)
                                     }
@@ -312,7 +474,7 @@ open class PrivateChatFragment : BaseFragment() {
                     }
                 }
 
-                override fun onTranslateClick(message: IncomingChatMessageEntity?) {
+                override fun onTranslateClick(message: ForwardedRepliedMessageEntity?) {
                     if (message == null) {
                         return
                     }
@@ -537,9 +699,9 @@ open class PrivateChatFragment : BaseFragment() {
     }
 
     private fun subscribeToLoadedMessages() {
-        viewModel.loadedMessage.observe(viewLifecycleOwner) {
+        viewModel.loadedMessage.observe(viewLifecycleOwner) { index ->
             if (viewModel.messages.isNotEmpty()) {
-                screenSettings?.getMessagesComponent()?.getAdapter()?.notifyItemInserted(0)
+                screenSettings?.getMessagesComponent()?.getAdapter()?.notifyItemInserted(index)
             }
         }
     }

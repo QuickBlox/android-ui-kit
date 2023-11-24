@@ -7,6 +7,16 @@
     android:layout_marginTop="8dp"
     android:paddingBottom="4dp">
 
+    <CheckBox
+        android:id="@+id/checkbox"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible" />
+
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/ivVideo"
         android:layout_width="240dp"

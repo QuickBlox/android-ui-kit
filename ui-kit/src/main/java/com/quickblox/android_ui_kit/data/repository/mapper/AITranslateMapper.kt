@@ -10,13 +10,14 @@ import com.quickblox.android_ui_kit.ExcludeFromCoverage
 import com.quickblox.android_ui_kit.data.dto.ai.AITranslateDTO
 import com.quickblox.android_ui_kit.data.dto.ai.AITranslateMessageDTO
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.AITranslateIncomingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
 
 @ExcludeFromCoverage
 object AITranslateMapper {
-    fun DTOFrom(messageEntity: IncomingChatMessageEntity): AITranslateDTO {
+    fun DTOFrom(messageEntity: ForwardedRepliedMessageEntity): AITranslateDTO {
         val dto = AITranslateDTO()
         dto.content = messageEntity.getContent()
         return dto
@@ -24,7 +25,7 @@ object AITranslateMapper {
 
     fun entityFrom(
         dto: AITranslateDTO,
-        incomingMessage: IncomingChatMessageEntity,
+        incomingMessage: ForwardedRepliedMessageEntity,
     ): AITranslateIncomingChatMessageEntity {
         val translateMessage = AITranslateIncomingChatMessageEntity(incomingMessage.getContentType())
         translateMessage.setTranslation(dto.translation)
@@ -34,11 +35,10 @@ object AITranslateMapper {
         translateMessage.setContent(incomingMessage.getContent())
         translateMessage.setSenderId(incomingMessage.getSenderId())
         translateMessage.setParticipantId(incomingMessage.getParticipantId())
-        translateMessage.setLoggedUserId(incomingMessage.getLoggedUserId())
-        translateMessage.setReadIds(incomingMessage.getReadIds())
-        translateMessage.setDeliveredIds(incomingMessage.getDeliveredIds())
         translateMessage.setMediaContent(incomingMessage.getMediaContent())
         translateMessage.setSender(incomingMessage.getSender())
+        translateMessage.setForwardedRepliedMessages(incomingMessage.getForwardedRepliedMessages())
+        incomingMessage.getForwardOrRepliedType()?.let { translateMessage.setForwardOrReplied(it) }
 
         return translateMessage
     }

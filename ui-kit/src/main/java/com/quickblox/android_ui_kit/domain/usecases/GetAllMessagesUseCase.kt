@@ -9,12 +9,17 @@ import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.entity.PaginationEntity
 import com.quickblox.android_ui_kit.domain.entity.UserEntity
-import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.exception.DomainException
 import com.quickblox.android_ui_kit.domain.usecases.base.FlowUseCase
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 
 class GetAllMessagesUseCase(
@@ -41,15 +46,20 @@ class GetAllMessagesUseCase(
                     if (result.isSuccess) {
                         val message = result.getOrNull()?.first
 
-                        val isIncomingChatMessage = message is IncomingChatMessageEntity?
+                        val isChatMessage = message is ChatMessageEntity?
 
-                        if (isIncomingChatMessage) {
-                            val incomingMessage = message as IncomingChatMessageEntity?
-                            val senderId = incomingMessage?.getSenderId()
+                        if (isChatMessage) {
+                            val chatMessage = message as ChatMessageEntity?
+                            val senderId = chatMessage?.getSenderId()
 
                             val user = getUser(senderId, usersFromDialog)
                             user?.let {
                                 message?.setSender(user)
+                            }
+
+                            if (isExistForwardReplyMessagesIn(message)) {
+                                val messages = getForwardedRepliedMessages(message as ForwardedRepliedMessageEntity)
+                                loadAndSetUsersForForwardedRepliedMessages(messages)
                             }
                         }
 
@@ -93,5 +103,37 @@ class GetAllMessagesUseCase(
 
     private fun getUserFromRemote(userId: Int): UserEntity {
         return usersRepository.getUserFromRemote(userId)
+    }
+
+    private fun isExistForwardReplyMessagesIn(message: MessageEntity?): Boolean {
+        val isForwardedRepliedMessage = message != null && message is ForwardedRepliedMessageEntity?
+        if (isForwardedRepliedMessage) {
+            val forwardedRepliedMessages = (message as ForwardedRepliedMessageEntity).getForwardedRepliedMessages()
+            if (forwardedRepliedMessages?.isNotEmpty() == true) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun getForwardedRepliedMessages(message: ForwardedRepliedMessageEntity): List<ChatMessageEntity> {
+        return message.getForwardedRepliedMessages() ?: listOf()
+    }
+
+    private fun loadAndSetUsersForForwardedRepliedMessages(messages: List<ChatMessageEntity>) {
+        val usersCache = hashMapOf<Int, UserEntity>()
+
+        for (message in messages) {
+            message.getSenderId()?.let { userId ->
+                val isNotExistUserInCache = !usersCache.contains(userId)
+                if (isNotExistUserInCache) {
+                    val loadedUser = getUserFromRemote(userId)
+                    usersCache[userId] = loadedUser
+                }
+
+                val user = usersCache[userId]
+                message.setSender(user)
+            }
+        }
     }
 }

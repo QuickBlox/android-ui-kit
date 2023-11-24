@@ -1,28 +1,36 @@
 /*
- * Created by Injoit on 12.5.2023.
+ * Created by Injoit on 7.11.2023.
  * Copyright © 2023 Quickblox. All rights reserved.
  *
  */
 
 package com.quickblox.android_ui_kit.presentation.components.messages.viewholders
 
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.drawable.GradientDrawable
-import android.view.LayoutInflater
-import android.view.ViewGroup
+import android.view.*
 import androidx.annotation.ColorInt
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.ContextCompat
 import com.quickblox.android_ui_kit.R
 import com.quickblox.android_ui_kit.databinding.FileIncomingMessageItemBinding
+import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
+import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder
 import com.quickblox.android_ui_kit.presentation.base.BaseViewHolder
+import com.quickblox.android_ui_kit.presentation.components.messages.MessageAdapter
 import com.quickblox.android_ui_kit.presentation.screens.convertToStringTime
 import com.quickblox.android_ui_kit.presentation.screens.loadCircleImageFromUrl
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 
 class FileIncomingViewHolder(binding: FileIncomingMessageItemBinding) :
-    BaseViewHolder<FileIncomingMessageItemBinding>(binding) {
+    BaseViewHolder<FileIncomingMessageItemBinding>(binding), Forward {
     private var theme: UiKitTheme = LightUIKitTheme()
+    private var checkBoxListener: MessageAdapter.CheckBoxListener? = null
 
     companion object {
         fun newInstance(parent: ViewGroup): FileIncomingViewHolder {
@@ -36,7 +44,10 @@ class FileIncomingViewHolder(binding: FileIncomingMessageItemBinding) :
         applyTheme(theme)
     }
 
-    fun bind(message: IncomingChatMessageEntity?, listener: FileIncomingListener?) {
+    fun bind(
+        message: IncomingChatMessageEntity?, listener: BaseMessageViewHolder.MessageListener?, isForwardState: Boolean,
+        selectedMessages: MutableList<MessageEntity>,
+    ) {
         binding.tvFileName.text = message?.getMediaContent()?.getName()
 
         binding.tvTime.text = message?.getTime()?.convertToStringTime()
@@ -50,6 +61,29 @@ class FileIncomingViewHolder(binding: FileIncomingMessageItemBinding) :
             binding.ivAvatar.loadCircleImageFromUrl(sender?.getAvatarUrl(), R.drawable.user_avatar_holder)
         }
 
+        if (isForwardState) {
+            binding.checkbox.visibility = View.VISIBLE
+
+            if (selectedMessages.isNotEmpty()) {
+                val foundMessage = selectedMessages.get(0)
+
+                if (foundMessage is ForwardedRepliedMessageEntity && message?.getMessageId() != null
+                    && message.getMessageId() == foundMessage.getMessageId() && foundMessage.getRelatedMessageId()
+                        .isNullOrEmpty()
+                ) {
+                    binding.checkbox.isChecked = true
+                }
+            }
+
+            binding.checkbox.setOnCheckedChangeListener { buttonView, isChecked ->
+                if (isChecked) {
+                    checkBoxListener?.onSelected(message)
+                } else {
+                    checkBoxListener?.onUnselected(message)
+                }
+            }
+        }
+
         setListener(message, listener)
 
         binding.tvName.text = sender?.getName() ?: sender?.getLogin()
@@ -57,15 +91,17 @@ class FileIncomingViewHolder(binding: FileIncomingMessageItemBinding) :
         applyTheme(theme)
     }
 
-    private fun setListener(message: IncomingChatMessageEntity?, listener: FileIncomingListener?) {
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setListener(message: IncomingChatMessageEntity?, listener: BaseMessageViewHolder.MessageListener?) {
         binding.llFile.setOnClickListener {
-            listener?.onFileClick(message)
+            listener?.onClick(message)
         }
-
         binding.llFile.setOnLongClickListener {
-            listener?.onFileLongClick(message)
             true
         }
+        binding.llFile.setOnTouchListener(
+            TouchListener(binding.llFile.context, message, listener, binding.llFile)
+        )
     }
 
     private fun applyTheme(theme: UiKitTheme) {
@@ -74,7 +110,16 @@ class FileIncomingViewHolder(binding: FileIncomingMessageItemBinding) :
         setNameColor(theme.getMainTextColor())
         setPlaceholderColor(theme.getTertiaryElementsColor())
         setFileNameColor(theme.getMainTextColor())
+        setCheckBoxColor(theme.getMainElementsColor())
     }
+
+    fun setCheckBoxColor(@ColorInt color: Int) {
+        val states: Array<IntArray> = arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf())
+        val defaultColor = ContextCompat.getColor(binding.root.context, android.R.color.darker_gray)
+        val colors = intArrayOf(color, defaultColor)
+        binding.checkbox.buttonTintList = ColorStateList(states, colors)
+    }
+
 
     private fun setPlaceholderColor(@ColorInt color: Int) {
         val drawable =
@@ -98,12 +143,40 @@ class FileIncomingViewHolder(binding: FileIncomingMessageItemBinding) :
         binding.tvName.setTextColor(color)
     }
 
+    override fun setChecked(checked: Boolean, selectedMessages: MutableList<MessageEntity>) {
+        binding.checkbox.isChecked = checked
+    }
+
     fun setTimeTextColor(@ColorInt color: Int) {
         binding.tvTime.setTextColor(color)
     }
 
-    interface FileIncomingListener {
-        fun onFileClick(message: IncomingChatMessageEntity?)
-        fun onFileLongClick(message: IncomingChatMessageEntity?)
+    fun setCheckBoxListener(checkBoxListener: MessageAdapter.CheckBoxListener) {
+        this.checkBoxListener = checkBoxListener
+    }
+
+    inner class TouchListener(
+        context: Context,
+        private val message: IncomingChatMessageEntity?,
+        private val listener: BaseMessageViewHolder.MessageListener?,
+        private val view: View,
+    ) : View.OnTouchListener {
+        private val gestureDetector: GestureDetector
+
+        init {
+            gestureDetector = GestureDetector(context, GestureListener())
+        }
+
+        override fun onTouch(v: View, event: MotionEvent): Boolean {
+            return gestureDetector.onTouchEvent(event)
+        }
+
+        private inner class GestureListener : GestureDetector.SimpleOnGestureListener() {
+            override fun onLongPress(e: MotionEvent) {
+                val x = e.rawX.toInt()
+                val y = e.rawY.toInt()
+                listener?.onLongClick(message, adapterPosition, view, x, y)
+            }
+        }
     }
 }

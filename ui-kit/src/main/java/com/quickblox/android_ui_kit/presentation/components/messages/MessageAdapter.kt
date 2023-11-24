@@ -1,5 +1,5 @@
 /*
- * Created by Injoit on 26.4.2023.
+ * Created by Injoit on 7.11.2023.
  * Copyright © 2023 Quickblox. All rights reserved.
  *
  */
@@ -12,20 +12,12 @@ import com.quickblox.android_ui_kit.domain.entity.message.*
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity.ChatMessageTypes.FROM_LOGGED_USER
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity.ChatMessageTypes.FROM_OPPONENT
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity.ContentTypes.TEXT
+import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder
+import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder.MessageListener
 import com.quickblox.android_ui_kit.presentation.base.BaseViewHolder
 import com.quickblox.android_ui_kit.presentation.components.messages.MessageAdapter.MessageViewHolderTypes.*
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.*
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.AudioIncomingViewHolder.AudioIncomingListener
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.AudioOutgoingViewHolder.AudioOutgoingListener
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.FileIncomingViewHolder.FileIncomingListener
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.FileOutgoingViewHolder.FileOutgoingListener
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.ImageIncomingViewHolder.ImageIncomingListener
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.ImageOutgoingViewHolder.ImageOutgoingListener
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.TextIncomingViewHolder.AIListener
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.TextIncomingViewHolder.TextIncomingListener
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.TextOutgoingViewHolder.TextOutgoingListener
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.VideoIncomingViewHolder.VideoIncomingListener
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.VideoOutgoingViewHolder.VideoOutgoingListener
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.factory.MessageViewHolderFactory
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.factory.MessageViewHolderFactoryImpl
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
@@ -52,26 +44,36 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
 
     private var readMessageListener: ReadMessageListener? = null
 
-    private var imageOutgoingListener: ImageOutgoingListener? = null
-    private var imageIncomingListener: ImageIncomingListener? = null
-    private var textIncomingListener: TextIncomingListener? = null
+    private var imageOutgoingListener: MessageListener? = null
+    private var imageIncomingListener: MessageListener? = null
+    private var textIncomingListener: MessageListener? = null
     private var aiListener: AIListener? = null
-    private var textOutgoingListener: TextOutgoingListener? = null
-    private var videoOutgoingListener: VideoOutgoingListener? = null
-    private var videoIncomingListener: VideoIncomingListener? = null
-    private var fileOutgoingListener: FileOutgoingListener? = null
-    private var fileIncomingListener: FileIncomingListener? = null
-    private var audioOutgoingListener: AudioOutgoingListener? = null
-    private var audioIncomingListener: AudioIncomingListener? = null
+    private var textOutgoingListener: MessageListener? = null
+    private var videoOutgoingListener: MessageListener? = null
+    private var videoIncomingListener: MessageListener? = null
+    private var fileOutgoingListener: MessageListener? = null
+    private var fileIncomingListener: MessageListener? = null
+    private var audioOutgoingListener: MessageListener? = null
+    private var audioIncomingListener: MessageListener? = null
+    private var forwardedClickListener: MessageListener? = null
 
     private var enabledAI: Boolean = false
     private var enabledAITranslation: Boolean = false
+
+    private var isForwardState: Boolean = false
+    private var lastCheckedHolder: BaseViewHolder<*>? = null
+
+    private var selectedMessages = mutableListOf<MessageEntity>()
+    private var selectionListener: SelectionListener? = null
 
     init {
         setHasStableIds(true)
     }
 
     override fun onBindViewHolder(holder: BaseViewHolder<*>, position: Int) {
+        if (holder is BaseMessageViewHolder){
+            holder.clearCachedData()
+        }
         val message = items?.get(position)
         holder.setTheme(theme)
 
@@ -85,6 +87,15 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
             if (message.isNotRead()) {
                 readMessageListener?.read(message)
             }
+        }
+        val isSelected =
+            selectedMessages.contains(message) || message is ForwardedRepliedMessageEntity && !message.getForwardedRepliedMessages()
+                .isNullOrEmpty() && selectedMessages.contains(
+                message.getForwardedRepliedMessages()!![0]
+            )
+
+        if (lastCheckedHolder== null && isSelected) {
+            lastCheckedHolder = holder
         }
 
         when (holder) {
@@ -101,53 +112,84 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
             is TextIncomingViewHolder -> {
                 message as IncomingChatMessageEntity
                 holder.setShowAITranslate(enabledAITranslation)
-                holder.bind(message, textIncomingListener, aiListener)
+                holder.bind(message, textIncomingListener, aiListener, isForwardState, selectedMessages)
                 holder.setShowAIIcon(enabledAI)
+                if (isForwardState) {
+                    holder.setCheckBoxListener(MessageCheckBoxListener(holder, message))
+                }
             }
 
             is TextOutgoingViewHolder -> {
                 message as OutgoingChatMessageEntity
-                holder.bind(message, textOutgoingListener)
+
+                holder.bind(message, textOutgoingListener, isForwardState, selectedMessages)
+                if (isForwardState) {
+                    holder.setCheckBoxListener(MessageCheckBoxListener(holder, message))
+                }
             }
 
             is ImageIncomingViewHolder -> {
                 message as IncomingChatMessageEntity
-                holder.bind(message, imageIncomingListener)
+                holder.bind(message, imageIncomingListener, isForwardState, selectedMessages)
+                if (isForwardState) {
+                    holder.setCheckBoxListener(MessageCheckBoxListener(holder, message))
+                }
             }
 
             is ImageOutgoingViewHolder -> {
                 message as OutgoingChatMessageEntity
-                holder.bind(message, imageOutgoingListener)
+                holder.bind(message, imageOutgoingListener, isForwardState, selectedMessages)
+                if (isForwardState) {
+                    holder.setCheckBoxListener(MessageCheckBoxListener(holder, message))
+                }
             }
 
             is VideoOutgoingViewHolder -> {
                 message as OutgoingChatMessageEntity
-                holder.bind(message, videoOutgoingListener)
+                holder.bind(message, videoOutgoingListener, isForwardState, selectedMessages)
+                if (isForwardState) {
+                    holder.setCheckBoxListener(MessageCheckBoxListener(holder, message))
+                }
             }
 
             is VideoIncomingViewHolder -> {
                 message as IncomingChatMessageEntity
-                holder.bind(message, videoIncomingListener)
+                holder.bind(message, videoIncomingListener, isForwardState, selectedMessages)
+                if (isForwardState) {
+                    holder.setCheckBoxListener(MessageCheckBoxListener(holder, message))
+                }
             }
 
             is FileOutgoingViewHolder -> {
                 message as OutgoingChatMessageEntity
-                holder.bind(message, fileOutgoingListener)
+                holder.bind(message, fileOutgoingListener, isForwardState, selectedMessages)
+                if (isForwardState) {
+                    holder.setCheckBoxListener(MessageCheckBoxListener(holder, message))
+                }
             }
 
             is FileIncomingViewHolder -> {
                 message as IncomingChatMessageEntity
-                holder.bind(message, fileIncomingListener)
+                holder.bind(message, fileIncomingListener, isForwardState, selectedMessages)
+                if (isForwardState) {
+                    holder.setCheckBoxListener(MessageCheckBoxListener(holder, message))
+                }
             }
 
             is AudioOutgoingViewHolder -> {
                 message as OutgoingChatMessageEntity
-                holder.bind(message, audioOutgoingListener)
+                holder.bind(message, audioOutgoingListener, isForwardState, selectedMessages)
+                if (isForwardState) {
+                    holder.setCheckBoxListener(MessageCheckBoxListener(holder, message))
+                }
             }
 
             is AudioIncomingViewHolder -> {
                 message as IncomingChatMessageEntity
-                holder.bind(message, audioIncomingListener)
+                holder.bind(message, audioIncomingListener, isForwardState, selectedMessages)
+                if (isForwardState) {
+                    holder.setCheckBoxListener(MessageCheckBoxListener(holder, message))
+                }
             }
         }
     }
@@ -164,27 +206,35 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
         return items
     }
 
-    fun getImageOutgoingListener(): ImageOutgoingListener? {
+    fun getImageOutgoingListener(): MessageListener? {
         return imageOutgoingListener
     }
 
-    fun setImageOutgoingListener(listener: ImageOutgoingListener?) {
+    fun setImageOutgoingListener(listener: MessageListener?) {
         this.imageOutgoingListener = listener
     }
 
-    fun getImageIncomingListener(): ImageIncomingListener? {
+    fun getForwardedClickListener(): MessageListener? {
+        return forwardedClickListener
+    }
+
+    fun setForwardedClickListener(listener: MessageListener?) {
+        this.forwardedClickListener = listener
+    }
+
+    fun getImageIncomingListener(): MessageListener? {
         return imageIncomingListener
     }
 
-    fun setImageIncomingListener(listener: ImageIncomingListener?) {
+    fun setImageIncomingListener(listener: MessageListener?) {
         this.imageIncomingListener = listener
     }
 
-    fun getTextIncomingListener(): TextIncomingListener? {
+    fun getTextIncomingListener(): MessageListener? {
         return textIncomingListener
     }
 
-    fun setTextIncomingListener(listener: TextIncomingListener?) {
+    fun setTextIncomingListener(listener: MessageListener?) {
         this.textIncomingListener = listener
     }
 
@@ -204,59 +254,59 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
         enabledAITranslation = enabled
     }
 
-    fun getTextOutgoingListener(): TextOutgoingListener? {
+    fun getTextOutgoingListener(): MessageListener? {
         return textOutgoingListener
     }
 
-    fun setTextOutgoingListener(listener: TextOutgoingListener?) {
+    fun setTextOutgoingListener(listener: MessageListener?) {
         this.textOutgoingListener = listener
     }
 
-    fun getVideoOutgoingListener(): VideoOutgoingListener? {
+    fun getVideoOutgoingListener(): MessageListener? {
         return videoOutgoingListener
     }
 
-    fun setVideoOutgoingListener(listener: VideoOutgoingListener?) {
+    fun setVideoOutgoingListener(listener: MessageListener?) {
         this.videoOutgoingListener = listener
     }
 
-    fun getVideoIncomingListener(): VideoIncomingListener? {
+    fun getVideoIncomingListener(): MessageListener? {
         return videoIncomingListener
     }
 
-    fun setVideoIncomingListener(listener: VideoIncomingListener?) {
+    fun setVideoIncomingListener(listener: MessageListener?) {
         this.videoIncomingListener = listener
     }
 
-    fun getFileOutgoingListener(): FileOutgoingListener? {
+    fun getFileOutgoingListener(): MessageListener? {
         return fileOutgoingListener
     }
 
-    fun setFileOutgoingListener(listener: FileOutgoingListener?) {
+    fun setFileOutgoingListener(listener: MessageListener?) {
         this.fileOutgoingListener = listener
     }
 
-    fun getFileIngoingListener(): FileIncomingListener? {
+    fun getFileIngoingListener(): MessageListener? {
         return fileIncomingListener
     }
 
-    fun setFileIngoingListener(listener: FileIncomingListener?) {
+    fun setFileIngoingListener(listener: MessageListener?) {
         this.fileIncomingListener = listener
     }
 
-    fun getAudioOutgoingListener(): AudioOutgoingListener? {
+    fun getAudioOutgoingListener(): MessageListener? {
         return audioOutgoingListener
     }
 
-    fun setAudioOutgoingListener(listener: AudioOutgoingListener?) {
+    fun setAudioOutgoingListener(listener: MessageListener?) {
         this.audioOutgoingListener = listener
     }
 
-    fun getAudioIncomingListener(): AudioIncomingListener? {
+    fun getAudioIncomingListener(): MessageListener? {
         return audioIncomingListener
     }
 
-    fun setAudioIncomingListener(listener: AudioIncomingListener?) {
+    fun setAudioIncomingListener(listener: MessageListener?) {
         this.audioIncomingListener = listener
     }
 
@@ -266,6 +316,22 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
 
     fun setReadMessageListener(listener: ReadMessageListener?) {
         this.readMessageListener = listener
+    }
+
+    fun setForwardState(isForwardState: Boolean) {
+        this.isForwardState = isForwardState
+    }
+
+    fun getSelectedMessages(): List<MessageEntity> {
+        return selectedMessages
+    }
+
+    fun setSelectedMessages(message: MessageEntity) {
+        selectedMessages.add(message)
+    }
+
+    fun setSelectionListener(selectionListener: SelectionListener) {
+        this.selectionListener = selectionListener
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder<*> {
@@ -389,5 +455,44 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
 
     interface ReadMessageListener {
         fun read(message: MessageEntity)
+    }
+
+    interface CheckBoxListener {
+        fun onSelected(selectedMessage: MessageEntity?)
+        fun onUnselected(unSelectedMessage: MessageEntity?)
+    }
+
+    inner class MessageCheckBoxListener(private val holder: BaseViewHolder<*>, private val message: ChatMessageEntity) :
+        CheckBoxListener {
+        override fun onSelected(selectedMessage: MessageEntity?) {
+
+            val checkedHolder = lastCheckedHolder
+
+            if (checkedHolder is Forward && checkedHolder != holder) {
+                checkedHolder.setChecked(false, selectedMessages)
+            } else if (checkedHolder is Forward && checkedHolder == holder && selectedMessages.isNotEmpty()) {
+                checkedHolder.setChecked(false, selectedMessages)
+            }
+
+            lastCheckedHolder = holder
+
+            if (selectedMessage != null) {
+                selectedMessages.add(selectedMessage)
+            }
+            notifySelectionListener(selectedMessages.size)
+        }
+
+        override fun onUnselected(unSelectedMessage: MessageEntity?) {
+            selectedMessages.remove(unSelectedMessage)
+            notifySelectionListener(selectedMessages.size)
+        }
+    }
+
+    private fun notifySelectionListener(countMessages: Int) {
+        selectionListener?.onSelection(countMessages)
+    }
+
+    interface SelectionListener {
+        fun onSelection(countMessages: Int)
     }
 }

@@ -6,15 +6,11 @@
 package com.quickblox.android_ui_kit.domain.entity.implementation.message
 
 import com.quickblox.android_ui_kit.domain.entity.UserEntity
-import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
-import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
-import com.quickblox.android_ui_kit.domain.entity.message.MediaContentEntity
-import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.*
 import kotlin.random.Random
 
-open class IncomingChatMessageEntityImpl(
-    private var contentType: ChatMessageEntity.ContentTypes,
-) : IncomingChatMessageEntity {
+open class IncomingChatMessageEntityImpl(private var contentType: ChatMessageEntity.ContentTypes) :
+    IncomingChatMessageEntity {
     private var dialogId: String? = null
     private var senderId: Int? = null
     private var loggedUserId: Int? = null
@@ -26,6 +22,11 @@ open class IncomingChatMessageEntityImpl(
     private var mediaContent: MediaContentEntity? = null
     private var readIds: Collection<Int>? = null
     private var deliveredIds: Collection<Int>? = null
+
+    private var forwardReplyType: ForwardedRepliedMessageEntity.Types? = null
+    private var forwardedRepliedMessages: List<ForwardedRepliedMessageEntity>? = null
+
+    private var relatedMessageId: String? = null
 
     override fun getChatMessageType(): ChatMessageEntity.ChatMessageTypes {
         return ChatMessageEntity.ChatMessageTypes.FROM_OPPONENT
@@ -141,6 +142,42 @@ open class IncomingChatMessageEntityImpl(
         val isContains = deliveredIds?.contains(loggedUserId)
         val isNotContains = !(isContains ?: false)
         return isNotContains
+    }
+
+    override fun setForwardOrReplied(type: ForwardedRepliedMessageEntity.Types) {
+        forwardReplyType = type
+    }
+
+    override fun getForwardOrRepliedType(): ForwardedRepliedMessageEntity.Types? {
+        return forwardReplyType
+    }
+
+    override fun isForwardedOrReplied(): Boolean {
+        return forwardReplyType != null
+    }
+
+    override fun isReplied(): Boolean {
+        return forwardReplyType == ForwardedRepliedMessageEntity.Types.REPLIED
+    }
+
+    override fun isForwarded(): Boolean {
+        return forwardReplyType == ForwardedRepliedMessageEntity.Types.FORWARDED
+    }
+
+    override fun getForwardedRepliedMessages(): List<ForwardedRepliedMessageEntity>? {
+        return forwardedRepliedMessages
+    }
+
+    override fun setForwardedRepliedMessages(messages: List<ForwardedRepliedMessageEntity>?) {
+        forwardedRepliedMessages = messages
+    }
+
+    override fun setRelatedMessageId(messageId: String?) {
+        this.relatedMessageId = messageId
+    }
+
+    override fun getRelatedMessageId(): String? {
+        return relatedMessageId
     }
 
     override fun equals(other: Any?): Boolean {

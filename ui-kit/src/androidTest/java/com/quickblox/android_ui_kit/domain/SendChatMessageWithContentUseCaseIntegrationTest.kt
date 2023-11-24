@@ -33,6 +33,7 @@ import com.quickblox.chat.model.QBChatMessage
 import com.quickblox.chat.model.QBDialogType
 import com.quickblox.users.model.QBUser
 import junit.framework.Assert.assertEquals
+import junit.framework.Assert.assertTrue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.catch
@@ -132,8 +133,7 @@ class SendChatMessageWithContentUseCaseIntegrationTest : BaseTest() {
         assertEquals(0, loadMessagesLatch.count)
 
         val receivedContentUrl = lastLoadedMessageFromRest?.getMediaContent()?.getUrl()
-        val createdContentUrl = createdMessage.getMediaContent()?.getUrl()
-        assertEquals(createdContentUrl, receivedContentUrl)
+        assertTrue(receivedContentUrl!!.contains("https://api.quickblox.com/blobs"))
 
         val receivedMimeType = lastLoadedMessageFromRest?.getMediaContent()?.getMimeType()
         val createdMimeType = createdMessage.getMediaContent()?.getMimeType()

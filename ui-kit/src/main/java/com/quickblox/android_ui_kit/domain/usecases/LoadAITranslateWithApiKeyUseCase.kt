@@ -12,7 +12,7 @@ import com.quickblox.android_ui_kit.domain.entity.PaginationEntity
 import com.quickblox.android_ui_kit.domain.entity.implementation.PaginationEntityImpl
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.AITranslateIncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
-import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.exception.DomainException
 import com.quickblox.android_ui_kit.domain.exception.repository.AIRepositoryException
@@ -22,8 +22,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @ExcludeFromCoverage
-class LoadAITranslateWithApiKeyUseCase(private val dialogId: String?, private val message: IncomingChatMessageEntity) :
-    BaseUseCase<AITranslateIncomingChatMessageEntity?>() {
+class LoadAITranslateWithApiKeyUseCase(
+    private val dialogId: String?,
+    private var message: ForwardedRepliedMessageEntity,
+) : BaseUseCase<AITranslateIncomingChatMessageEntity?>() {
     private val aiRepository = QuickBloxUiKit.getDependency().getAIRepository()
     private val messageRepository = QuickBloxUiKit.getDependency().getMessagesRepository()
 
@@ -45,13 +47,14 @@ class LoadAITranslateWithApiKeyUseCase(private val dialogId: String?, private va
                 throw DomainException(exception.message ?: "Unexpected Exception")
             }
         }
+        entity?.setRelatedMessageId(message.getRelatedMessageId())
 
         return entity
     }
 
     private suspend fun searchStartPagination(
         dialogId: String,
-        incomingMessage: IncomingChatMessageEntity,
+        incomingMessage: ForwardedRepliedMessageEntity,
     ): PaginationEntity {
         var paginationResult: PaginationEntity = PaginationEntityImpl()
         paginationResult.setHasNextPage(true)
@@ -65,7 +68,8 @@ class LoadAITranslateWithApiKeyUseCase(private val dialogId: String?, private va
 
                 paginationResult = receivedPagination
 
-                val isEqualsMessages = receivedMessage?.getMessageId() == incomingMessage.getMessageId()
+                val messageId = incomingMessage.getRelatedMessageId() ?: incomingMessage.getMessageId()
+                val isEqualsMessages = receivedMessage?.getMessageId() == messageId
                 if (isNotFoundPagination && isEqualsMessages) {
                     isNotFoundPagination = false
                     return@collect
@@ -86,7 +90,7 @@ class LoadAITranslateWithApiKeyUseCase(private val dialogId: String?, private va
 
     private suspend fun loadMessages(
         dialogId: String,
-        startMessage: IncomingChatMessageEntity,
+        startMessage: ForwardedRepliedMessageEntity,
         paginationEntity: PaginationEntity,
     ): List<MessageEntity> {
         val messages = mutableListOf<MessageEntity>()
@@ -105,7 +109,9 @@ class LoadAITranslateWithApiKeyUseCase(private val dialogId: String?, private va
                 pagination = receivedPagination
 
                 receivedMessage?.let {
-                    if (receivedMessage.getMessageId() == startMessage.getMessageId()) {
+                    val messageId = startMessage.getRelatedMessageId() ?: startMessage.getMessageId()
+
+                    if (receivedMessage.getMessageId() == messageId) {
                         foundStartMessage = true
                     }
 

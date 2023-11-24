@@ -21,12 +21,20 @@ import com.quickblox.android_ui_kit.data.source.remote.listener.ChatMessageListe
 import com.quickblox.android_ui_kit.data.source.remote.listener.StatusMessageListener
 import com.quickblox.android_ui_kit.data.source.remote.listener.SystemMessageListener
 import com.quickblox.android_ui_kit.data.source.remote.listener.TypingListener
-import com.quickblox.android_ui_kit.data.source.remote.mapper.*
+import com.quickblox.android_ui_kit.data.source.remote.mapper.RemoteDialogDTOMapper
+import com.quickblox.android_ui_kit.data.source.remote.mapper.RemoteFileDTOMapper
+import com.quickblox.android_ui_kit.data.source.remote.mapper.RemoteMessageDTOMapper
+import com.quickblox.android_ui_kit.data.source.remote.mapper.RemotePaginationDTOMapper
+import com.quickblox.android_ui_kit.data.source.remote.mapper.RemoteUserDTOMapper
 import com.quickblox.android_ui_kit.data.source.remote.parser.EventMessageParser
 import com.quickblox.android_ui_kit.domain.exception.repository.MappingException
 import com.quickblox.auth.session.QBSessionManager
 import com.quickblox.auth.session.Query
-import com.quickblox.chat.*
+import com.quickblox.chat.JIDHelper
+import com.quickblox.chat.QBAbstractChat
+import com.quickblox.chat.QBChatService
+import com.quickblox.chat.QBGroupChat
+import com.quickblox.chat.QBRestChatService
 import com.quickblox.chat.model.QBChatDialog
 import com.quickblox.chat.model.QBChatMessage
 import com.quickblox.chat.model.QBDialogType
@@ -41,7 +49,11 @@ import com.quickblox.users.QBUsers
 import com.quickblox.users.model.QBUser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jivesoftware.smack.AbstractConnectionListener
@@ -339,7 +351,8 @@ open class RemoteDataSourceImpl : RemoteDataSource {
         return token
     }
 
-    private fun getLoggedUserIdOrThrowException(): Int {
+    @VisibleForTesting
+    open fun getLoggedUserIdOrThrowException(): Int {
         val loggedUserId = getLoggedUserIdFromSession()
         if (loggedUserId == null) {
             throw RuntimeException("The logged userId is null")
@@ -699,7 +712,8 @@ open class RemoteDataSourceImpl : RemoteDataSource {
             qbChat.sendMessage(qbChatMessage)
 
             // TODO: Added this logic for notifying UI when sending a message in private chat.
-            //  The server does not return a message sent from itself.
+            //  The server does not return a message sent from itself and we can update the last message in private dialog
+            // TODO: need to add the enum for dialog types instead of using "magic digits" like "3"
             CoroutineScope(Dispatchers.IO).launch {
                 val isPrivate = dialogDTO.type == 3
                 if (isPrivate) {
@@ -725,15 +739,19 @@ open class RemoteDataSourceImpl : RemoteDataSource {
                 RemoteMessageDTO.MessageTypes.EVENT_CREATED_DIALOG -> {
                     qbChatMessage = EventMessageParser.addCreatedDialogPropertyTo(qbChatMessage)
                 }
+
                 RemoteMessageDTO.MessageTypes.EVENT_ADDED_USER -> {
                     qbChatMessage = EventMessageParser.addAddedUsersPropertyTo(qbChatMessage)
                 }
+
                 RemoteMessageDTO.MessageTypes.EVENT_LEFT_USER -> {
                     qbChatMessage = EventMessageParser.addLeftUsersPropertyTo(qbChatMessage)
                 }
+
                 RemoteMessageDTO.MessageTypes.EVENT_REMOVED_USER -> {
                     qbChatMessage = EventMessageParser.addRemovedUsersPropertyTo(qbChatMessage)
                 }
+
                 else -> {}
             }
 

@@ -7,13 +7,23 @@
     android:layout_marginTop="8dp"
     android:paddingBottom="4dp">
 
+    <CheckBox
+        android:id="@+id/checkbox"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible" />
+
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/ivAvatar"
         android:layout_width="36dp"
         android:layout_height="36dp"
         android:layout_marginStart="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/checkbox"
         tools:src="@drawable/private_holder" />
 
     <androidx.appcompat.widget.AppCompatTextView
@@ -30,7 +40,6 @@
         app:layout_constraintEnd_toEndOf="@id/clMessage"
         app:layout_constraintHorizontal_bias="0"
         app:layout_constraintStart_toStartOf="@+id/clMessage"
-        app:layout_constraintTop_toTopOf="parent"
         tools:text="name" />
 
     <androidx.constraintlayout.widget.ConstraintLayout

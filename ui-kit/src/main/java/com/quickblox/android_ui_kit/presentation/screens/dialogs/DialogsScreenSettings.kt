@@ -6,7 +6,6 @@ package com.quickblox.android_ui_kit.presentation.screens.dialogs
 
 import android.content.Context
 import com.quickblox.android_ui_kit.QuickBloxUiKit
-import com.quickblox.android_ui_kit.presentation.components.Component
 import com.quickblox.android_ui_kit.presentation.components.dialogs.DialogsComponent
 import com.quickblox.android_ui_kit.presentation.components.dialogs.DialogsComponentImpl
 import com.quickblox.android_ui_kit.presentation.components.header.HeaderWithIconComponent
@@ -14,8 +13,8 @@ import com.quickblox.android_ui_kit.presentation.components.header.HeaderWithIco
 import com.quickblox.android_ui_kit.presentation.components.search.SearchComponent
 import com.quickblox.android_ui_kit.presentation.screens.ScreenSettings
 import com.quickblox.android_ui_kit.presentation.screens.ScreenSettingsBuilder
-import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
+import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 
 class DialogsScreenSettings private constructor() : ScreenSettings {
     private var theme: UiKitTheme = LightUIKitTheme()
@@ -70,7 +69,7 @@ class DialogsScreenSettings private constructor() : ScreenSettings {
         private var showDialogs: Boolean = true
         private var headerComponent: HeaderWithIconComponent? = null
         private var searchComponent: SearchComponent? = null
-        private var dialogsComponent: Component? = null
+        private var dialogsComponent: DialogsComponent? = null
 
         fun showHeader(show: Boolean): Builder {
             this.showHeader = show
@@ -110,18 +109,25 @@ class DialogsScreenSettings private constructor() : ScreenSettings {
         override fun build(): DialogsScreenSettings {
             val settings = DialogsScreenSettings()
 
-            if (headerComponent == null && showHeader) {
-                val headerComponent = HeaderWithIconComponentImpl(context)
-                headerComponent.setTheme(theme)
-
-                settings.headerWithIconComponent = headerComponent
+            if (showHeader) {
+                if (headerComponent == null) {
+                    val headerComponent = HeaderWithIconComponentImpl(context)
+                    headerComponent.setTheme(theme)
+                    settings.headerWithIconComponent = headerComponent
+                } else {
+                    settings.headerWithIconComponent = headerComponent
+                }
             }
-            if (dialogsComponent == null && showDialogs) {
-                val dialogsComponent = DialogsComponentImpl(context)
-                dialogsComponent.setTheme(theme)
-                dialogsComponent.showSearch(showSearch)
 
-                settings.dialogsComponent = dialogsComponent
+            if (showDialogs) {
+                if (dialogsComponent == null) {
+                    val localDialogsComponent = DialogsComponentImpl(context)
+                    localDialogsComponent.setTheme(theme)
+                    localDialogsComponent.showSearch(showSearch)
+                    settings.dialogsComponent = localDialogsComponent
+                } else {
+                    settings.dialogsComponent = dialogsComponent
+                }
             }
 
             settings.theme = theme

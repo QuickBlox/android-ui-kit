@@ -11,9 +11,7 @@ import android.graphics.drawable.ColorDrawable
 import android.util.AttributeSet
 import android.view.View
 import androidx.appcompat.widget.LinearLayoutCompat
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.Recycler
+import androidx.recyclerview.widget.RecyclerView.Adapter
 import com.quickblox.android_ui_kit.R
 import com.quickblox.android_ui_kit.databinding.DialogsComponentBinding
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
@@ -27,7 +25,7 @@ class DialogsComponentImpl : LinearLayoutCompat, DialogsComponent {
     private var itemLongClickListener: ((result: DialogEntity) -> Unit)? = null
 
     private var theme: UiKitTheme = LightUIKitTheme()
-    private var adapter: DialogsAdapter? = DialogsAdapter()
+    private var adapter: DialogsAdapter? = DialogsHistoryAdapter()
 
     constructor(context: Context) : super(context) {
         init(context, null)
@@ -51,7 +49,7 @@ class DialogsComponentImpl : LinearLayoutCompat, DialogsComponent {
         binding?.rvDialogs?.setHasFixedSize(true)
         binding?.rvDialogs?.background = ColorDrawable(theme.getMainBackgroundColor())
         binding?.rvDialogs?.itemAnimator = null
-        binding?.rvDialogs?.adapter = adapter
+        binding?.rvDialogs?.adapter = adapter as Adapter<*>
 
         adapter?.setTheme(theme)
         adapter?.setDialogAdapterListener(DialogAdapterListenerImpl())
@@ -69,6 +67,7 @@ class DialogsComponentImpl : LinearLayoutCompat, DialogsComponent {
 
     override fun setAdapter(adapter: DialogsAdapter?) {
         this.adapter = adapter
+        binding?.rvDialogs?.adapter = adapter as Adapter<*>
     }
 
     override fun getAdapter(): DialogsAdapter? {
@@ -117,7 +116,7 @@ class DialogsComponentImpl : LinearLayoutCompat, DialogsComponent {
         binding?.llSyncing?.visibility = View.GONE
     }
 
-    private inner class DialogAdapterListenerImpl : DialogsAdapter.DialogAdapterListener {
+    private inner class DialogAdapterListenerImpl : DialogAdapterListener {
         override fun onClick(dialog: DialogEntity) {
             itemClickListener?.invoke(dialog)
         }

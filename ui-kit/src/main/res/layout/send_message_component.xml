@@ -6,6 +6,13 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp">
 
+    <View
+        android:id="@+id/vDivider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/dividerColor"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <androidx.appcompat.widget.AppCompatTextView
         android:id="@+id/tvTyping"
         android:layout_width="match_parent"
@@ -14,15 +21,26 @@
         android:fontFamily="@font/roboto_500"
         android:textSize="11sp"
         android:visibility="gone"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:text="typing..."
-        tools:visibility="visible" />
+        app:layout_constraintBottom_toTopOf="@+id/clSendMessage"
+        tools:text="typing..." />
+
+    <FrameLayout
+        android:id="@+id/fl_forward_reply_container"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:paddingBottom="2dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@+id/clSendMessage"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/clSendMessage"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:minHeight="56dp"
-        app:layout_constraintTop_toBottomOf="@+id/tvTyping">
+        app:layout_constraintBottom_toBottomOf="parent">
 
         <HorizontalScrollView
             android:id="@+id/horizontalScrollView"
@@ -46,9 +64,8 @@
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/ivAttachment"
-            android:layout_width="56dp"
+            android:layout_width="46dp"
             android:layout_height="56dp"
-            android:paddingHorizontal="12dp"
             android:paddingVertical="16dp"
             android:src="@drawable/attachment"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -59,6 +76,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginVertical="8dp"
+            android:layout_marginStart="8dp"
             android:layout_marginEnd="56dp"
             android:background="@drawable/bg_send_message"
             android:gravity="center_vertical"

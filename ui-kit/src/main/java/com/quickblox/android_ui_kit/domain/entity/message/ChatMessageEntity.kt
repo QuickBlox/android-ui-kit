@@ -5,11 +5,16 @@
 
 package com.quickblox.android_ui_kit.domain.entity.message
 
+import com.quickblox.android_ui_kit.domain.entity.UserEntity
+
 interface ChatMessageEntity : MessageEntity {
     enum class ChatMessageTypes { FROM_OPPONENT, FROM_LOGGED_USER }
     enum class ContentTypes { TEXT, URL, LOCATION, MEDIA }
 
     fun getContentType(): ContentTypes
+
+    fun getSender(): UserEntity?
+    fun setSender(userEntity: UserEntity?)
 
     fun getContent(): String?
     fun setContent(content: String?)
@@ -19,5 +24,6 @@ interface ChatMessageEntity : MessageEntity {
     fun isMediaContent(): Boolean
 
     fun getMediaContent(): MediaContentEntity?
+
     fun setMediaContent(mediaContent: MediaContentEntity?)
 }

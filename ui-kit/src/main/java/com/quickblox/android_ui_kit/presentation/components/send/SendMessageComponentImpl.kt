@@ -19,6 +19,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
+import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.google.android.material.chip.Chip
@@ -26,8 +27,7 @@ import com.quickblox.android_ui_kit.R
 import com.quickblox.android_ui_kit.databinding.SendMessageComponentBinding
 import com.quickblox.android_ui_kit.domain.entity.AIRephraseEntity
 import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponent.MessageComponentStates
-import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponent.MessageComponentStates.CHAT_MESSAGE
-import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponent.MessageComponentStates.VOICE_MESSAGE
+import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponent.MessageComponentStates.*
 import com.quickblox.android_ui_kit.presentation.dialogs.AttachmentsDialog
 import com.quickblox.android_ui_kit.presentation.makeClickableBackground
 import com.quickblox.android_ui_kit.presentation.screens.SimpleTextWatcher
@@ -68,12 +68,19 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
     private fun setListeners(context: Context) {
         binding?.ivSend?.setOnClick {
             val textMessage = binding?.etMessage?.text.toString()
-            if (textMessage.isNotEmpty()) {
+            if (componentState == FORWARDING_MESSAGE) {
                 listener?.onSendTextMessageClickListener(textMessage)
-                binding?.etMessage?.text?.clear()
+                if (textMessage.isNotEmpty()) {
+                    binding?.etMessage?.text?.clear()
+                }
+            } else {
+                if (textMessage.isNotEmpty()) {
+                    listener?.onSendTextMessageClickListener(textMessage)
+                    binding?.etMessage?.text?.clear()
 
-                typingTimer.stop()
-                listener?.onStoppedTyping()
+                    typingTimer.stop()
+                    listener?.onStoppedTyping()
+                }
             }
         }
 
@@ -175,12 +182,17 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
     }
 
     private fun setChatState() {
-        componentState = CHAT_MESSAGE
+        if (componentState != FORWARDING_MESSAGE) {
+            componentState = CHAT_MESSAGE
+        }
         binding?.ivSendVoice?.visibility = View.GONE
         binding?.ivSend?.visibility = View.VISIBLE
     }
 
     private fun setVoiceState() {
+        if (componentState == FORWARDING_MESSAGE) {
+            return
+        }
         componentState = VOICE_MESSAGE
         binding?.ivSendVoice?.visibility = View.VISIBLE
         binding?.ivSend?.visibility = View.GONE
@@ -223,6 +235,7 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
         binding?.ivSendVoice?.makeClickableBackground(theme.getMainElementsColor())
         binding?.ivSend?.makeClickableBackground(theme.getMainElementsColor())
         binding?.ivAttachment?.makeClickableBackground(theme.getMainElementsColor())
+        binding?.vDivider?.setBackgroundColor(theme.getDividerColor())
     }
 
     private fun setTimerTextColor(color: Int) {
@@ -242,6 +255,9 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
 
             VOICE_MESSAGE -> {
                 setVoiceState()
+            }
+            FORWARDING_MESSAGE -> {
+                setChatState()
             }
         }
     }
@@ -285,6 +301,10 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
 
     override fun getMessageEditText(): AppCompatEditText? {
         return binding?.etMessage
+    }
+
+    override fun getAttachmentContainer(): FrameLayout? {
+        return binding?.flForwardReplyContainer
     }
 
     override fun enableRephrase(enable: Boolean) {
@@ -335,6 +355,14 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
     override fun showStoppedTyping() {
         binding?.tvTyping?.visibility = View.GONE
         binding?.tvTyping?.text = ""
+    }
+
+    override fun isShowButtonAttachment(show: Boolean) {
+        if (show) {
+            binding?.ivAttachment?.visibility = View.VISIBLE
+        } else {
+            binding?.ivAttachment?.visibility = View.GONE
+        }
     }
 
     override fun setBackground(color: Int) {
