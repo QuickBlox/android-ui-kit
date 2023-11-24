@@ -14,6 +14,8 @@ import com.quickblox.android_ui_kit.data.source.exception.AIDataSourceException
 import com.quickblox.android_ui_kit.domain.entity.AIRephraseEntity
 import com.quickblox.android_ui_kit.domain.entity.AIRephraseToneEntity
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.AITranslateIncomingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.exception.repository.AIRepositoryException
@@ -21,7 +23,7 @@ import com.quickblox.android_ui_kit.domain.repository.AIRepository
 
 class AIRepositoryImpl(private val aiDataSource: AIDataSource) : AIRepository {
     override fun translateIncomingMessageWithApiKey(
-        messageEntity: IncomingChatMessageEntity,
+        messageEntity: ForwardedRepliedMessageEntity,
         messagesFromUIKit: List<MessageEntity>,
     ): AITranslateIncomingChatMessageEntity {
         try {
@@ -36,7 +38,7 @@ class AIRepositoryImpl(private val aiDataSource: AIDataSource) : AIRepository {
     }
 
     override fun translateIncomingMessageWithProxyServer(
-        messageEntity: IncomingChatMessageEntity,
+        messageEntity: ForwardedRepliedMessageEntity,
         token: String,
         messagesFromUIKit: List<MessageEntity>,
     ): AITranslateIncomingChatMessageEntity {

@@ -10,6 +10,8 @@ import com.quickblox.android_ui_kit.ExcludeFromCoverage
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.entity.UserEntity
+import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.exception.DomainException
@@ -53,6 +55,11 @@ class MessagesEventUseCase(private val dialog: DialogEntity) : FlowUseCase<Messa
                     val isIncomingMessage = messageEntity is IncomingChatMessageEntity
                     if (isIncomingMessage) {
                         addUserToMessage(messageEntity, usersFromDialog)
+                    }
+
+                    if (isExistForwardReplyMessagesIn(messageEntity)) {
+                        val messages = getForwardedRepliedMessages(messageEntity as ForwardedRepliedMessageEntity)
+                        loadAndSetUsersForForwardedRepliedMessages(messages)
                     }
 
                     messageEntity?.let {
@@ -111,6 +118,38 @@ class MessagesEventUseCase(private val dialog: DialogEntity) : FlowUseCase<Messa
 
     private fun getUserFromRemote(userId: Int): UserEntity {
         return usersRepository.getUserFromRemote(userId)
+    }
+
+    private fun isExistForwardReplyMessagesIn(message: MessageEntity?): Boolean {
+        val isForwardedRepliedMessage = message is ForwardedRepliedMessageEntity?
+        if (isForwardedRepliedMessage) {
+            val forwardedRepliedMessages = (message as ForwardedRepliedMessageEntity).getForwardedRepliedMessages()
+            if (forwardedRepliedMessages?.isNotEmpty() == true) {
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun getForwardedRepliedMessages(message: ForwardedRepliedMessageEntity): List<ChatMessageEntity> {
+        return message.getForwardedRepliedMessages() ?: listOf()
+    }
+
+    private fun loadAndSetUsersForForwardedRepliedMessages(messages: List<ChatMessageEntity>) {
+        val usersCache = hashMapOf<Int, UserEntity>()
+
+        for (message in messages) {
+            message.getSenderId()?.let { userId ->
+                val isNotExistUserInCache = !usersCache.contains(userId)
+                if (isNotExistUserInCache) {
+                    val loadedUser = getUserFromRemote(userId)
+                    usersCache[userId] = loadedUser
+                }
+
+                val user = usersCache[userId]
+                message.setSender(user)
+            }
+        }
     }
 
     @ExcludeFromCoverage

@@ -14,11 +14,16 @@ import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.entity.PaginationEntity
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.EventMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.exception.repository.MappingException
 import com.quickblox.android_ui_kit.domain.repository.MessagesRepository
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
 
 class MessagesRepositoryImpl(private val remoteDataSource: RemoteDataSource) : MessagesRepository {
     private val exceptionFactory: MessagesRepositoryExceptionFactory = MessagesRepositoryExceptionFactoryImpl()
@@ -108,11 +113,32 @@ class MessagesRepositoryImpl(private val remoteDataSource: RemoteDataSource) : M
 
     override fun createMessage(entity: OutgoingChatMessageEntity): OutgoingChatMessageEntity {
         try {
-            val remoteMessageDTO = MessageMapper.remoteDTOFromOutgoingChatMessage(entity)
+            val remoteMessageDTO = MessageMapper.remoteDTOFromChatMessage(entity)
             val createdMessage = remoteDataSource.createMessage(remoteMessageDTO)
 
+            // TODO: Need to move this logic to UseCase. The logic for changing status should be inside use case.
             createdMessage.outgoingState = RemoteMessageDTO.OutgoingMessageStates.SENDING
+
             return MessageMapper.outgoingChatEntityFrom(createdMessage)
+        } catch (exception: RemoteDataSourceException) {
+            throw exceptionFactory.makeBy(exception.code, exception.description)
+        } catch (exception: MappingException) {
+            throw exceptionFactory.makeIncorrectData(exception.message.toString())
+        }
+    }
+
+    override fun createForwardMessage(
+        forwardMessages: List<ForwardedRepliedMessageEntity>,
+        relateMessage: OutgoingChatMessageEntity
+    ): OutgoingChatMessageEntity {
+        try {
+            val remoteMessageDTO = MessageMapper.remoteDTOFromForwardChatMessage(forwardMessages, relateMessage)
+            val createdMessageDTO = remoteDataSource.createMessage(remoteMessageDTO)
+
+            // TODO: Need to move this logic to UseCase. The logic for changing status should be inside use case.
+            createdMessageDTO.outgoingState = RemoteMessageDTO.OutgoingMessageStates.SENDING
+
+            return MessageMapper.outgoingChatEntityFrom(createdMessageDTO)
         } catch (exception: RemoteDataSourceException) {
             throw exceptionFactory.makeBy(exception.code, exception.description)
         } catch (exception: MappingException) {

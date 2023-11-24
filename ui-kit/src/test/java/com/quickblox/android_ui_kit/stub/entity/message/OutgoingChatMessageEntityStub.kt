@@ -4,7 +4,9 @@
  */
 package com.quickblox.android_ui_kit.stub.entity.message
 
+import com.quickblox.android_ui_kit.domain.entity.UserEntity
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MediaContentEntity
 import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
 
@@ -53,7 +55,51 @@ open class OutgoingChatMessageEntityStub : MessageEntityStub(), OutgoingChatMess
         throw buildRuntimeException()
     }
 
+    override fun isForwardedOrReplied(): Boolean {
+        throw buildRuntimeException()
+    }
+
+    override fun setForwardOrReplied(type: ForwardedRepliedMessageEntity.Types) {
+        throw buildRuntimeException()
+    }
+
+    override fun getForwardOrRepliedType(): ForwardedRepliedMessageEntity.Types? {
+        throw buildRuntimeException()
+    }
+
+    override fun isReplied(): Boolean {
+        throw buildRuntimeException()
+    }
+
+    override fun isForwarded(): Boolean {
+        throw buildRuntimeException()
+    }
+
+    override fun getForwardedRepliedMessages(): List<ForwardedRepliedMessageEntity>? {
+        throw buildRuntimeException()
+    }
+
+    override fun setForwardedRepliedMessages(messages: List<ForwardedRepliedMessageEntity>?) {
+        throw buildRuntimeException()
+    }
+
+    override fun setRelatedMessageId(messageId: String?) {
+        throw buildRuntimeException()
+    }
+
+    override fun getRelatedMessageId(): String? {
+        throw buildRuntimeException()
+    }
+
     override fun getContentType(): ChatMessageEntity.ContentTypes {
+        throw buildRuntimeException()
+    }
+
+    override fun getSender(): UserEntity? {
+        throw buildRuntimeException()
+    }
+
+    override fun setSender(userEntity: UserEntity?) {
         throw buildRuntimeException()
     }
 }

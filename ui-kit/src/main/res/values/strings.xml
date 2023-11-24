@@ -51,4 +51,11 @@
     <string name="show_translate">Show translation</string>
     <string name="show_original">Show original</string>
     <string name="tone">tone</string>
+
+    <string name="messages_selected">%s messages selected</string>
+    <string name="empty_messages_selected">0 messages selected</string>
+    <string name="forward">Forward</string>
+    <string name="forwarded_from_with_name">Forwarded from %s</string>
+    <string name="forwarded_from">Forwarded from</string>
+    <string name="message_forwarded_to">Message forwarded to %s</string>
 </resources>

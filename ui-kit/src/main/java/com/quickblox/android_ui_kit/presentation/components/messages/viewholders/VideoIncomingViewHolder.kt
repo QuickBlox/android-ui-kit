@@ -1,17 +1,18 @@
 /*
- * Created by Injoit on 26.4.2023.
+ * Created by Injoit on 7.11.2023.
  * Copyright © 2023 Quickblox. All rights reserved.
  *
  */
 
 package com.quickblox.android_ui_kit.presentation.components.messages.viewholders
 
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.ImageView
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
@@ -22,16 +23,22 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
 import com.quickblox.android_ui_kit.R
 import com.quickblox.android_ui_kit.databinding.VideoIncomingMessageItemBinding
+import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
+import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder
+import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder.MessageListener
 import com.quickblox.android_ui_kit.presentation.base.BaseViewHolder
+import com.quickblox.android_ui_kit.presentation.components.messages.MessageAdapter
 import com.quickblox.android_ui_kit.presentation.screens.convertToStringTime
 import com.quickblox.android_ui_kit.presentation.screens.loadCircleImageFromUrl
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 
 class VideoIncomingViewHolder(binding: VideoIncomingMessageItemBinding) :
-    BaseViewHolder<VideoIncomingMessageItemBinding>(binding) {
+    BaseViewHolder<VideoIncomingMessageItemBinding>(binding), Forward {
     private var theme: UiKitTheme = LightUIKitTheme()
+    private var checkBoxListener: MessageAdapter.CheckBoxListener? = null
 
     companion object {
         fun newInstance(parent: ViewGroup): VideoIncomingViewHolder {
@@ -45,7 +52,11 @@ class VideoIncomingViewHolder(binding: VideoIncomingMessageItemBinding) :
         applyTheme(theme)
     }
 
-    fun bind(message: IncomingChatMessageEntity, listener: VideoIncomingListener?) {
+    fun bind(
+        message: IncomingChatMessageEntity,
+        listener: MessageListener?,
+        isForwardState: Boolean,
+        selectedMessages: MutableList<MessageEntity>, ) {
         binding.tvTime.text = message.getTime()?.convertToStringTime()
 
         val avatarHolder = ContextCompat.getDrawable(binding.root.context, R.drawable.user_avatar_holder)
@@ -63,20 +74,45 @@ class VideoIncomingViewHolder(binding: VideoIncomingMessageItemBinding) :
 
         binding.tvName.text = sender?.getName() ?: sender?.getLogin()
 
+        if (isForwardState) {
+            binding.checkbox.visibility = View.VISIBLE
+
+            if (selectedMessages.isNotEmpty()) {
+                val foundMessage = selectedMessages.get(0)
+
+                if (foundMessage is ForwardedRepliedMessageEntity && message?.getMessageId() != null
+                    && message.getMessageId() == foundMessage.getMessageId() && foundMessage.getRelatedMessageId()
+                        .isNullOrEmpty()
+                ) {
+                    binding.checkbox.isChecked = true
+                }
+            }
+
+            binding.checkbox.setOnCheckedChangeListener { buttonView, isChecked ->
+                if (isChecked) {
+                    checkBoxListener?.onSelected(message)
+                } else {
+                    checkBoxListener?.onUnselected(message)
+                }
+            }
+        }
+
         setListener(message, listener)
 
         applyTheme(theme)
     }
 
-    private fun setListener(message: IncomingChatMessageEntity?, listener: VideoIncomingListener?) {
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setListener(message: IncomingChatMessageEntity?, listener: MessageListener?) {
         binding.ivVideo.setOnClickListener {
-            listener?.onVideoClick(message)
+            listener?.onClick(message)
         }
-
         binding.ivVideo.setOnLongClickListener {
-            listener?.onVideoLongClick(message)
             true
         }
+        binding.ivVideo.setOnTouchListener(
+            TouchListener(binding.ivVideo.context, message, listener, binding.ivVideo)
+        )
     }
 
     private fun loadImageBy(url: String?) {
@@ -90,6 +126,14 @@ class VideoIncomingViewHolder(binding: VideoIncomingMessageItemBinding) :
     private fun applyTheme(theme: UiKitTheme) {
         setNameColor(theme.getTertiaryElementsColor())
         setTimeTextColor(theme.getTertiaryElementsColor())
+        setCheckBoxColor(theme.getMainElementsColor())
+    }
+
+    fun setCheckBoxColor(@ColorInt color: Int) {
+        val states: Array<IntArray> = arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf())
+        val defaultColor = ContextCompat.getColor(binding.root.context, android.R.color.darker_gray)
+        val colors = intArrayOf(color, defaultColor)
+        binding.checkbox.buttonTintList = ColorStateList(states, colors)
     }
 
     fun setNameColor(@ColorInt color: Int) {
@@ -109,6 +153,14 @@ class VideoIncomingViewHolder(binding: VideoIncomingMessageItemBinding) :
         binding.ivVideo.setImageResource(R.drawable.ic_video_placeholder)
 
         binding.ivVideo.scaleType = ImageView.ScaleType.CENTER
+    }
+
+    fun setCheckBoxListener(checkBoxListener: MessageAdapter.CheckBoxListener) {
+        this.checkBoxListener = checkBoxListener
+    }
+
+    override fun setChecked(checked: Boolean, selectedMessages: MutableList<MessageEntity>) {
+        binding.checkbox.isChecked = checked
     }
 
     private inner class RequestListenerImpl : RequestListener<Drawable> {
@@ -143,8 +195,28 @@ class VideoIncomingViewHolder(binding: VideoIncomingMessageItemBinding) :
         binding.ivPlayButton.background = playButtonDrawable
     }
 
-    interface VideoIncomingListener {
-        fun onVideoClick(message: IncomingChatMessageEntity?)
-        fun onVideoLongClick(message: IncomingChatMessageEntity?)
+    inner class TouchListener(
+        context: Context,
+        private val message: IncomingChatMessageEntity?,
+        private val listener: MessageListener?,
+        private val view: View,
+    ) : View.OnTouchListener {
+        private val gestureDetector: GestureDetector
+
+        init {
+            gestureDetector = GestureDetector(context, GestureListener())
+        }
+
+        override fun onTouch(v: View, event: MotionEvent): Boolean {
+            return gestureDetector.onTouchEvent(event)
+        }
+
+        private inner class GestureListener : GestureDetector.SimpleOnGestureListener() {
+            override fun onLongPress(e: MotionEvent) {
+                val x = e.rawX.toInt()
+                val y = e.rawY.toInt()
+                listener?.onLongClick(message, adapterPosition, view, x, y)
+            }
+        }
     }
 }

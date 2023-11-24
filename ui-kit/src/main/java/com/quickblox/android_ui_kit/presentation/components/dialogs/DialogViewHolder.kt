@@ -146,7 +146,12 @@ class DialogViewHolder(binding: DialogGroupItemBinding) : BaseViewHolder<DialogG
 
     private fun showTextMessage(text: String?) {
         val textView = buildMessageTextView()
-        textView.text = text
+
+        if (text?.contains("[Forwarded_Message]") == true) {
+            textView.text = "Forwarded message"
+        } else {
+            textView.text = text
+        }
 
         binding.flLastMessage.addView(textView)
     }

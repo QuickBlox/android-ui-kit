@@ -32,6 +32,7 @@ object QuickBloxUiKit {
     private var enabledAIAnswerAssistant = true
     private var enabledAITranslate = true
     private var enabledAIRephrase = true
+    private var enabledForward = true
 
     private var answerAssistantOpenAIToken: String = ""
     private var answerAssistantProxyServerURL: String = ""
@@ -447,5 +448,17 @@ object QuickBloxUiKit {
 
     fun isEnabledAIRephrase(): Boolean {
         return enabledAIRephrase
+    }
+
+    fun enableForward() {
+        enabledForward = true
+    }
+
+    fun disableForward() {
+        enabledForward = false
+    }
+
+    fun isEnabledForward(): Boolean {
+        return enabledForward
     }
 }

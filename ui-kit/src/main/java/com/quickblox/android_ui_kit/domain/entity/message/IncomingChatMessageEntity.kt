@@ -5,12 +5,7 @@
 
 package com.quickblox.android_ui_kit.domain.entity.message
 
-import com.quickblox.android_ui_kit.domain.entity.UserEntity
-
-interface IncomingChatMessageEntity : ChatMessageEntity {
-    fun getSender(): UserEntity?
-    fun setSender(userEntity: UserEntity?)
-
+interface IncomingChatMessageEntity : ForwardedRepliedMessageEntity {
     fun getLoggedUserId(): Int?
     fun setLoggedUserId(id: Int?)
 

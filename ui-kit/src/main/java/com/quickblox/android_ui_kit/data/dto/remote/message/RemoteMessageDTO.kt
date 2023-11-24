@@ -36,4 +36,7 @@ class RemoteMessageDTO {
     var loggedUserId: Int? = null
     var readIds: Collection<Int>? = null
     var deliveredIds: Collection<Int>? = null
+
+    var isForwardedOrReplied: Boolean? = null
+    var properties: Map<String?, String?>? = null
 }

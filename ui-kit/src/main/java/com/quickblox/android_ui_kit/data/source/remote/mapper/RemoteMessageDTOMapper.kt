@@ -7,6 +7,7 @@ package com.quickblox.android_ui_kit.data.source.remote.mapper
 import androidx.annotation.VisibleForTesting
 import com.quickblox.android_ui_kit.data.dto.remote.message.RemoteMessageDTO
 import com.quickblox.android_ui_kit.data.source.remote.parser.EventMessageParser
+import com.quickblox.android_ui_kit.data.source.remote.parser.ForwardMessageParser
 import com.quickblox.chat.model.QBAttachment
 import com.quickblox.chat.model.QBChatMessage
 import com.quickblox.content.model.QBFile
@@ -44,6 +45,11 @@ object RemoteMessageDTOMapper {
             dto.outgoingState = parseOutgoingState(qbChatMessage, loggedUserId)
         }
 
+        if (ForwardMessageParser.isForwardedOrRepliedIn(qbChatMessage)) {
+            dto.isForwardedOrReplied = true
+            dto.properties = ForwardMessageParser.parsePropertiesFrom(qbChatMessage)
+        }
+
         return dto
     }
 
@@ -64,16 +70,16 @@ object RemoteMessageDTOMapper {
         val readIds = qbChatMessage.readIds
         val deliveredIds = qbChatMessage.deliveredIds
 
-        readIds.remove(loggedUserId)
-        deliveredIds.remove(loggedUserId)
+        readIds?.remove(loggedUserId)
+        deliveredIds?.remove(loggedUserId)
 
-        val isAlreadyRead = readIds.isNotEmpty()
-        if (isAlreadyRead) {
+        val isAlreadyRead = readIds?.isNotEmpty()
+        if (isAlreadyRead == true) {
             return RemoteMessageDTO.OutgoingMessageStates.READ
         }
 
-        val isAlreadyDelivered = deliveredIds.isNotEmpty()
-        if (isAlreadyDelivered) {
+        val isAlreadyDelivered = deliveredIds?.isNotEmpty()
+        if (isAlreadyDelivered == true) {
             return RemoteMessageDTO.OutgoingMessageStates.DELIVERED
         }
 
@@ -144,7 +150,17 @@ object RemoteMessageDTOMapper {
             qbChatMessage.dateSent = time
         }
 
+        if (dto.isForwardedOrReplied == true) {
+            addProperties(qbChatMessage, dto.properties as MutableMap)
+        }
+
         return qbChatMessage
+    }
+
+    private fun addProperties(qbChatMessage: QBChatMessage, properties: MutableMap<String?, String?>) {
+        for ((key, value) in properties) {
+            qbChatMessage.setProperty(key, value)
+        }
     }
 
     private fun isAvailableAttachmentIn(dto: RemoteMessageDTO): Boolean {
@@ -179,15 +195,19 @@ object RemoteMessageDTOMapper {
             RemoteMessageDTO.MessageTypes.EVENT_CREATED_DIALOG -> {
                 return EventMessageParser.addCreatedDialogPropertyTo(qbChatMessage)
             }
+
             RemoteMessageDTO.MessageTypes.EVENT_ADDED_USER -> {
                 return EventMessageParser.addAddedUsersPropertyTo(qbChatMessage)
             }
+
             RemoteMessageDTO.MessageTypes.EVENT_REMOVED_USER -> {
                 return EventMessageParser.addRemovedUsersPropertyTo(qbChatMessage)
             }
+
             RemoteMessageDTO.MessageTypes.EVENT_LEFT_USER -> {
                 return EventMessageParser.addLeftUsersPropertyTo(qbChatMessage)
             }
+
             else -> {}
         }
 

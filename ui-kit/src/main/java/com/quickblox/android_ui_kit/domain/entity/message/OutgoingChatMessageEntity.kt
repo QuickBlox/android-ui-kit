@@ -5,7 +5,7 @@
 
 package com.quickblox.android_ui_kit.domain.entity.message
 
-interface OutgoingChatMessageEntity : ChatMessageEntity {
+interface OutgoingChatMessageEntity : ForwardedRepliedMessageEntity {
     enum class OutgoingStates { SENDING, SENT, DELIVERED, READ, ERROR }
 
     fun getOutgoingState(): OutgoingStates?

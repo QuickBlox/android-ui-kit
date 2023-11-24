@@ -15,6 +15,7 @@ import com.quickblox.android_ui_kit.dependency.DependencyImpl
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.usecases.CreatePrivateDialogUseCase
 import com.quickblox.android_ui_kit.domain.usecases.UpdateDialogUseCase
+import com.quickblox.content.model.QBFile
 import junit.framework.Assert.assertEquals
 import junit.framework.Assert.fail
 import kotlinx.coroutines.Dispatchers
@@ -78,6 +79,6 @@ class UpdateDialogUseCaseIntegrationTest : BaseTest() {
         }
 
         assertEquals(createdDialog?.getDialogId(), loadedDialog?.getDialogId())
-        assertEquals(updatedPhoto, loadedDialog?.getPhoto())
+        assertEquals(QBFile.getPrivateUrlForUID(updatedPhoto), loadedDialog?.getPhoto())
     }
 }

@@ -7,6 +7,16 @@
     android:layout_marginTop="8dp"
     android:paddingBottom="4dp">
 
+    <CheckBox
+        android:id="@+id/checkbox"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible" />
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/clMessage"
         android:layout_width="0dp"
@@ -14,6 +24,66 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/guideline">
+
+<!--        <androidx.appcompat.widget.LinearLayoutCompat-->
+<!--            android:id="@+id/llForward"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:visibility="gone"-->
+<!--            app:layout_constraintEnd_toEndOf="@id/llFile"-->
+<!--            app:layout_constraintHorizontal_bias="0"-->
+<!--            app:layout_constraintStart_toStartOf="@+id/llFile"-->
+<!--            app:layout_constraintTop_toTopOf="parent"-->
+<!--            tools:visibility="visible">-->
+
+<!--            <androidx.appcompat.widget.AppCompatImageView-->
+<!--                android:id="@+id/ivIcon"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_marginStart="8dp"-->
+<!--                android:src="@drawable/froward"-->
+<!--                app:layout_constraintBottom_toTopOf="@+id/clMessage"-->
+<!--                app:layout_constraintEnd_toEndOf="@id/clMessage"-->
+<!--                app:layout_constraintHorizontal_bias="0"-->
+<!--                app:layout_constraintStart_toStartOf="@+id/clMessage"-->
+<!--                app:layout_constraintTop_toTopOf="parent" />-->
+
+<!--            <androidx.appcompat.widget.AppCompatTextView-->
+<!--                android:id="@+id/tvActionText"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_marginStart="4dp"-->
+<!--                android:layout_marginEnd="16dp"-->
+<!--                android:ellipsize="end"-->
+<!--                android:fontFamily="@font/roboto_500"-->
+<!--                android:gravity="center_vertical"-->
+<!--                android:lines="1"-->
+<!--                android:textColor="@color/secondary500"-->
+<!--                android:textSize="12sp"-->
+<!--                app:layout_constraintBottom_toBottomOf="@+id/ivIcon"-->
+<!--                app:layout_constraintEnd_toEndOf="parent"-->
+<!--                app:layout_constraintStart_toEndOf="@+id/ivIcon"-->
+<!--                app:layout_constraintTop_toTopOf="@+id/ivIcon"-->
+<!--                tools:text="text " />-->
+<!--        </androidx.appcompat.widget.LinearLayoutCompat>-->
+
+<!--        <androidx.appcompat.widget.AppCompatTextView-->
+<!--            android:id="@+id/tvName"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginStart="8dp"-->
+<!--            android:layout_marginEnd="8dp"-->
+<!--            android:ellipsize="end"-->
+<!--            android:fontFamily="@font/roboto_500"-->
+<!--            android:lines="1"-->
+<!--            android:textSize="12sp"-->
+<!--            android:visibility="gone"-->
+<!--            app:layout_constraintEnd_toEndOf="@id/llFile"-->
+<!--            app:layout_constraintHorizontal_bias="0"-->
+<!--            app:layout_constraintStart_toStartOf="@+id/llFile"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/llForward"-->
+<!--            tools:text="name"-->
+<!--            tools:visibility="visible" />-->
 
         <androidx.appcompat.widget.LinearLayoutCompat
             android:id="@+id/llFile"

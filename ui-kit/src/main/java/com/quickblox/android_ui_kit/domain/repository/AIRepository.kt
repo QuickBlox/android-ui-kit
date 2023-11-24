@@ -9,17 +9,18 @@ package com.quickblox.android_ui_kit.domain.repository
 import com.quickblox.android_ui_kit.domain.entity.AIRephraseEntity
 import com.quickblox.android_ui_kit.domain.entity.AIRephraseToneEntity
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.AITranslateIncomingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 
 interface AIRepository {
     fun translateIncomingMessageWithApiKey(
-        messageEntity: IncomingChatMessageEntity,
+        messageEntity: ForwardedRepliedMessageEntity,
         messagesFromUIKit: List<MessageEntity>,
     ): AITranslateIncomingChatMessageEntity
 
     fun translateIncomingMessageWithProxyServer(
-        messageEntity: IncomingChatMessageEntity, token: String, messagesFromUIKit: List<MessageEntity>,
+        messageEntity: ForwardedRepliedMessageEntity, token: String, messagesFromUIKit: List<MessageEntity>,
     ): AITranslateIncomingChatMessageEntity
 
     fun createAnswerWithApiKey(messagesFromUIKit: List<MessageEntity>): String

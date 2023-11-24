@@ -131,7 +131,8 @@ class CreateMessageUseCaseTest : BaseTest() {
         val mediaContent = useCase.createMediaContent(fileName, fileUrl, mimeType)
 
         val dialogId = "dialogId"
-        val mediaMessage = useCase.createMediaMessage(dialogId, mediaContent)
+        val loggedUserId = 0
+        val mediaMessage = useCase.createMediaMessage(dialogId, mediaContent, loggedUserId)
 
         assertEquals(dialogId, mediaMessage.getDialogId())
         assertEquals(fileUrl, mediaMessage.getMediaContent()!!.getUrl())
@@ -146,7 +147,8 @@ class CreateMessageUseCaseTest : BaseTest() {
         val dialogId = "dialogId"
         val contentType = ChatMessageEntity.ContentTypes.MEDIA
         val content = "temp_content"
-        val mediaMessage = buildCreateMessageUseCase().createMessage(dialogId, content, contentType)
+        val loggedUserId = 0
+        val mediaMessage = buildCreateMessageUseCase().createMessage(dialogId, content, contentType, loggedUserId)
         assertEquals(dialogId, mediaMessage.getDialogId())
         assertEquals(contentType, mediaMessage.getContentType())
         assertEquals(content, mediaMessage.getContent())
@@ -160,7 +162,8 @@ class CreateMessageUseCaseTest : BaseTest() {
         val dialogId = "dialogId"
         val contentType = ChatMessageEntity.ContentTypes.TEXT
         val content = "temp_content"
-        val mediaMessage = buildCreateMessageUseCase().createMessage(dialogId, content, contentType)
+        val loggedUserId = 0
+        val mediaMessage = buildCreateMessageUseCase().createMessage(dialogId, content, contentType, loggedUserId)
         assertEquals(dialogId, mediaMessage.getDialogId())
         assertEquals(contentType, mediaMessage.getContentType())
         assertEquals(content, mediaMessage.getContent())

@@ -10,7 +10,9 @@ import com.quickblox.android_ui_kit.ExcludeFromCoverage
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.domain.entity.PaginationEntity
 import com.quickblox.android_ui_kit.domain.entity.implementation.PaginationEntityImpl
+import com.quickblox.android_ui_kit.domain.entity.implementation.message.AITranslateIncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.exception.DomainException
@@ -22,7 +24,7 @@ import kotlinx.coroutines.withContext
 @ExcludeFromCoverage
 class LoadAIAnswerAssistantWithProxyServerUseCase(
     private val dialogId: String,
-    private val message: IncomingChatMessageEntity,
+    private val message: ForwardedRepliedMessageEntity,
 ) : BaseUseCase<String>() {
     private val messagesRepository = QuickBloxUiKit.getDependency().getMessagesRepository()
     private val usersRepository = QuickBloxUiKit.getDependency().getUsersRepository()
@@ -51,7 +53,7 @@ class LoadAIAnswerAssistantWithProxyServerUseCase(
 
     private suspend fun searchStartPagination(
         dialogId: String,
-        incomingMessage: IncomingChatMessageEntity,
+        incomingMessage: ForwardedRepliedMessageEntity,
     ): PaginationEntity {
         var paginationResult: PaginationEntity = PaginationEntityImpl()
         paginationResult.setHasNextPage(true)
@@ -65,7 +67,8 @@ class LoadAIAnswerAssistantWithProxyServerUseCase(
 
                 paginationResult = receivedPagination
 
-                val isEqualsMessages = receivedMessage?.getMessageId() == incomingMessage.getMessageId()
+                val messageId = incomingMessage.getRelatedMessageId() ?: incomingMessage.getMessageId()
+                val isEqualsMessages = receivedMessage?.getMessageId() == messageId
                 if (isNotFoundPagination && isEqualsMessages) {
                     isNotFoundPagination = false
                     return@collect
@@ -86,7 +89,7 @@ class LoadAIAnswerAssistantWithProxyServerUseCase(
 
     private suspend fun loadMessages(
         dialogId: String,
-        startMessage: IncomingChatMessageEntity,
+        startMessage: ForwardedRepliedMessageEntity,
         paginationEntity: PaginationEntity,
     ): List<MessageEntity> {
         val messages = mutableListOf<MessageEntity>()
@@ -105,10 +108,15 @@ class LoadAIAnswerAssistantWithProxyServerUseCase(
                 pagination = receivedPagination
 
                 receivedMessage?.let {
-                    if (receivedMessage.getMessageId() == startMessage.getMessageId()) {
+                    val messageId = startMessage.getRelatedMessageId() ?: startMessage.getMessageId()
+                    if (receivedMessage.getMessageId() == messageId) {
                         foundStartMessage = true
                         if (receivedMessage is ChatMessageEntity) {
-                            receivedMessage.setContent(startMessage.getContent())
+                            if (startMessage is AITranslateIncomingChatMessageEntity && startMessage.isTranslated()) {
+                                receivedMessage.setContent(startMessage.getTranslation())
+                            } else {
+                                receivedMessage.setContent(startMessage.getContent())
+                            }
                         }
                     }
 

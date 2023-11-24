@@ -1,5 +1,5 @@
 /*
- * Created by Injoit on 21.4.2023.
+ * Created by Injoit on 7.11.2023.
  * Copyright © 2023 Quickblox. All rights reserved.
  *
  */
@@ -7,18 +7,9 @@
 package com.quickblox.android_ui_kit.presentation.components.messages
 
 import androidx.recyclerview.widget.RecyclerView
+import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder.MessageListener
 import com.quickblox.android_ui_kit.presentation.components.Component
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.AudioIncomingViewHolder.AudioIncomingListener
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.AudioOutgoingViewHolder.AudioOutgoingListener
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.FileIncomingViewHolder.FileIncomingListener
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.FileOutgoingViewHolder.FileOutgoingListener
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.ImageIncomingViewHolder.ImageIncomingListener
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.ImageOutgoingViewHolder.ImageOutgoingListener
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.TextIncomingViewHolder.AIListener
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.TextIncomingViewHolder.TextIncomingListener
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.TextOutgoingViewHolder.TextOutgoingListener
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.VideoIncomingViewHolder.VideoIncomingListener
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.VideoOutgoingViewHolder.VideoOutgoingListener
 import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponent
 
 interface MessagesComponent : Component {
@@ -27,14 +18,14 @@ interface MessagesComponent : Component {
     fun setAdapter(adapter: MessageAdapter?)
     fun getAdapter(): MessageAdapter?
 
-    fun setImageIncomingListener(listener: ImageIncomingListener?)
-    fun getImageIncomingListener(): ImageIncomingListener?
+    fun setImageIncomingListener(listener: MessageListener?)
+    fun getImageIncomingListener(): MessageListener?
 
-    fun setImageOutgoingListener(listener: ImageOutgoingListener?)
-    fun getImageOutgoingListener(): ImageOutgoingListener?
+    fun setImageOutgoingListener(listener: MessageListener?)
+    fun getImageOutgoingListener(): MessageListener?
 
-    fun setTextIncomingListener(listener: TextIncomingListener?)
-    fun getTextIncomingListener(): TextIncomingListener?
+    fun setTextIncomingListener(listener: MessageListener?)
+    fun getTextIncomingListener(): MessageListener?
 
     fun setAIListener(lisAIListener: AIListener)
     fun getAIListener(): AIListener?
@@ -42,29 +33,30 @@ interface MessagesComponent : Component {
     fun enableAI()
     fun disableAI()
 
-    fun setTextOutgoingListener(listener: TextOutgoingListener?)
-    fun getTextOutgoingListener(): TextOutgoingListener?
+    fun setTextOutgoingListener(listener: MessageListener?)
+    fun getTextOutgoingListener(): MessageListener?
 
-    fun setVideoOutgoingListener(listener: VideoOutgoingListener?)
-    fun getVideoOutgoingListener(): VideoOutgoingListener?
+    fun setVideoOutgoingListener(listener: MessageListener?)
+    fun getVideoOutgoingListener(): MessageListener?
 
-    fun setVideoIncomingListener(listener: VideoIncomingListener?)
-    fun getVideoIncomingListener(): VideoIncomingListener?
+    fun setVideoIncomingListener(listener: MessageListener?)
+    fun getVideoIncomingListener(): MessageListener?
 
-    fun setFileOutgoingListener(listener: FileOutgoingListener?)
-    fun getFileOutgoingListener(): FileOutgoingListener?
+    fun setFileOutgoingListener(listener: MessageListener?)
+    fun getFileOutgoingListener(): MessageListener?
 
-    fun setFileIncomingListener(listener: FileIncomingListener?)
-    fun getFileIncomingListener(): FileIncomingListener?
+    fun setFileIncomingListener(listener: MessageListener?)
+    fun getFileIncomingListener(): MessageListener?
 
-    fun setAudioOutgoingListener(listener: AudioOutgoingListener?)
-    fun getAudioOutgoingListener(): AudioOutgoingListener?
+    fun setAudioOutgoingListener(listener: MessageListener?)
+    fun getAudioOutgoingListener(): MessageListener?
 
-    fun setAudioIncomingListener(listener: AudioIncomingListener?)
-    fun getAudioIncomingListener(): AudioIncomingListener?
+    fun setAudioIncomingListener(listener: MessageListener?)
+    fun getAudioIncomingListener(): MessageListener?
 
     fun setOnScrollListener(listener: RecyclerView.OnScrollListener)
     fun scrollToDown()
+    fun scrollToPosition(position: Int)
 
     fun showProgress()
     fun hideProgress()

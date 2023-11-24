@@ -16,10 +16,7 @@ import com.quickblox.android_ui_kit.domain.entity.FileEntity
 import com.quickblox.android_ui_kit.domain.entity.PaginationEntity
 import com.quickblox.android_ui_kit.domain.entity.implementation.PaginationEntityImpl
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.AITranslateIncomingChatMessageEntity
-import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
-import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
-import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
-import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.*
 import com.quickblox.android_ui_kit.domain.exception.DomainException
 import com.quickblox.android_ui_kit.domain.usecases.*
 import com.quickblox.android_ui_kit.presentation.base.BaseViewModel
@@ -63,7 +60,7 @@ class PrivateChatViewModel : BaseViewModel() {
     private var loadMessagesJob: Job? = null
     private var subscribeMessagesEventJob: Job? = null
 
-    private var pagination = createDefaultPagination()
+    var pagination = createDefaultPagination()
 
     private val _loadedDialogEntity = MutableLiveData<DialogEntity?>()
     val loadedDialogEntity: LiveData<DialogEntity?>
@@ -112,7 +109,6 @@ class PrivateChatViewModel : BaseViewModel() {
                 }
             }.onFailure { error ->
                 hideLoading()
-                showError(error.message)
             }
         }
     }
@@ -451,7 +447,7 @@ class PrivateChatViewModel : BaseViewModel() {
         }
     }
 
-    fun executeAIAnswerAssistant(dialogId: String, message: IncomingChatMessageEntity) {
+    fun executeAIAnswerAssistant(dialogId: String, message: ForwardedRepliedMessageEntity) {
         if (QuickBloxUiKit.isAIAnswerAssistantEnabledWithOpenAIToken()) {
             viewModelScope.launch {
                 try {
@@ -484,17 +480,36 @@ class PrivateChatViewModel : BaseViewModel() {
         }
     }
 
-    fun executeAITranslate(message: IncomingChatMessageEntity) {
+    fun executeAITranslate(message: ForwardedRepliedMessageEntity) {
         if (message is AITranslateIncomingChatMessageEntity) {
-            addOrUpdateMessage(message)
-            return
+            val reverseIsTranslated = !message.isTranslated()
+            message.setTranslated(reverseIsTranslated)
+
+            var updateMessage = message
+
+            val isInternalMessage = !message.getRelatedMessageId().isNullOrEmpty()
+            if (isInternalMessage) {
+                updateMessage = findMessageBy(message.getRelatedMessageId())
+            }
+            addOrUpdateMessage(updateMessage)
         }
 
         if (QuickBloxUiKit.isAITranslateEnabledWithOpenAIToken()) {
             viewModelScope.launch {
                 try {
-                    val entity = LoadAITranslateWithApiKeyUseCase(dialog?.getDialogId(), message).execute()
-                    updateTranslatedMessage(entity)
+                    var updateMessage: MessageEntity
+                    val entity = LoadAITranslateWithApiKeyUseCase(dialog?.getDialogId(), message).execute()!!
+                    entity.setTranslated(true)
+                    updateMessage = entity
+
+                    val isInternalMessage = !message.getRelatedMessageId().isNullOrEmpty()
+                    if (isInternalMessage) {
+                        val foundMessage = findMessageBy(entity.getRelatedMessageId())
+                        foundMessage.setForwardedRepliedMessages(listOf(entity as ForwardedRepliedMessageEntity))
+                        updateMessage = foundMessage
+                    }
+
+                    addOrUpdateMessage(updateMessage)
                 } catch (exception: DomainException) {
                     showError(exception.message)
                     addOrUpdateMessage(message)
@@ -504,8 +519,19 @@ class PrivateChatViewModel : BaseViewModel() {
         if (QuickBloxUiKit.isAITranslateEnabledWithProxyServer()) {
             viewModelScope.launch {
                 try {
-                    val entity = LoadAITranslateWithProxyServerUseCase(dialog?.getDialogId(), message).execute()
-                    updateTranslatedMessage(entity)
+                    var updateMessage: MessageEntity
+                    val entity = LoadAITranslateWithProxyServerUseCase(dialog?.getDialogId(), message).execute()!!
+                    entity.setTranslated(true)
+                    updateMessage = entity
+
+                    val isInternalMessage = !message.getRelatedMessageId().isNullOrEmpty()
+                    if (isInternalMessage) {
+                        val foundMessage = findMessageBy(entity.getRelatedMessageId())
+                        foundMessage.setForwardedRepliedMessages(listOf(entity as ForwardedRepliedMessageEntity))
+                        updateMessage = foundMessage
+                    }
+
+                    addOrUpdateMessage(updateMessage)
                 } catch (exception: DomainException) {
                     showError(exception.message)
                     addOrUpdateMessage(message)
@@ -514,11 +540,10 @@ class PrivateChatViewModel : BaseViewModel() {
         }
     }
 
-    private fun updateTranslatedMessage(entity: AITranslateIncomingChatMessageEntity?) {
-        if (entity?.getTranslation()?.isNotEmpty() == true) {
-            entity.setTranslated(true)
-            addOrUpdateMessage(entity)
-        }
+    private fun findMessageBy(messageId: String?): ForwardedRepliedMessageEntity {
+        return messages.find {
+            it.getMessageId() == messageId
+        } as ForwardedRepliedMessageEntity
     }
 
     fun executeAIRephrase(toneEntity: AIRephraseEntity) {

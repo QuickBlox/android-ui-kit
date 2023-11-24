@@ -1,5 +1,5 @@
 /*
- * Created by Injoit on 21.4.2023.
+ * Created by Injoit on 7.11.2023.
  * Copyright © 2023 Quickblox. All rights reserved.
  *
  */
@@ -14,9 +14,8 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.quickblox.android_ui_kit.R
 import com.quickblox.android_ui_kit.databinding.MessagesComonentBinding
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.*
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.ImageIncomingViewHolder.ImageIncomingListener
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.ImageOutgoingViewHolder.ImageOutgoingListener
+import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder.MessageListener
+import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.TextIncomingViewHolder
 import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponent
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
@@ -67,27 +66,27 @@ class MessagesComponentImpl : ConstraintLayout, MessagesComponent {
         return adapter
     }
 
-    override fun setImageIncomingListener(listener: ImageIncomingListener?) {
+    override fun setImageIncomingListener(listener: MessageListener?) {
         adapter?.setImageIncomingListener(listener)
     }
 
-    override fun getImageIncomingListener(): ImageIncomingListener? {
+    override fun getImageIncomingListener(): MessageListener? {
         return adapter?.getImageIncomingListener()
     }
 
-    override fun setImageOutgoingListener(listener: ImageOutgoingListener?) {
+    override fun setImageOutgoingListener(listener: MessageListener?) {
         adapter?.setImageOutgoingListener(listener)
     }
 
-    override fun getImageOutgoingListener(): ImageOutgoingListener? {
+    override fun getImageOutgoingListener(): MessageListener? {
         return adapter?.getImageOutgoingListener()
     }
 
-    override fun setTextIncomingListener(listener: TextIncomingViewHolder.TextIncomingListener?) {
+    override fun setTextIncomingListener(listener: MessageListener?) {
         adapter?.setTextIncomingListener(listener)
     }
 
-    override fun getTextIncomingListener(): TextIncomingViewHolder.TextIncomingListener? {
+    override fun getTextIncomingListener(): MessageListener? {
         return adapter?.getTextIncomingListener()
     }
 
@@ -107,59 +106,59 @@ class MessagesComponentImpl : ConstraintLayout, MessagesComponent {
         return adapter?.getAIListener()
     }
 
-    override fun setTextOutgoingListener(listener: TextOutgoingViewHolder.TextOutgoingListener?) {
+    override fun setTextOutgoingListener(listener: MessageListener?) {
         adapter?.setTextOutgoingListener(listener)
     }
 
-    override fun getTextOutgoingListener(): TextOutgoingViewHolder.TextOutgoingListener? {
+    override fun getTextOutgoingListener(): MessageListener? {
         return adapter?.getTextOutgoingListener()
     }
 
-    override fun setVideoOutgoingListener(listener: VideoOutgoingViewHolder.VideoOutgoingListener?) {
+    override fun setVideoOutgoingListener(listener: MessageListener?) {
         adapter?.setVideoOutgoingListener(listener)
     }
 
-    override fun getVideoOutgoingListener(): VideoOutgoingViewHolder.VideoOutgoingListener? {
+    override fun getVideoOutgoingListener(): MessageListener? {
         return adapter?.getVideoOutgoingListener()
     }
 
-    override fun setVideoIncomingListener(listener: VideoIncomingViewHolder.VideoIncomingListener?) {
+    override fun setVideoIncomingListener(listener: MessageListener?) {
         adapter?.setVideoIncomingListener(listener)
     }
 
-    override fun getVideoIncomingListener(): VideoIncomingViewHolder.VideoIncomingListener? {
+    override fun getVideoIncomingListener(): MessageListener? {
         return adapter?.getVideoIncomingListener()
     }
 
-    override fun setFileOutgoingListener(listener: FileOutgoingViewHolder.FileOutgoingListener?) {
+    override fun setFileOutgoingListener(listener: MessageListener?) {
         adapter?.setFileOutgoingListener(listener)
     }
 
-    override fun getFileOutgoingListener(): FileOutgoingViewHolder.FileOutgoingListener? {
+    override fun getFileOutgoingListener(): MessageListener? {
         return adapter?.getFileOutgoingListener()
     }
 
-    override fun setFileIncomingListener(listener: FileIncomingViewHolder.FileIncomingListener?) {
+    override fun setFileIncomingListener(listener: MessageListener?) {
         adapter?.setFileIngoingListener(listener)
     }
 
-    override fun getFileIncomingListener(): FileIncomingViewHolder.FileIncomingListener? {
+    override fun getFileIncomingListener(): MessageListener? {
         return adapter?.getFileIngoingListener()
     }
 
-    override fun setAudioOutgoingListener(listener: AudioOutgoingViewHolder.AudioOutgoingListener?) {
+    override fun setAudioOutgoingListener(listener: MessageListener?) {
         adapter?.setAudioOutgoingListener(listener)
     }
 
-    override fun getAudioOutgoingListener(): AudioOutgoingViewHolder.AudioOutgoingListener? {
+    override fun getAudioOutgoingListener(): MessageListener? {
         return adapter?.getAudioOutgoingListener()
     }
 
-    override fun setAudioIncomingListener(listener: AudioIncomingViewHolder.AudioIncomingListener?) {
+    override fun setAudioIncomingListener(listener: MessageListener?) {
         adapter?.setAudioIncomingListener(listener)
     }
 
-    override fun getAudioIncomingListener(): AudioIncomingViewHolder.AudioIncomingListener? {
+    override fun getAudioIncomingListener(): MessageListener? {
         return adapter?.getAudioIncomingListener()
     }
 
@@ -172,6 +171,13 @@ class MessagesComponentImpl : ConstraintLayout, MessagesComponent {
         val size = adapter?.getItems()?.size
         if (size != null && size > 0) {
             binding?.rvMessages?.scrollToPosition(0)
+        }
+    }
+
+    override fun scrollToPosition(position: Int) {
+        val size = adapter?.getItems()?.size
+        if (size != null && size >= position) {
+            binding?.rvMessages?.scrollToPosition(position)
         }
     }
 

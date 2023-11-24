@@ -16,6 +16,7 @@ class LightUIKitTheme : UiKitTheme {
     private var outgoingMessageColor: String = "#E7EFFF"
     private var inputBackgroundColor: String = "#E4E6E8"
     private var tertiaryElementsColor: String = "#636D78"
+    private var captionColor: String = "#90979F"
     private var errorColor: String = "#FF766E"
 
     override fun getMainBackgroundColor(): Int {
@@ -116,6 +117,14 @@ class LightUIKitTheme : UiKitTheme {
 
     override fun setTertiaryElementsColor(colorString: String) {
         tertiaryElementsColor = colorString
+    }
+
+    override fun getCaptionColor(): Int {
+        return parseColorToIntFrom(captionColor)
+    }
+
+    override fun setCaptionColor(colorString: String) {
+       captionColor = colorString
     }
 
     override fun getSecondaryElementsColor(): Int {

@@ -10,7 +10,7 @@ import com.quickblox.android_ui_kit.domain.entity.message.MediaContentEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
 import com.quickblox.android_ui_kit.stub.entity.message.OutgoingChatMessageEntityStub
-import java.util.*
+import java.util.UUID
 import kotlin.random.Random
 
 open class OutgoingChatMessageEntitySpy : OutgoingChatMessageEntityStub() {
@@ -99,5 +99,9 @@ open class OutgoingChatMessageEntitySpy : OutgoingChatMessageEntityStub() {
 
     override fun setMediaContent(mediaContent: MediaContentEntity?) {
         this.mediaContent = mediaContent
+    }
+
+    override fun isForwardedOrReplied(): Boolean {
+        return false
     }
 }

@@ -28,12 +28,15 @@ class MediaContentEntityImpl(
             MediaContentEntity.Types.AUDIO.value -> {
                 return MediaContentEntity.Types.AUDIO
             }
+
             MediaContentEntity.Types.VIDEO.value -> {
                 return MediaContentEntity.Types.VIDEO
             }
+
             MediaContentEntity.Types.IMAGE.value -> {
                 return MediaContentEntity.Types.IMAGE
             }
+
             else -> {
                 return MediaContentEntity.Types.FILE
             }
@@ -58,15 +61,22 @@ class MediaContentEntityImpl(
 
     @VisibleForTesting
     fun getFileTypeFrom(mimeType: String): String {
-        val fileSource = getSpitTypesFrom(mimeType)[0]
-        return fileSource
+        val splitTypes = getSpitTypesFrom(mimeType)
+
+        val isContainsOnlyType = splitTypes.size == 1
+        if (isContainsOnlyType) {
+            return mimeType
+        } else {
+            val fileSource = splitTypes[0]
+            return fileSource
+        }
     }
 
     @VisibleForTesting
     fun getFileExtensionFrom(mimeType: String): String {
         return try {
             getSpitTypesFrom(mimeType)[1]
-        }catch (e: IndexOutOfBoundsException){
+        } catch (e: IndexOutOfBoundsException) {
             mimeType
         }
     }
