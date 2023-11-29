@@ -52,7 +52,7 @@ interface SendMessageComponent : Component {
     fun setBackground(@ColorInt color: Int)
     fun getMessageEditText(): AppCompatEditText?
 
-    fun getAttachmentContainer(): FrameLayout?
+    fun getTopContainer(): FrameLayout?
 
     fun enableRephrase(enable: Boolean)
     fun setRephraseTones(tones: List<AIRephraseEntity>)

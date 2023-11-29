@@ -12,7 +12,6 @@ import android.content.res.ColorStateList
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.view.*
-import android.widget.CheckBox
 import android.widget.ImageView.ScaleType.CENTER
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
@@ -28,21 +27,20 @@ import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity.OutgoingStates
 import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder
-import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder.MessageListener
-import com.quickblox.android_ui_kit.presentation.base.BaseViewHolder
-import com.quickblox.android_ui_kit.presentation.components.messages.MessageAdapter
 import com.quickblox.android_ui_kit.presentation.components.messages.MessageAdapter.*
 import com.quickblox.android_ui_kit.presentation.screens.convertToStringTime
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 
 class ImageOutgoingViewHolder(binding: ImageOutgiongMessageItemBinding) :
-    BaseViewHolder<ImageOutgiongMessageItemBinding>(binding), Forward {
+    BaseMessageViewHolder<ImageOutgiongMessageItemBinding>(binding), Forward {
     private var theme: UiKitTheme = LightUIKitTheme()
     private var checkBoxListener: CheckBoxListener? = null
-    private var forwardedCheckBox: CheckBox? = null
-
     private var message: ForwardedRepliedMessageEntity? = null
+
+    override fun clearCachedData() {
+        binding.flForwardReplyContainer.removeAllViews()
+    }
 
     companion object {
         fun newInstance(parent: ViewGroup): ImageOutgoingViewHolder {
@@ -62,6 +60,27 @@ class ImageOutgoingViewHolder(binding: ImageOutgiongMessageItemBinding) :
         isForwardState: Boolean,
         selectedMessages: MutableList<MessageEntity>,
     ) {
+        this.message = message
+        if (message?.isForwardedOrReplied() == true) {
+            setSelectedMessages(selectedMessages)
+            showForwardedReplyMessages(
+                message,
+                listener,
+                theme,
+                isForwardState
+            )
+
+            val content = message.getContent()
+            if (content.isNullOrEmpty() || content.contains("[Forwarded_Message]")) {
+                binding.ivImage.visibility = View.GONE
+                binding.ivStatus.visibility = View.GONE
+                binding.tvTime.visibility = View.GONE
+                binding.checkbox.visibility = View.GONE
+                applyTheme(theme)
+                return
+            }
+        }
+
         binding.tvTime.text = message?.getTime()?.convertToStringTime()
 
         applyPlaceHolder(message?.getMediaContent()?.isGif())
@@ -86,19 +105,35 @@ class ImageOutgoingViewHolder(binding: ImageOutgiongMessageItemBinding) :
                 }
             }
 
-            binding.checkbox.setOnCheckedChangeListener { buttonView, isChecked ->
+            binding.checkbox.setOnClickListener {
+                val isChecked = binding.checkbox.isChecked
                 if (isChecked) {
+                    binding.checkbox.isChecked = true
                     checkBoxListener?.onSelected(message)
                 } else {
+                    binding.checkbox.isChecked = false
                     checkBoxListener?.onUnselected(message)
                 }
             }
         }
 
         setListener(message, listener)
-        setState(message)
+        setState(message, theme, binding.ivStatus)
 
         applyTheme(theme)
+    }
+
+    private fun showForwardedReplyMessages(
+        message: ForwardedRepliedMessageEntity,
+        listener: MessageListener?,
+        theme: UiKitTheme,
+        isForwardState: Boolean,
+    ) {
+        if (message.getForwardedRepliedMessages()?.isEmpty() == true) {
+            return
+        }
+        val forwardReplyView = buildOutgoingMessage(message, listener, theme, isForwardState)
+        binding.flForwardReplyContainer.addView(forwardReplyView)
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -159,48 +194,18 @@ class ImageOutgoingViewHolder(binding: ImageOutgiongMessageItemBinding) :
         binding.ivImage.scaleType = CENTER
     }
 
-    private fun setState(message: OutgoingChatMessageEntity?) {
-        val resourceId: Int?
-        val color: Int?
-        when (message?.getOutgoingState()) {
-            OutgoingStates.SENDING -> {
-                resourceId = R.drawable.sending
-                color = theme.getTertiaryElementsColor()
-            }
-            OutgoingStates.SENT -> {
-                resourceId = R.drawable.sent
-                color = theme.getTertiaryElementsColor()
-            }
-            OutgoingStates.DELIVERED -> {
-                resourceId = R.drawable.delivered
-                color = theme.getTertiaryElementsColor()
-            }
-            OutgoingStates.READ -> {
-                resourceId = R.drawable.read
-                color = theme.getMainElementsColor()
-            }
-            OutgoingStates.ERROR -> {
-                resourceId = R.drawable.send_error
-                color = theme.getErrorColor()
-            }
-            else -> {
-                return
-            }
-        }
-
-        binding.ivStatus.setImageResource(resourceId)
-        binding.ivStatus.setColorFilter(color)
-    }
-
     override fun setChecked(checked: Boolean, selectedMessages: MutableList<MessageEntity>) {
         if (message?.isForwardedOrReplied() == true) {
             if (selectedMessages.contains(message as MessageEntity)) {
                 binding.checkbox.isChecked = checked
             } else {
-                forwardedCheckBox?.isChecked = checked
+                getCheckbox()?.isChecked = checked
             }
         } else {
             binding.checkbox.isChecked = checked
+        }
+        if (!checked) {
+            checkBoxListener?.onUnselected(message)
         }
     }
 
@@ -226,7 +231,8 @@ class ImageOutgoingViewHolder(binding: ImageOutgiongMessageItemBinding) :
         }
     }
 
-     fun setCheckBoxListener(checkBoxListener: CheckBoxListener) {
+    override fun setCheckBoxListener(checkBoxListener: CheckBoxListener) {
+        super.setCheckBoxListener(checkBoxListener)
         this.checkBoxListener = checkBoxListener
     }
 

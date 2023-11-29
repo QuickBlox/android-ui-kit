@@ -13,11 +13,11 @@ import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity.Chat
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity.ChatMessageTypes.FROM_OPPONENT
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity.ContentTypes.TEXT
 import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder
+import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder.AIListener
 import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder.MessageListener
 import com.quickblox.android_ui_kit.presentation.base.BaseViewHolder
 import com.quickblox.android_ui_kit.presentation.components.messages.MessageAdapter.MessageViewHolderTypes.*
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.*
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.TextIncomingViewHolder.AIListener
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.factory.MessageViewHolderFactory
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.factory.MessageViewHolderFactoryImpl
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
@@ -71,7 +71,7 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
     }
 
     override fun onBindViewHolder(holder: BaseViewHolder<*>, position: Int) {
-        if (holder is BaseMessageViewHolder){
+        if (holder is BaseMessageViewHolder) {
             holder.clearCachedData()
         }
         val message = items?.get(position)
@@ -94,7 +94,7 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
                 message.getForwardedRepliedMessages()!![0]
             )
 
-        if (lastCheckedHolder== null && isSelected) {
+        if (lastCheckedHolder == null && isSelected) {
             lastCheckedHolder = holder
         }
 
@@ -130,7 +130,7 @@ class MessageAdapter : RecyclerView.Adapter<BaseViewHolder<*>>() {
 
             is ImageIncomingViewHolder -> {
                 message as IncomingChatMessageEntity
-                holder.bind(message, imageIncomingListener, isForwardState, selectedMessages)
+                holder.bind(message, imageIncomingListener, isForwardState, aiListener, selectedMessages)
                 if (isForwardState) {
                     holder.setCheckBoxListener(MessageCheckBoxListener(holder, message))
                 }

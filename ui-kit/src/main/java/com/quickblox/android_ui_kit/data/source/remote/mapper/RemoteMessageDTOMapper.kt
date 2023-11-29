@@ -4,10 +4,11 @@
  */
 package com.quickblox.android_ui_kit.data.source.remote.mapper
 
+import android.text.TextUtils
 import androidx.annotation.VisibleForTesting
 import com.quickblox.android_ui_kit.data.dto.remote.message.RemoteMessageDTO
 import com.quickblox.android_ui_kit.data.source.remote.parser.EventMessageParser
-import com.quickblox.android_ui_kit.data.source.remote.parser.ForwardMessageParser
+import com.quickblox.android_ui_kit.data.source.remote.parser.ForwardReplyMessageParser
 import com.quickblox.chat.model.QBAttachment
 import com.quickblox.chat.model.QBChatMessage
 import com.quickblox.content.model.QBFile
@@ -32,10 +33,10 @@ object RemoteMessageDTOMapper {
             val attachment = qbChatMessage.attachments.toList()[0]
             dto.fileName = attachment.name
 
-            if (qbChatMessage.body == null) {
+            if (TextUtils.isEmpty(qbChatMessage.body)) {
                 dto.fileUrl = attachment.url
             } else {
-                dto.fileUrl = parseBody(qbChatMessage.body)
+                dto.fileUrl = parseFileUrl(qbChatMessage.body)
             }
 
             dto.mimeType = attachment.contentType ?: attachment.type
@@ -45,15 +46,15 @@ object RemoteMessageDTOMapper {
             dto.outgoingState = parseOutgoingState(qbChatMessage, loggedUserId)
         }
 
-        if (ForwardMessageParser.isForwardedOrRepliedIn(qbChatMessage)) {
+        if (ForwardReplyMessageParser.isForwardedOrRepliedIn(qbChatMessage)) {
             dto.isForwardedOrReplied = true
-            dto.properties = ForwardMessageParser.parsePropertiesFrom(qbChatMessage)
+            dto.properties = ForwardReplyMessageParser.parsePropertiesFrom(qbChatMessage)
         }
 
         return dto
     }
 
-    private fun parseBody(body: String?): String? {
+    private fun parseFileUrl(body: String?): String? {
         return try {
             val splitUrl = body?.split("|")
             val uid = splitUrl?.get(2)
@@ -166,7 +167,7 @@ object RemoteMessageDTOMapper {
     private fun isAvailableAttachmentIn(dto: RemoteMessageDTO): Boolean {
         val availableContentType = dto.mimeType?.isNotEmpty() == true
         val availableUrl = dto.fileUrl?.isNotEmpty() == true
-
+// TODO: Need to add checking dto file name 
         return availableContentType && availableUrl
     }
 

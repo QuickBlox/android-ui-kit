@@ -56,7 +56,6 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
         isForwardState: Boolean,
         selectedMessages: MutableList<MessageEntity>,
     ) {
-
         this.message = message
         if (message?.isForwardedOrReplied() == true) {
             setSelectedMessages(selectedMessages)
@@ -150,9 +149,7 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
             listener,
             theme,
             isForwardState,
-            aiListener,
-            isEnabledAIAnswerAssistant,
-            isEnabledAITranslate,
+            aiListener
         )
         binding.flForwardReplyContainer.addView(forwardReplyView)
     }
@@ -271,11 +268,6 @@ class TextIncomingViewHolder(binding: TextIncomingMessageItemBinding) :
     override fun setCheckBoxListener(checkBoxListener: MessageAdapter.CheckBoxListener) {
         super.setCheckBoxListener(checkBoxListener)
         this.checkBoxListener = checkBoxListener
-    }
-
-    interface AIListener {
-        fun onIconClick(message: ForwardedRepliedMessageEntity?)
-        fun onTranslateClick(message: ForwardedRepliedMessageEntity?)
     }
 
     inner class TouchListener(

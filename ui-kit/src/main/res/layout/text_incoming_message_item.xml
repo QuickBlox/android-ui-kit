@@ -104,10 +104,9 @@
             android:id="@+id/flAi"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            app:layout_constraintBottom_toBottomOf="@+id/clMessage"
+            app:layout_constraintBottom_toBottomOf="@+id/tvMessage"
             app:layout_constraintStart_toEndOf="@+id/barrier"
-            app:layout_constraintTop_toTopOf="@+id/clMessage">
+            app:layout_constraintTop_toTopOf="@+id/tvMessage">
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/ivAI"
@@ -123,8 +122,8 @@
 
             <ProgressBar
                 android:id="@+id/progressAI"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="23dp"
+                android:layout_height="28dp"
                 android:layout_gravity="center"
                 android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="@+id/clMessage"
@@ -139,7 +138,6 @@
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_gravity="bottom"
-            android:layout_marginStart="8dp"
             android:fontFamily="@font/roboto_500"
             android:textSize="11sp"
             app:layout_constraintBottom_toBottomOf="@+id/tvMessage"

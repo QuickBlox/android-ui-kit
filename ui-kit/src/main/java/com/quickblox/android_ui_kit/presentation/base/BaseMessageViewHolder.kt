@@ -20,6 +20,7 @@ import android.widget.ImageView
 import android.widget.ProgressBar
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.AppCompatImageView
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.content.ContextCompat
 import androidx.viewbinding.ViewBinding
 import com.bumptech.glide.Glide
@@ -28,12 +29,12 @@ import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
+import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.R
 import com.quickblox.android_ui_kit.databinding.*
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.AITranslateIncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.*
 import com.quickblox.android_ui_kit.presentation.components.messages.MessageAdapter
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.TextIncomingViewHolder
 import com.quickblox.android_ui_kit.presentation.screens.convertToStringTime
 import com.quickblox.android_ui_kit.presentation.screens.loadCircleImageFromUrl
 import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
@@ -54,7 +55,7 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         listener: MessageListener?,
         theme: UiKitTheme,
         isForwardState: Boolean,
-    ): View? {
+    ): View {
         val forwardedMessage = message?.getForwardedRepliedMessages()?.get(0)
         return if (forwardedMessage?.getContentType() == ChatMessageEntity.ContentTypes.TEXT) {
             buildTextOutgoingMessage(message, listener, theme, isForwardState)
@@ -68,15 +69,11 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         listener: MessageListener?,
         theme: UiKitTheme,
         isForwardState: Boolean,
-        aiListener: TextIncomingViewHolder.AIListener?,
-        isEnabledAIAnswerAssistant: Boolean? = null,
-        isEnabledAITranslate: Boolean? = null,
+        aiListener: AIListener?
     ): View? {
         val forwardedMessage = message?.getForwardedRepliedMessages()?.get(0)
         return if (forwardedMessage?.getContentType() == ChatMessageEntity.ContentTypes.TEXT) {
-            buildTextIncomingMessage(
-                message, listener, theme, isForwardState, aiListener, isEnabledAIAnswerAssistant, isEnabledAITranslate
-            )
+            buildTextIncomingMessage(message, listener, theme, isForwardState, aiListener)
         } else {
             buildMediaIncomingMessage(message, listener, theme, isForwardState)
         }
@@ -92,47 +89,50 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         listener: MessageListener?,
         theme: UiKitTheme,
         isForwardState: Boolean,
-        aiListener: TextIncomingViewHolder.AIListener?,
-        isEnabledAIAnswerAssistant: Boolean?,
-        isEnabledAITranslate: Boolean?,
+        aiListener: AIListener?,
     ): View {
         val textMessageBinding = buildForwardedReplyIncomingTextMessageBinding()
-
         val textMessage = message.getForwardedRepliedMessages()?.get(0)
+
         val sender = textMessage?.getSender()
         textMessageBinding.tvName.text = sender?.getName() ?: sender?.getLogin()
-        textMessageBinding.llForward.visibility = View.VISIBLE
-        textMessageBinding.ivIcon.setImageResource(R.drawable.froward)
-        textMessageBinding.tvActionText.text =
-            textMessageBinding.tvActionText.context.getString(R.string.forwarded_from)
+
+        if (message.isForwarded()) {
+            showForwardHeader(textMessageBinding.ivIcon, textMessageBinding.tvActionText)
+        }
+
+        if (message.isReplied()) {
+            showReplyHeader(textMessageBinding.ivIcon, textMessageBinding.tvActionText)
+            textMessageBinding.tvTime.visibility = View.GONE
+        }
+
         textMessageBinding.tvMessage.background =
             AppCompatResources.getDrawable(textMessageBinding.tvMessage.context, R.drawable.bg_forwarded_message)
         textMessageBinding.tvMessage.setBackgroundTintList(ColorStateList.valueOf(theme.getIncomingMessageColor()))
 
-        textMessageBinding.tvName.setTextColor(theme.getTertiaryElementsColor())
-        textMessageBinding.tvTime.setTextColor(theme.getTertiaryElementsColor())
-        if (isEnabledAITranslate == true && textMessage is AITranslateIncomingChatMessageEntity) {
-            updateTranslatedContent(textMessage, textMessageBinding)
-        } else {
-            textMessageBinding.tvMessage.text = textMessage?.getContent()
-        }
-
         val avatarHolder = ContextCompat.getDrawable(binding.root.context, R.drawable.user_avatar_holder)
         textMessageBinding.ivAvatar.setImageDrawable(avatarHolder)
 
+        textMessageBinding.tvName.setTextColor(theme.getTertiaryElementsColor())
+        textMessageBinding.tvTime.setTextColor(theme.getTertiaryElementsColor())
         textMessageBinding.ivIcon.setColorFilter(theme.getSecondaryTextColor())
         textMessageBinding.tvActionText.setTextColor(theme.getSecondaryTextColor())
-
-        val isAvatarExist = !sender?.getAvatarUrl().isNullOrEmpty()
-        if (isAvatarExist) {
-            textMessageBinding.ivAvatar.loadCircleImageFromUrl(sender?.getAvatarUrl(), R.drawable.user_avatar_holder)
-        }
-
         textMessageBinding.tvMessage.setTextColor(theme.getMainTextColor())
         textMessageBinding.tvAITranslate.setTextColor(theme.getTertiaryElementsColor())
         textMessageBinding.progressAI.indeterminateTintList = ColorStateList.valueOf(theme.getMainElementsColor())
         textMessageBinding.ivAI.setColorFilter(theme.getMainElementsColor())
         textMessageBinding.tvTime.text = message.getTime()?.convertToStringTime()
+
+        if (QuickBloxUiKit.isEnabledAITranslate() && textMessage is AITranslateIncomingChatMessageEntity) {
+            updateTranslatedContent(textMessage, textMessageBinding)
+        } else {
+            textMessageBinding.tvMessage.text = textMessage?.getContent()
+        }
+
+        val isAvatarExist = !sender?.getAvatarUrl().isNullOrEmpty()
+        if (isAvatarExist) {
+            textMessageBinding.ivAvatar.loadCircleImageFromUrl(sender?.getAvatarUrl(), R.drawable.user_avatar_holder)
+        }
 
         textMessageBinding.tvMessage.setOnLongClickListener {
             true
@@ -167,22 +167,33 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
             forwardedCheckBox = textMessageBinding.checkbox
         } else {
             setAIListener(message, aiListener, textMessageBinding)
-            setTranslateListener(textMessage!!, aiListener, textMessageBinding, isEnabledAIAnswerAssistant)
+            setTranslateListener(textMessage!!, aiListener, textMessageBinding)
         }
 
-        if (isEnabledAITranslate == true) {
+        if (QuickBloxUiKit.isEnabledAITranslate()) {
             textMessageBinding.tvAITranslate.visibility = View.VISIBLE
         } else {
             textMessageBinding.tvAITranslate.visibility = View.GONE
         }
 
-        if (isEnabledAIAnswerAssistant == true) {
+        if (QuickBloxUiKit.isEnabledAIAnswerAssistant()) {
             textMessageBinding.ivAI.visibility = View.VISIBLE
         } else {
             textMessageBinding.ivAI.visibility = View.GONE
         }
 
         return textMessageBinding.root
+    }
+
+    private fun showForwardHeader(ivIcon: AppCompatImageView, tvActionText: AppCompatTextView) {
+        ivIcon.setImageResource(R.drawable.ic_forward)
+        tvActionText.text = tvActionText.context.getString(R.string.forwarded_from)
+
+    }
+
+    private fun showReplyHeader(ivIcon: AppCompatImageView, tvActionText: AppCompatTextView) {
+        ivIcon.setImageResource(R.drawable.ic_reply)
+        tvActionText.text = tvActionText.context.getString(R.string.replied_to)
     }
 
     private fun updateTranslatedContent(
@@ -201,7 +212,7 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
 
     private fun setAIListener(
         message: IncomingChatMessageEntity,
-        listener: TextIncomingViewHolder.AIListener?,
+        listener: AIListener?,
         textMessageBinding: ForwardedReplyIncomingTextMessageBinding,
     ) {
         textMessageBinding.ivAI.setOnClickListener {
@@ -213,9 +224,8 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
 
     private fun setTranslateListener(
         message: ForwardedRepliedMessageEntity,
-        listener: TextIncomingViewHolder.AIListener?,
+        listener: AIListener?,
         textMessageBinding: ForwardedReplyIncomingTextMessageBinding,
-        isEnabledAIAnswerAssistant: Boolean?,
     ) {
         textMessageBinding.tvAITranslate.setOnClickListener {
             listener?.onTranslateClick(message)
@@ -226,7 +236,7 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
 
             textMessageBinding.progressAI.visibility = View.VISIBLE
 
-            if (isEnabledAIAnswerAssistant == true) {
+            if (QuickBloxUiKit.isEnabledAIAnswerAssistant()) {
                 textMessageBinding.ivAI.visibility = View.GONE
             }
         }
@@ -244,24 +254,32 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         val textMessage = message.getForwardedRepliedMessages()?.get(0)
         val sender = textMessage?.getSender()
         textMessageBinding.tvName.text = sender?.getName() ?: sender?.getLogin()
-        textMessageBinding.tvName.visibility = View.VISIBLE
-        textMessageBinding.llForward.visibility = View.VISIBLE
-        textMessageBinding.ivIcon.setImageResource(R.drawable.froward)
-        textMessageBinding.tvActionText.text =
-            textMessageBinding.tvActionText.context.getString(R.string.forwarded_from)
+
+        if (message.isForwarded()) {
+            showForwardHeader(textMessageBinding.ivIcon, textMessageBinding.tvActionText)
+        }
+
+        if (message.isReplied()) {
+            showReplyHeader(textMessageBinding.ivIcon, textMessageBinding.tvActionText)
+            textMessageBinding.ivStatus.visibility = View.GONE
+            textMessageBinding.tvTime.visibility = View.GONE
+        }
 
         textMessageBinding.tvMessage.text = textMessage?.getContent()
+        textMessageBinding.tvTime.text = message.getTime()?.convertToStringTime()
+
         textMessageBinding.tvMessage.setTextColor(theme.getMainTextColor())
-
-        textMessageBinding.tvTime.text = textMessage?.getTime()?.convertToStringTime()
-
         textMessageBinding.ivIcon.setColorFilter(theme.getSecondaryTextColor())
         textMessageBinding.tvActionText.setTextColor(theme.getSecondaryTextColor())
         textMessageBinding.tvName.setTextColor(theme.getSecondaryTextColor())
-
         textMessageBinding.tvMessage.backgroundTintList = ColorStateList.valueOf(theme.getOutgoingMessageColor())
         textMessageBinding.tvTime.setTextColor(theme.getTertiaryElementsColor())
         textMessageBinding.tvMessage.setTextColor(theme.getMainTextColor())
+
+        val states: Array<IntArray> = arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf())
+        val defaultColor = ContextCompat.getColor(binding.root.context, android.R.color.darker_gray)
+        val colors = intArrayOf(theme.getMainElementsColor(), defaultColor)
+        textMessageBinding.checkbox.buttonTintList = ColorStateList(states, colors)
 
         setState(message, theme, textMessageBinding.ivStatus)
 
@@ -272,11 +290,6 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         textMessageBinding.tvMessage.setOnTouchListener(
             TouchListener(textMessageBinding.tvMessage.context, textMessage, listener, textMessageBinding.tvMessage)
         )
-
-        val states: Array<IntArray> = arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf())
-        val defaultColor = ContextCompat.getColor(binding.root.context, android.R.color.darker_gray)
-        val colors = intArrayOf(theme.getMainElementsColor(), defaultColor)
-        textMessageBinding.checkbox.buttonTintList = ColorStateList(states, colors)
 
         if (isForwardState) {
             textMessageBinding.checkbox.visibility = View.VISIBLE
@@ -310,7 +323,7 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         listener: MessageListener?,
         theme: UiKitTheme,
         forwardState: Boolean,
-    ): View? {
+    ): View {
         val mediaContent = message?.getForwardedRepliedMessages()?.get(0)?.getMediaContent()
         return when (mediaContent?.getType()) {
             MediaContentEntity.Types.IMAGE -> {
@@ -336,7 +349,7 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         listener: MessageListener?,
         theme: UiKitTheme,
         forwardState: Boolean,
-    ): View? {
+    ): View {
         val mediaContent = message?.getForwardedRepliedMessages()?.get(0)?.getMediaContent()
         return when (mediaContent?.getType()) {
             MediaContentEntity.Types.IMAGE -> {
@@ -363,37 +376,38 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         listener: MessageListener?,
         theme: UiKitTheme,
         forwardState: Boolean,
-    ): View? {
+    ): View {
         val fileMessageBinding = buildForwardedReplyIncomingFileMessageBinding()
 
         val forwardedMessage = message.getForwardedRepliedMessages()?.get(0)
 
-        fileMessageBinding.llForward.visibility = View.VISIBLE
-        fileMessageBinding.ivIcon.setImageResource(R.drawable.froward)
-        fileMessageBinding.tvActionText.text =
-            fileMessageBinding.tvActionText.context.getString(R.string.forwarded_from)
-        fileMessageBinding.ivIcon.setColorFilter(theme.getSecondaryTextColor())
-        fileMessageBinding.tvActionText.setTextColor(theme.getSecondaryTextColor())
+        if (message.isForwarded()) {
+            showForwardHeader(fileMessageBinding.ivIcon, fileMessageBinding.tvActionText)
+        }
+
+        if (message.isReplied()) {
+            showReplyHeader(fileMessageBinding.ivIcon, fileMessageBinding.tvActionText)
+            fileMessageBinding.tvTime.visibility = View.GONE
+        }
 
         fileMessageBinding.tvFileName.text = forwardedMessage?.getMediaContent()?.getName()
-
         fileMessageBinding.tvTime.text = message.getTime()?.convertToStringTime()
+
+        fileMessageBinding.ivIcon.setColorFilter(theme.getSecondaryTextColor())
+        fileMessageBinding.tvActionText.setTextColor(theme.getSecondaryTextColor())
+        fileMessageBinding.tvTime.setTextColor(theme.getTertiaryElementsColor())
+        fileMessageBinding.tvName.setTextColor(theme.getMainTextColor())
+        fileMessageBinding.tvFileName.setTextColor(theme.getMainTextColor())
 
         val drawableBackground =
             ContextCompat.getDrawable(binding.root.context, R.drawable.bg_forwarded_message) as GradientDrawable
         drawableBackground.setColor(theme.getIncomingMessageColor())
         fileMessageBinding.llFile.background = drawableBackground
 
-        fileMessageBinding.tvTime.setTextColor(theme.getTertiaryElementsColor())
-
-        fileMessageBinding.tvName.setTextColor(theme.getMainTextColor())
-
         val drawablePlaceholder =
             ContextCompat.getDrawable(binding.root.context, R.drawable.bg_around_corners_6dp) as GradientDrawable
         drawablePlaceholder.setColor(theme.getTertiaryElementsColor())
         fileMessageBinding.ivFile.background = drawablePlaceholder
-
-        fileMessageBinding.tvFileName.setTextColor(theme.getMainTextColor())
 
         val avatarHolder = ContextCompat.getDrawable(fileMessageBinding.root.context, R.drawable.user_avatar_holder)
         fileMessageBinding.ivAvatar.setImageDrawable(avatarHolder)
@@ -421,10 +435,7 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
 
         fileMessageBinding.clMessage.setOnTouchListener(
             TouchListener(
-                fileMessageBinding.clMessage.context,
-                forwardedMessage,
-                listener,
-                fileMessageBinding.clMessage
+                fileMessageBinding.clMessage.context, forwardedMessage, listener, fileMessageBinding.clMessage
             )
         )
 
@@ -460,21 +471,19 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         forwardState: Boolean,
     ): View {
         val videoMessageBinding = buildForwardedReplyIncomingVideoMessageBinding()
-
         val forwardedMessage = message.getForwardedRepliedMessages()?.get(0)
 
+        if (message.isForwarded()) {
+            showForwardHeader(videoMessageBinding.ivIcon, videoMessageBinding.tvActionText)
+        }
 
-        videoMessageBinding.llForward.visibility = View.VISIBLE
-        videoMessageBinding.ivIcon.setImageResource(R.drawable.froward)
-        videoMessageBinding.tvActionText.text =
-            videoMessageBinding.tvActionText.context.getString(R.string.forwarded_from)
+        if (message.isReplied()) {
+            showReplyHeader(videoMessageBinding.ivIcon, videoMessageBinding.tvActionText)
+            videoMessageBinding.tvTime.visibility = View.GONE
+        }
 
         videoMessageBinding.ivIcon.setColorFilter(theme.getSecondaryTextColor())
         videoMessageBinding.tvActionText.setTextColor(theme.getSecondaryTextColor())
-
-
-        videoMessageBinding.tvTime.text = message.getTime()?.convertToStringTime()
-
         videoMessageBinding.tvName.setTextColor(theme.getMainTextColor())
         videoMessageBinding.tvTime.setTextColor(theme.getTertiaryElementsColor())
 
@@ -482,7 +491,6 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         val defaultColor = ContextCompat.getColor(videoMessageBinding.root.context, android.R.color.darker_gray)
         val colors = intArrayOf(theme.getMainElementsColor(), defaultColor)
         videoMessageBinding.checkbox.buttonTintList = ColorStateList(states, colors)
-
 
         val avatarHolder = ContextCompat.getDrawable(videoMessageBinding.root.context, R.drawable.user_avatar_holder)
         videoMessageBinding.ivAvatar.setImageDrawable(avatarHolder)
@@ -492,6 +500,8 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         if (isAvatarExist) {
             videoMessageBinding.ivAvatar.loadCircleImageFromUrl(sender?.getAvatarUrl(), R.drawable.user_avatar_holder)
         }
+
+        videoMessageBinding.tvTime.text = message.getTime()?.convertToStringTime()
 
         applyIncomingVideoPlaceHolder(videoMessageBinding.ivVideo, theme)
 
@@ -547,27 +557,29 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         forwardState: Boolean,
     ): View {
         val audioMessageBinding = buildForwardedReplyIncomingAudioMessageBinding()
-
         val forwardedMessage = message.getForwardedRepliedMessages()?.get(0)
 
-        audioMessageBinding.llForward.visibility = View.VISIBLE
-        audioMessageBinding.ivIcon.setImageResource(R.drawable.froward)
-        audioMessageBinding.tvActionText.text =
-            audioMessageBinding.tvActionText.context.getString(R.string.forwarded_from)
-        audioMessageBinding.tvTime.text = message.getTime()?.convertToStringTime()
+        if (message.isForwarded()) {
+            showForwardHeader(audioMessageBinding.ivIcon, audioMessageBinding.tvActionText)
+            audioMessageBinding.tvTime.text = message.getTime()?.convertToStringTime()
+        }
+
+        if (message.isReplied()) {
+            showReplyHeader(audioMessageBinding.ivIcon, audioMessageBinding.tvActionText)
+            audioMessageBinding.tvTime.visibility = View.GONE
+        }
 
         audioMessageBinding.ivIcon.setColorFilter(theme.getSecondaryTextColor())
         audioMessageBinding.tvActionText.setTextColor(theme.getSecondaryTextColor())
+        audioMessageBinding.tvName.setTextColor(theme.getMainTextColor())
+        audioMessageBinding.tvTime.setTextColor(theme.getTertiaryElementsColor())
+        audioMessageBinding.ivPlay.setColorFilter(theme.getMainElementsColor())
 
         val drawable = ContextCompat.getDrawable(
             audioMessageBinding.root.context, R.drawable.bg_forwarded_message
         ) as GradientDrawable
         drawable.setColor(theme.getIncomingMessageColor())
         audioMessageBinding.llFile.background = drawable
-
-        audioMessageBinding.tvName.setTextColor(theme.getMainTextColor())
-        audioMessageBinding.tvTime.setTextColor(theme.getTertiaryElementsColor())
-        audioMessageBinding.ivPlay.setColorFilter(theme.getMainElementsColor())
 
         val states: Array<IntArray> = arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf())
         val defaultColor = ContextCompat.getColor(audioMessageBinding.root.context, android.R.color.darker_gray)
@@ -628,20 +640,23 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         forwardState: Boolean,
     ): View {
         val imageMessageBinding = buildForwardedReplyIncomingImageMessageBinding()
-
         val forwardedMessage = message.getForwardedRepliedMessages()?.get(0)
 
         imageMessageBinding.llForward.visibility = View.VISIBLE
-        imageMessageBinding.ivIcon.setImageResource(R.drawable.froward)
-        imageMessageBinding.tvActionText.text =
-            imageMessageBinding.tvActionText.context.getString(R.string.forwarded_from)
+        if (message.isForwarded()) {
+            showForwardHeader(imageMessageBinding.ivIcon, imageMessageBinding.tvActionText)
+        }
+
+        if (message.isReplied()) {
+            showReplyHeader(imageMessageBinding.ivIcon, imageMessageBinding.tvActionText)
+            imageMessageBinding.tvTime.visibility = View.GONE
+        }
+
         imageMessageBinding.ivIcon.setColorFilter(theme.getSecondaryTextColor())
         imageMessageBinding.tvActionText.setTextColor(theme.getSecondaryTextColor())
         imageMessageBinding.tvName.setTextColor(theme.getSecondaryTextColor())
 
-        imageMessageBinding.tvTime.text = message.getTime()?.convertToStringTime()
         imageMessageBinding.tvTime.setTextColor(theme.getTertiaryElementsColor())
-
         val avatarHolder = ContextCompat.getDrawable(binding.root.context, R.drawable.user_avatar_holder)
         imageMessageBinding.ivAvatar.setImageDrawable(avatarHolder)
 
@@ -649,6 +664,8 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         val defaultColor = ContextCompat.getColor(binding.root.context, android.R.color.darker_gray)
         val colors = intArrayOf(theme.getMainElementsColor(), defaultColor)
         imageMessageBinding.checkbox.buttonTintList = ColorStateList(states, colors)
+
+        imageMessageBinding.tvTime.text = message.getTime()?.convertToStringTime()
 
         val sender = forwardedMessage?.getSender()
         val isAvatarExist = !sender?.getAvatarUrl().isNullOrEmpty()
@@ -702,24 +719,23 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         listener: MessageListener?,
         theme: UiKitTheme,
         forwardState: Boolean,
-    ): View? {
+    ): View {
         val videoMessageBinding = buildForwardedReplyOutgoingVideoMessageBinding()
-
         val forwardedMessage = message.getForwardedRepliedMessages()?.get(0)
 
         val sender = forwardedMessage?.getSender()
         videoMessageBinding.tvName.text = sender?.getName() ?: sender?.getLogin()
-        videoMessageBinding.tvName.visibility = View.VISIBLE
         videoMessageBinding.llForward.visibility = View.VISIBLE
-        videoMessageBinding.ivIcon.setImageResource(R.drawable.froward)
-        videoMessageBinding.tvActionText.text =
-            videoMessageBinding.tvActionText.context.getString(R.string.forwarded_from)
 
-        videoMessageBinding.ivIcon.setColorFilter(theme.getSecondaryTextColor())
-        videoMessageBinding.tvActionText.setTextColor(theme.getSecondaryTextColor())
-        videoMessageBinding.tvName.setTextColor(theme.getSecondaryTextColor())
+        if (message.isForwarded()) {
+            showForwardHeader(videoMessageBinding.ivIcon, videoMessageBinding.tvActionText)
+        }
 
-        videoMessageBinding.tvTime.text = message.getTime()?.convertToStringTime()
+        if (message.isReplied()) {
+            showReplyHeader(videoMessageBinding.ivIcon, videoMessageBinding.tvActionText)
+            videoMessageBinding.ivStatus.visibility = View.GONE
+            videoMessageBinding.tvTime.visibility = View.GONE
+        }
 
         videoMessageBinding.ivIcon.setColorFilter(theme.getSecondaryTextColor())
         videoMessageBinding.tvActionText.setTextColor(theme.getSecondaryTextColor())
@@ -730,6 +746,9 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         val defaultColor = ContextCompat.getColor(binding.root.context, android.R.color.darker_gray)
         val colors = intArrayOf(theme.getMainElementsColor(), defaultColor)
         videoMessageBinding.checkbox.buttonTintList = ColorStateList(states, colors)
+
+        videoMessageBinding.tvTime.text = message.getTime()?.convertToStringTime()
+
         setState(message, theme, videoMessageBinding.ivStatus)
 
         applyOutgoingVideoPlaceHolder(videoMessageBinding.ivVideo, theme)
@@ -804,19 +823,22 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         forwardState: Boolean,
     ): View {
         val fileMessageBinding = buildForwardedReplyOutgoingFileMessageBinding()
-
         val forwardedMessage = message.getForwardedRepliedMessages()?.get(0)
-
-        fileMessageBinding.tvTime.text = message.getTime()?.convertToStringTime()
-        fileMessageBinding.tvFileName.text = forwardedMessage?.getMediaContent()?.getName()
 
         val sender = forwardedMessage?.getSender()
         fileMessageBinding.tvName.text = sender?.getName() ?: sender?.getLogin()
-        fileMessageBinding.tvName.visibility = View.VISIBLE
-        fileMessageBinding.llForward.visibility = View.VISIBLE
-        fileMessageBinding.ivIcon.setImageResource(R.drawable.froward)
-        fileMessageBinding.tvActionText.text =
-            fileMessageBinding.tvActionText.context.getString(R.string.forwarded_from)
+        fileMessageBinding.tvTime.text = message.getTime()?.convertToStringTime()
+        fileMessageBinding.tvFileName.text = forwardedMessage?.getMediaContent()?.getName()
+
+        if (message.isForwarded()) {
+            showForwardHeader(fileMessageBinding.ivIcon, fileMessageBinding.tvActionText)
+        }
+
+        if (message.isReplied()) {
+            showReplyHeader(fileMessageBinding.ivIcon, fileMessageBinding.tvActionText)
+            fileMessageBinding.ivStatus.visibility = View.GONE
+            fileMessageBinding.tvTime.visibility = View.GONE
+        }
 
         fileMessageBinding.ivIcon.setColorFilter(theme.getSecondaryTextColor())
         fileMessageBinding.tvActionText.setTextColor(theme.getSecondaryTextColor())
@@ -830,7 +852,7 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
 
         val drawablePlaceholder =
             ContextCompat.getDrawable(binding.root.context, R.drawable.bg_around_corners_6dp) as GradientDrawable
-        drawablePlaceholder.setColor(theme.getMainElementsColor())
+        drawablePlaceholder.setColor(theme.getTertiaryElementsColor())
         fileMessageBinding.ivFile.background = drawablePlaceholder
 
         fileMessageBinding.tvTime.setTextColor(theme.getTertiaryElementsColor())
@@ -886,12 +908,18 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         val audioMessageBinding = buildForwardedReplyOutgoingAudioMessageBinding()
         val forwardedMessage = message.getForwardedRepliedMessages()?.get(0)
         val sender = forwardedMessage?.getSender()
+
         audioMessageBinding.tvName.text = sender?.getName() ?: sender?.getLogin()
-        audioMessageBinding.tvName.visibility = View.VISIBLE
-        audioMessageBinding.llForward.visibility = View.VISIBLE
-        audioMessageBinding.ivIcon.setImageResource(R.drawable.froward)
-        audioMessageBinding.tvActionText.text =
-            audioMessageBinding.tvActionText.context.getString(R.string.forwarded_from)
+
+        if (message.isForwarded()) {
+            showForwardHeader(audioMessageBinding.ivIcon, audioMessageBinding.tvActionText)
+        }
+
+        if (message.isReplied()) {
+            showReplyHeader(audioMessageBinding.ivIcon, audioMessageBinding.tvActionText)
+            audioMessageBinding.ivStatus.visibility = View.GONE
+            audioMessageBinding.tvTime.visibility = View.GONE
+        }
 
         audioMessageBinding.tvTime.text = message.getTime()?.convertToStringTime()
 
@@ -944,8 +972,6 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
             }
             forwardedCheckBox = audioMessageBinding.checkbox
         }
-
-
         return audioMessageBinding.root
     }
 
@@ -957,28 +983,32 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         isForwardState: Boolean,
     ): View {
         val imageMessageBinding = buildForwardedReplyOutgoingImageMessageBinding()
-
         val forwardedMessage = message?.getForwardedRepliedMessages()?.get(0)
 
         val sender = forwardedMessage?.getSender()
         imageMessageBinding.tvName.text = sender?.getName() ?: sender?.getLogin()
-        imageMessageBinding.tvName.visibility = View.VISIBLE
-        imageMessageBinding.llForward.visibility = View.VISIBLE
-        imageMessageBinding.ivIcon.setImageResource(R.drawable.froward)
-        imageMessageBinding.tvActionText.text =
-            imageMessageBinding.tvActionText.context.getString(R.string.forwarded_from)
 
-        imageMessageBinding.tvTime.text = message?.getTime()?.convertToStringTime()
+        if (message?.isForwarded() == true) {
+            showForwardHeader(imageMessageBinding.ivIcon, imageMessageBinding.tvActionText)
+        }
+
+        if (message?.isReplied() == true) {
+            showReplyHeader(imageMessageBinding.ivIcon, imageMessageBinding.tvActionText)
+            imageMessageBinding.ivStatus.visibility = View.GONE
+            imageMessageBinding.tvTime.visibility = View.GONE
+        }
 
         imageMessageBinding.ivIcon.setColorFilter(theme.getSecondaryTextColor())
         imageMessageBinding.tvActionText.setTextColor(theme.getSecondaryTextColor())
         imageMessageBinding.tvName.setTextColor(theme.getSecondaryTextColor())
-
         imageMessageBinding.tvTime.setTextColor(theme.getTertiaryElementsColor())
+
         val states: Array<IntArray> = arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf())
         val defaultColor = ContextCompat.getColor(binding.root.context, android.R.color.darker_gray)
         val colors = intArrayOf(theme.getMainElementsColor(), defaultColor)
         imageMessageBinding.checkbox.buttonTintList = ColorStateList(states, colors)
+
+        imageMessageBinding.tvTime.text = message?.getTime()?.convertToStringTime()
 
         setState(message, theme, imageMessageBinding.ivStatus)
 
@@ -1072,7 +1102,7 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
 
     inner class TouchListener(
         context: Context,
-        private val message: ChatMessageEntity?,
+        private val message: ForwardedRepliedMessageEntity?,
         private val listener: MessageListener?,
         private val view: View,
     ) : View.OnTouchListener {
@@ -1098,7 +1128,7 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
     interface MessageListener {
         fun onClick(message: ChatMessageEntity?)
         fun onLongClick(
-            message: ChatMessageEntity?, position: Int? = null, view: View,
+            message: ForwardedRepliedMessageEntity?, position: Int? = null, view: View,
             xRawTouch: Int, yRawTouch: Int,
         )
     }
@@ -1227,7 +1257,7 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         videoView.scaleType = ImageView.ScaleType.CENTER
     }
 
-    private fun setState(message: ForwardedRepliedMessageEntity?, theme: UiKitTheme, ivStatus: AppCompatImageView) {
+    protected fun setState(message: ForwardedRepliedMessageEntity?, theme: UiKitTheme, ivStatus: AppCompatImageView) {
         if (message is OutgoingChatMessageEntity) {
             val resourceId: Int?
             val color: Int?
@@ -1259,5 +1289,10 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
             ivStatus.setImageResource(resourceId)
             ivStatus.setColorFilter(color)
         }
+    }
+
+    interface AIListener {
+        fun onIconClick(message: ForwardedRepliedMessageEntity?)
+        fun onTranslateClick(message: ForwardedRepliedMessageEntity?)
     }
 }

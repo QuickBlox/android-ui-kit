@@ -28,16 +28,20 @@ import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessag
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
 import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder
-import com.quickblox.android_ui_kit.presentation.base.BaseViewHolder
 import com.quickblox.android_ui_kit.presentation.components.messages.MessageAdapter
 import com.quickblox.android_ui_kit.presentation.screens.convertToStringTime
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 
 class VideoOutgoingViewHolder(binding: VideoOutgiongMessageItemBinding) :
-    BaseViewHolder<VideoOutgiongMessageItemBinding>(binding), Forward {
+    BaseMessageViewHolder<VideoOutgiongMessageItemBinding>(binding), Forward {
     private var theme: UiKitTheme = LightUIKitTheme()
     private var checkBoxListener: MessageAdapter.CheckBoxListener? = null
+    private var message: ForwardedRepliedMessageEntity? = null
+
+    override fun clearCachedData() {
+        binding.flForwardReplyContainer.removeAllViews()
+    }
 
     companion object {
         fun newInstance(parent: ViewGroup): VideoOutgoingViewHolder {
@@ -53,10 +57,31 @@ class VideoOutgoingViewHolder(binding: VideoOutgiongMessageItemBinding) :
 
     fun bind(
         message: OutgoingChatMessageEntity?,
-        listener: BaseMessageViewHolder.MessageListener?,
+        listener: MessageListener?,
         isForwardState: Boolean,
         selectedMessages: MutableList<MessageEntity>,
     ) {
+        this.message = message
+        if (message?.isForwardedOrReplied() == true) {
+            setSelectedMessages(selectedMessages)
+            showForwardedReplyMessages(
+                message,
+                listener,
+                theme,
+                isForwardState
+            )
+
+            val content = message.getContent()
+            if (content.isNullOrEmpty() || content.contains("[Forwarded_Message]")) {
+                binding.ivVideo.visibility = View.GONE
+                binding.ivStatus.visibility = View.GONE
+                binding.tvTime.visibility = View.GONE
+                binding.checkbox.visibility = View.GONE
+                applyTheme(theme)
+                return
+            }
+        }
+
         binding.tvTime.text = message?.getTime()?.convertToStringTime()
 
         applyPlaceHolder()
@@ -81,23 +106,39 @@ class VideoOutgoingViewHolder(binding: VideoOutgiongMessageItemBinding) :
                 }
             }
 
-            binding.checkbox.setOnCheckedChangeListener { buttonView, isChecked ->
+            binding.checkbox.setOnClickListener {
+                val isChecked = binding.checkbox.isChecked
                 if (isChecked) {
+                    binding.checkbox.isChecked = true
                     checkBoxListener?.onSelected(message)
                 } else {
+                    binding.checkbox.isChecked = false
                     checkBoxListener?.onUnselected(message)
                 }
             }
         }
 
         setListener(message, listener)
-        setState(message)
+        setState(message, theme, binding.ivStatus)
 
         applyTheme(theme)
     }
 
+    private fun showForwardedReplyMessages(
+        message: ForwardedRepliedMessageEntity,
+        listener: MessageListener?,
+        theme: UiKitTheme,
+        isForwardState: Boolean,
+    ) {
+        if (message.getForwardedRepliedMessages()?.isEmpty() == true) {
+            return
+        }
+        val forwardReplyView = buildOutgoingMessage(message, listener, theme, isForwardState)
+        binding.flForwardReplyContainer.addView(forwardReplyView)
+    }
+
     @SuppressLint("ClickableViewAccessibility")
-    private fun setListener(message: OutgoingChatMessageEntity?, listener: BaseMessageViewHolder.MessageListener?) {
+    private fun setListener(message: OutgoingChatMessageEntity?, listener: MessageListener?) {
         binding.ivVideo.setOnClickListener {
             listener?.onClick(message)
         }
@@ -153,45 +194,24 @@ class VideoOutgoingViewHolder(binding: VideoOutgiongMessageItemBinding) :
         binding.ivVideo.scaleType = ImageView.ScaleType.CENTER
     }
 
-    private fun setState(message: OutgoingChatMessageEntity?) {
-        val resourceId: Int?
-        val color: Int?
-        when (message?.getOutgoingState()) {
-            OutgoingChatMessageEntity.OutgoingStates.SENDING -> {
-                resourceId = R.drawable.sending
-                color = theme.getTertiaryElementsColor()
-            }
-            OutgoingChatMessageEntity.OutgoingStates.SENT -> {
-                resourceId = R.drawable.sent
-                color = theme.getTertiaryElementsColor()
-            }
-            OutgoingChatMessageEntity.OutgoingStates.DELIVERED -> {
-                resourceId = R.drawable.delivered
-                color = theme.getTertiaryElementsColor()
-            }
-            OutgoingChatMessageEntity.OutgoingStates.READ -> {
-                resourceId = R.drawable.read
-                color = theme.getMainElementsColor()
-            }
-            OutgoingChatMessageEntity.OutgoingStates.ERROR -> {
-                resourceId = R.drawable.send_error
-                color = theme.getErrorColor()
-            }
-            else -> {
-                return
-            }
-        }
-
-        binding.ivStatus.setImageResource(resourceId)
-        binding.ivStatus.setColorFilter(color)
-    }
-
-    fun setCheckBoxListener(checkBoxListener: MessageAdapter.CheckBoxListener) {
+    override fun setCheckBoxListener(checkBoxListener: MessageAdapter.CheckBoxListener) {
+        super.setCheckBoxListener(checkBoxListener)
         this.checkBoxListener = checkBoxListener
     }
 
     override fun setChecked(checked: Boolean, selectedMessages: MutableList<MessageEntity>) {
-        binding.checkbox.isChecked = checked
+        if (message?.isForwardedOrReplied() == true) {
+            if (selectedMessages.contains(message as MessageEntity)) {
+                binding.checkbox.isChecked = checked
+            } else {
+                getCheckbox()?.isChecked = checked
+            }
+        } else {
+            binding.checkbox.isChecked = checked
+        }
+        if (!checked) {
+            checkBoxListener?.onUnselected(message)
+        }
     }
 
     private inner class RequestListenerImpl : RequestListener<Drawable> {
@@ -228,7 +248,7 @@ class VideoOutgoingViewHolder(binding: VideoOutgiongMessageItemBinding) :
     inner class TouchListener(
         context: Context,
         private val message: OutgoingChatMessageEntity?,
-        private val listener: BaseMessageViewHolder.MessageListener?,
+        private val listener: MessageListener?,
         private val view: View,
     ) : View.OnTouchListener {
         private val gestureDetector: GestureDetector

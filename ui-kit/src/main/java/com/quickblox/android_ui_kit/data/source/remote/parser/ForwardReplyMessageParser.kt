@@ -21,8 +21,8 @@ import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 
-object ForwardMessageParser {
-    private val TAG = ForwardMessageParser::class.simpleName
+object ForwardReplyMessageParser {
+    private val TAG = ForwardReplyMessageParser::class.simpleName
 
     private const val QB_MESSAGE_ACTION_KEY = "qb_message_action"
     const val QB_ORIGINAL_MESSAGES_KEY = "qb_original_messages"
@@ -54,12 +54,12 @@ object ForwardMessageParser {
     }
 
     fun parseForwardRepliedTypeFrom(dto: RemoteMessageDTO): ForwardedRepliedMessageEntity.Types {
-        var type = ForwardedRepliedMessageEntity.Types.FORWARDED
         val parsedType = dto.properties?.get(QB_MESSAGE_ACTION_KEY)
-        if (parsedType == REPLY_TYPE) {
-            type = ForwardedRepliedMessageEntity.Types.REPLIED
+        return if (parsedType == REPLY_TYPE) {
+            ForwardedRepliedMessageEntity.Types.REPLIED
+        } else {
+            ForwardedRepliedMessageEntity.Types.FORWARDED
         }
-        return type
     }
 
     fun parsePropertiesFrom(qbChatMessage: QBChatMessage): Map<String?, String?> {
@@ -73,13 +73,24 @@ object ForwardMessageParser {
         return properties
     }
 
-    fun parsePropertiesFrom(forwardMessages: List<ChatMessageEntity>): Map<String?, String?> {
-        val properties: MutableMap<String?, String?> = mutableMapOf()
-        properties[QB_MESSAGE_ACTION_KEY] = FORWARD_TYPE
-        properties[QB_ORIGINAL_MESSAGES_KEY] = parseMessagesToJson(forwardMessages)
+    fun parseReplyPropertiesFrom(replyMessage: ChatMessageEntity): Map<String?, String?> {
+        val properties = parsePropertiesFrom(listOf(replyMessage)) as MutableMap
+        properties[QB_MESSAGE_ACTION_KEY] = REPLY_TYPE
 
-        // TODO: will be removed when we start support to forward multiple messages
-        properties[ORIGIN_SENDER_NAME_KEY] = forwardMessages[0].getSender()?.getName() ?: ""
+        return properties
+    }
+
+    fun parseForwardPropertiesFrom(forwardMessages: List<ChatMessageEntity>): Map<String?, String?> {
+        val properties = parsePropertiesFrom(forwardMessages) as MutableMap
+        properties[QB_MESSAGE_ACTION_KEY] = FORWARD_TYPE
+
+        return properties
+    }
+
+    private fun parsePropertiesFrom(messages: List<ChatMessageEntity>): Map<String?, String?> {
+        val properties: MutableMap<String?, String?> = mutableMapOf()
+        properties[QB_ORIGINAL_MESSAGES_KEY] = parseMessagesToJson(messages)
+        properties[ORIGIN_SENDER_NAME_KEY] = messages[0].getSender()?.getName() ?: ""
 
         return properties
     }

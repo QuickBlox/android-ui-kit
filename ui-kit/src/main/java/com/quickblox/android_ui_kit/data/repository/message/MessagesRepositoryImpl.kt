@@ -146,6 +146,26 @@ class MessagesRepositoryImpl(private val remoteDataSource: RemoteDataSource) : M
         }
     }
 
+    override fun createReplyMessage(
+        replyMessage: ForwardedRepliedMessageEntity,
+        relateMessage: OutgoingChatMessageEntity
+    ): OutgoingChatMessageEntity {
+        try {
+            val remoteMessageDTO = MessageMapper.remoteDTOFromReplyChatMessage(replyMessage, relateMessage)
+            val createdMessageDTO = remoteDataSource.createMessage(remoteMessageDTO)
+
+            // TODO: Need to move this logic to UseCase. The logic for changing status should be inside use case.
+            createdMessageDTO.outgoingState = RemoteMessageDTO.OutgoingMessageStates.SENDING
+
+            val outgoingMessage = MessageMapper.outgoingChatEntityFrom(createdMessageDTO)
+            return outgoingMessage
+        } catch (exception: RemoteDataSourceException) {
+            throw exceptionFactory.makeBy(exception.code, exception.description)
+        } catch (exception: MappingException) {
+            throw exceptionFactory.makeIncorrectData(exception.message.toString())
+        }
+    }
+
     override fun readMessage(entity: MessageEntity, dialog: DialogEntity) {
         try {
             val remoteMessageDTO = MessageMapper.remoteDTOFromMessageEntity(entity)

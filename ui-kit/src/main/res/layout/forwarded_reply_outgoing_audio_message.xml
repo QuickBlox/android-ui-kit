@@ -33,19 +33,17 @@
             android:id="@+id/llForward"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="@id/llFile"
             app:layout_constraintHorizontal_bias="0"
             app:layout_constraintStart_toStartOf="@+id/llFile"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:visibility="visible">
+            app:layout_constraintTop_toTopOf="parent">
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/ivIcon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:src="@drawable/froward"
+                android:src="@drawable/ic_forward"
                 app:layout_constraintBottom_toTopOf="@+id/clMessage"
                 app:layout_constraintEnd_toEndOf="@id/clMessage"
                 app:layout_constraintHorizontal_bias="0"
@@ -81,7 +79,6 @@
             android:fontFamily="@font/roboto_500"
             android:lines="1"
             android:textSize="12sp"
-            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="@id/llFile"
             app:layout_constraintHorizontal_bias="0"
             app:layout_constraintStart_toStartOf="@+id/llFile"

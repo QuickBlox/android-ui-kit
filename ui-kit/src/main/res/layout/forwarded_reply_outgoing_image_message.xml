@@ -25,19 +25,17 @@
         android:id="@+id/llForward"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="@id/ivImage"
         app:layout_constraintHorizontal_bias="0"
         app:layout_constraintStart_toStartOf="@+id/ivImage"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:visibility="visible">
+        app:layout_constraintTop_toTopOf="parent">
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/ivIcon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:src="@drawable/froward"
+            android:src="@drawable/ic_forward"
             app:layout_constraintBottom_toTopOf="@+id/clMessage"
             app:layout_constraintEnd_toEndOf="@id/clMessage"
             app:layout_constraintHorizontal_bias="0"
@@ -73,7 +71,6 @@
         android:fontFamily="@font/roboto_500"
         android:lines="1"
         android:textSize="12sp"
-        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="@id/ivImage"
         app:layout_constraintHorizontal_bias="0"
         app:layout_constraintStart_toStartOf="@+id/ivImage"
@@ -86,7 +83,6 @@
         android:layout_width="240dp"
         android:layout_height="160dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="4dp"
         android:adjustViewBounds="true"
         android:clickable="true"
         android:focusable="true"
@@ -94,8 +90,8 @@
         app:layout_constrainedWidth="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        tools:backgroundTint="#E7EFFF"
         app:layout_constraintTop_toBottomOf="@+id/tvName"
+        tools:backgroundTint="#E7EFFF"
         tools:src="@drawable/ic_image_placeholder" />
 
     <androidx.appcompat.widget.AppCompatTextView

@@ -236,7 +236,7 @@ class SendChatMessageWithContentUseCaseIntegrationTest : BaseTest() {
     private fun subscribeToReceiveDialogChatMessage(
         createdContent: MediaContentEntity,
         createdDialog: DialogEntity,
-        receivedMessageLatch: CountDownLatch
+        receivedMessageLatch: CountDownLatch,
     ) {
         val qbDialog = QBChatDialog()
         qbDialog.dialogId = createdDialog.getDialogId()!!

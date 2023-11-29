@@ -80,7 +80,7 @@ class TextOutgoingViewHolder(binding: TextOutgiongMessageItemBinding) :
         binding.tvTime.text = message?.getTime()?.convertToStringTime()
 
         setListener(message, listener)
-        setState(message)
+        setState(message, theme, binding.ivStatus)
 
         if (isForwardState) {
             binding.checkbox.isChecked = false
@@ -98,7 +98,7 @@ class TextOutgoingViewHolder(binding: TextOutgiongMessageItemBinding) :
             }
 
             binding.checkbox.setOnClickListener {
-                val isChecked = !binding.checkbox.isChecked
+                val isChecked = binding.checkbox.isChecked
                 if (isChecked) {
                     binding.checkbox.isChecked = true
                     checkBoxListener?.onSelected(message)
@@ -123,38 +123,6 @@ class TextOutgoingViewHolder(binding: TextOutgiongMessageItemBinding) :
         binding.tvMessage.setOnTouchListener(
             TouchListener(binding.tvMessage.context, message, listener, binding.tvMessage)
         )
-    }
-
-    private fun setState(message: OutgoingChatMessageEntity?) {
-        val resourceId: Int?
-        val color: Int?
-        when (message?.getOutgoingState()) {
-            SENDING -> {
-                resourceId = R.drawable.sending
-                color = theme.getTertiaryElementsColor()
-            }
-            SENT -> {
-                resourceId = R.drawable.sent
-                color = theme.getTertiaryElementsColor()
-            }
-            DELIVERED -> {
-                resourceId = R.drawable.delivered
-                color = theme.getTertiaryElementsColor()
-            }
-            READ -> {
-                resourceId = R.drawable.read
-                color = theme.getMainElementsColor()
-            }
-            ERROR -> {
-                resourceId = R.drawable.send_error
-                color = theme.getErrorColor()
-            }
-            else -> {
-                return
-            }
-        }
-        binding.ivStatus.setImageResource(resourceId)
-        binding.ivStatus.setColorFilter(color)
     }
 
     private fun applyTheme(theme: UiKitTheme) {
@@ -182,6 +150,9 @@ class TextOutgoingViewHolder(binding: TextOutgiongMessageItemBinding) :
         } else {
             binding.checkbox.isChecked = checked
         }
+        if (!checked) {
+            checkBoxListener?.onUnselected(message)
+        }
     }
 
     fun setBackgroundMessageColor(@ColorInt color: Int) {
@@ -203,7 +174,7 @@ class TextOutgoingViewHolder(binding: TextOutgiongMessageItemBinding) :
         theme: UiKitTheme,
         isForwardState: Boolean,
     ) {
-        if (message.getForwardedRepliedMessages()?.isEmpty() == true){
+        if (message.getForwardedRepliedMessages()?.isEmpty() == true) {
             return
         }
         val forwardReplyView = buildOutgoingMessage(message, listener, theme, isForwardState)
@@ -231,7 +202,6 @@ class TextOutgoingViewHolder(binding: TextOutgiongMessageItemBinding) :
                 val x = e.rawX.toInt()
                 val y = e.rawY.toInt()
                 listener?.onLongClick(message, adapterPosition, view, x, y)
-                Log.d("myLogs", "onLongPress: SenderId ----  ${message?.getSenderId()}")
             }
         }
     }

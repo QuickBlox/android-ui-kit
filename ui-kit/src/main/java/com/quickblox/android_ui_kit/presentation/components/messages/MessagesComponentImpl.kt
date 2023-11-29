@@ -14,7 +14,8 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.quickblox.android_ui_kit.R
 import com.quickblox.android_ui_kit.databinding.MessagesComonentBinding
-import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder.MessageListener
+import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder
+import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder.*
 import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.TextIncomingViewHolder
 import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponent
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
@@ -98,11 +99,11 @@ class MessagesComponentImpl : ConstraintLayout, MessagesComponent {
 
     }
 
-    override fun setAIListener(listener: TextIncomingViewHolder.AIListener) {
-        adapter?.setAIListener(listener)
+    override fun setAIListener(aiListener: AIListener) {
+        adapter?.setAIListener(aiListener)
     }
 
-    override fun getAIListener(): TextIncomingViewHolder.AIListener? {
+    override fun getAIListener(): AIListener? {
         return adapter?.getAIListener()
     }
 
