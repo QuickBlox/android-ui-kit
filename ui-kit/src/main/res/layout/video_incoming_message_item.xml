@@ -11,10 +11,19 @@
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toBottomOf="@+id/ivVideo"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/ivVideo"
         tools:visibility="visible" />
+
+    <FrameLayout
+        android:id="@+id/fl_forward_reply_container"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingBottom="2dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/ivAvatar"
@@ -35,6 +44,7 @@
         android:fontFamily="@font/roboto_500"
         android:lines="1"
         android:textSize="12sp"
+        app:layout_constraintTop_toBottomOf="@+id/fl_forward_reply_container"
         app:layout_constraintBottom_toTopOf="@+id/ivVideo"
         app:layout_constraintEnd_toEndOf="@+id/ivVideo"
         app:layout_constraintStart_toStartOf="@+id/ivVideo"

@@ -45,6 +45,17 @@ open class MessagesRepositorySpy(private val remoteMessagesCount: Int = 10) : Me
         }
     }
 
+    override fun createReplyMessage(
+        replyMessage: ForwardedRepliedMessageEntity,
+        relateMessage: OutgoingChatMessageEntity
+    ): OutgoingChatMessageEntity {
+        val outgoingState = OutgoingChatMessageEntity.OutgoingStates.SENDING
+        val contentType = ChatMessageEntity.ContentTypes.TEXT
+        return OutgoingChatMessageEntityImpl(outgoingState, contentType).apply {
+            setForwardOrReplied(ForwardedRepliedMessageEntity.Types.REPLIED)
+        }
+    }
+
     override fun readMessage(entity: MessageEntity, dialog: DialogEntity) {
 
     }

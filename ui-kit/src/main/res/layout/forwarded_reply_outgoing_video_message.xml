@@ -38,7 +38,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:src="@drawable/froward"
+            android:src="@drawable/ic_forward"
             app:layout_constraintBottom_toTopOf="@+id/clMessage"
             app:layout_constraintEnd_toEndOf="@id/clMessage"
             app:layout_constraintHorizontal_bias="0"

@@ -7,13 +7,18 @@ package com.quickblox.android_ui_kit.data.repository.mapper
 
 import androidx.annotation.VisibleForTesting
 import com.quickblox.android_ui_kit.data.dto.remote.message.RemoteMessageDTO
-import com.quickblox.android_ui_kit.data.source.remote.parser.ForwardMessageParser
+import com.quickblox.android_ui_kit.data.source.remote.parser.ForwardReplyMessageParser
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.EventMessageEntityImpl
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.IncomingChatMessageEntityImpl
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.MediaContentEntityImpl
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.OutgoingChatMessageEntityImpl
-import com.quickblox.android_ui_kit.domain.entity.message.*
+import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.EventMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.EventMessageEntity.EventTypes
+import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.MediaContentEntity
+import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.exception.repository.MappingException
 
 object MessageMapper {
@@ -37,10 +42,10 @@ object MessageMapper {
         }
 
         if (dto.isForwardedOrReplied == true) {
-            val parsedForwardedRepliedType = ForwardMessageParser.parseForwardRepliedTypeFrom(dto)
+            val parsedForwardedRepliedType = ForwardReplyMessageParser.parseForwardRepliedTypeFrom(dto)
             entity.setForwardOrReplied(parsedForwardedRepliedType)
 
-            val parsedMessages = ForwardMessageParser.parseIncomingMessagesFrom(dto)
+            val parsedMessages = ForwardReplyMessageParser.parseIncomingMessagesFrom(dto)
             entity.setForwardedRepliedMessages(parsedMessages)
         }
 
@@ -65,14 +70,14 @@ object MessageMapper {
         }
 
         if (dto.isForwardedOrReplied == true) {
-            val parsedForwardedRepliedType = ForwardMessageParser.parseForwardRepliedTypeFrom(dto)
+            val parsedForwardedRepliedType = ForwardReplyMessageParser.parseForwardRepliedTypeFrom(dto)
             entity.setForwardOrReplied(parsedForwardedRepliedType)
 
-            val parsedMessages = ForwardMessageParser.parseOutgoingMessagesFrom(dto)
+            val parsedMessages = ForwardReplyMessageParser.parseOutgoingMessagesFrom(dto)
             entity.setForwardedRepliedMessages(parsedMessages)
 
             var content = dto.text
-            if (content.isNullOrBlank()) {
+            if (entity.isForwarded() && content.isNullOrBlank()) {
                 content = "[Forwarded_Message]"
                 entity.setContent(content)
             }
@@ -174,12 +179,23 @@ object MessageMapper {
         return parsedEntityType
     }
 
+    fun remoteDTOFromReplyChatMessage(
+        replyMessages: ChatMessageEntity, relateMessage: OutgoingChatMessageEntity
+    ): RemoteMessageDTO {
+        val dto = remoteDTOFromChatMessage(relateMessage)
+
+        dto.properties = ForwardReplyMessageParser.parseReplyPropertiesFrom(replyMessages)
+        dto.isForwardedOrReplied = true
+
+        return dto
+    }
+
     fun remoteDTOFromForwardChatMessage(
         forwardMessages: List<ChatMessageEntity>, relateMessage: OutgoingChatMessageEntity
     ): RemoteMessageDTO {
         val dto = remoteDTOFromChatMessage(relateMessage)
 
-        dto.properties = ForwardMessageParser.parsePropertiesFrom(forwardMessages)
+        dto.properties = ForwardReplyMessageParser.parseForwardPropertiesFrom(forwardMessages)
         dto.isForwardedOrReplied = true
 
         return dto
@@ -226,7 +242,13 @@ object MessageMapper {
         if (entity.isForwardedOrReplied()) {
             val forwardedMessages = entity.getForwardedRepliedMessages()
             forwardedMessages?.let {
-                dto.properties = ForwardMessageParser.parsePropertiesFrom(forwardedMessages)
+                if (entity.isForwarded()) {
+                    dto.properties = ForwardReplyMessageParser.parseForwardPropertiesFrom(forwardedMessages)
+                }
+                if (entity.isReplied()) {
+                    val replyMessage = forwardedMessages[0]
+                    dto.properties = ForwardReplyMessageParser.parseReplyPropertiesFrom(replyMessage)
+                }
                 dto.isForwardedOrReplied = true
             }
         }

@@ -7,7 +7,7 @@ package com.quickblox.android_ui_kit.data.parser
 
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.data.dto.remote.message.RemoteMessageDTO
-import com.quickblox.android_ui_kit.data.source.remote.parser.ForwardMessageParser
+import com.quickblox.android_ui_kit.data.source.remote.parser.ForwardReplyMessageParser
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.MediaContentEntityImpl
 import com.quickblox.android_ui_kit.spy.DependencySpy
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -29,10 +29,10 @@ class ForwardMessageParserTest {
         val remoteDTO = RemoteMessageDTO()
 
         val properties = mutableMapOf<String?, String?>()
-        properties[ForwardMessageParser.QB_ORIGINAL_MESSAGES_KEY] = forwardedMessagesJsonArray.toString()
+        properties[ForwardReplyMessageParser.QB_ORIGINAL_MESSAGES_KEY] = forwardedMessagesJsonArray.toString()
         remoteDTO.properties = properties
 
-        val parsedOutgoingMessage = ForwardMessageParser.parseOutgoingMessagesFrom(remoteDTO)
+        val parsedOutgoingMessage = ForwardReplyMessageParser.parseOutgoingMessagesFrom(remoteDTO)
         parsedOutgoingMessage.toString()
     }
 
@@ -47,10 +47,10 @@ class ForwardMessageParserTest {
         val remoteDTO = RemoteMessageDTO()
 
         val properties = mutableMapOf<String?, String?>()
-        properties[ForwardMessageParser.QB_ORIGINAL_MESSAGES_KEY] = forwardedMessagesJsonArray.toString()
+        properties[ForwardReplyMessageParser.QB_ORIGINAL_MESSAGES_KEY] = forwardedMessagesJsonArray.toString()
         remoteDTO.properties = properties
 
-        val parsedIncomingMessage = ForwardMessageParser.parseIncomingMessagesFrom(remoteDTO)
+        val parsedIncomingMessage = ForwardReplyMessageParser.parseIncomingMessagesFrom(remoteDTO)
         parsedIncomingMessage.toString()
     }
 
@@ -59,7 +59,7 @@ class ForwardMessageParserTest {
     fun correctJsonAttachment_parseMediaContentFrom_receivedMediaContent() = runTest {
         val attachmentJson =
             JSONObject("{\"id\":\"11411032\",\"uid\":\"7ebbafa088a342e689e8bc6a8f35f25300\",\"type\":\"image/png\",\"url\":\"https://api.quickblox.com/blobs/7ebbafa088a342e689e8bc6a8f35f25300?token=eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NfdHlwZSI6InVzZXJfYWNjZXNzIiwiYXBwbGljYXRpb25faWQiOjc1OTQ5LCJhdWQiOiJxYl9jb3JlIiwiZXhwIjoxNzAwMjE3Njk0LCJpYXQiOjE3MDAxMzEyOTQsImlzcyI6InFiX2NvcmUiLCJqdGkiOiJhZjc5ZGYzNC1mMWRjLTQwNjItOTdhZC02ZGNmNTBlOWM1MDUiLCJuYmYiOjE3MDAxMzEyOTMsInN1YiI6MTM0ODA0MTQ3LCJ0eXAiOiJhY2Nlc3MifQ.3cXtP4SHfnT1U-XMUrCv4TjFwx-3DGdyROS8b3AIDvimwV_BDxW31tqwOQdTEHnzuFKJTPr2Ga81JsnQE-nzcg\",\"name\":\"game-icon-timber-2.png\",\"size\":\"29862\"}")
-        val mediaContent = ForwardMessageParser.parseMediaContentFrom(attachmentJson)
+        val mediaContent = ForwardReplyMessageParser.parseMediaContentFrom(attachmentJson)
         assertTrue(mediaContent.isImage())
         assertTrue(mediaContent.getUrl().isNotEmpty())
         assertTrue(mediaContent.getMimeType().isNotEmpty())
@@ -72,7 +72,7 @@ class ForwardMessageParserTest {
         val fileUrl =
             "https://api.quickblox.com/blobs/7ebbafa088a342e689e8bc6a8f35f25300?token=eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NfdHlwZSI6InVzZXJfYWNjZXNzIiwiYXBwbGljYXRpb25faWQiOjc1OTQ5LCJhdWQiOiJxYl9jb3JlIiwiZXhwIjoxNzAwMjE3Njk0LCJpYXQiOjE3MDAxMzEyOTQsImlzcyI6InFiX2NvcmUiLCJqdGkiOiJhZjc5ZGYzNC1mMWRjLTQwNjItOTdhZC02ZGNmNTBlOWM1MDUiLCJuYmYiOjE3MDAxMzEyOTMsInN1YiI6MTM0ODA0MTQ3LCJ0eXAiOiJhY2Nlc3MifQ.3cXtP4SHfnT1U-XMUrCv4TjFwx-3DGdyROS8b3AIDvimwV_BDxW31tqwOQdTEHnzuFKJTPr2Ga81JsnQE-nzcg"
         val mediaContent = MediaContentEntityImpl("test-icon", fileUrl, "image")
-        val jsonMediaContent = ForwardMessageParser.parseMediaContentToJson(mediaContent)
+        val jsonMediaContent = ForwardReplyMessageParser.parseMediaContentToJson(mediaContent)
         assertTrue(jsonMediaContent.get("type").toString().isNotEmpty())
         assertTrue(jsonMediaContent.get("name").toString().isNotEmpty())
         assertTrue(jsonMediaContent.get("uid").toString().isNotEmpty())

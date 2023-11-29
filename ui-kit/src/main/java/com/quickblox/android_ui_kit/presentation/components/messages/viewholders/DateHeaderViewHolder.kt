@@ -13,8 +13,8 @@ import androidx.annotation.ColorInt
 import com.quickblox.android_ui_kit.databinding.DateHeaderMessageItemBinding
 import com.quickblox.android_ui_kit.presentation.base.BaseViewHolder
 import com.quickblox.android_ui_kit.presentation.components.messages.DateHeaderMessageEntity
-import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
+import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 
 class DateHeaderViewHolder(binding: DateHeaderMessageItemBinding) :
     BaseViewHolder<DateHeaderMessageItemBinding>(binding) {

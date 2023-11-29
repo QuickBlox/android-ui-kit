@@ -29,6 +29,7 @@ import com.quickblox.android_ui_kit.presentation.components.messages.DateHeaderM
 import com.quickblox.android_ui_kit.presentation.screens.modifyChatDateStringFrom
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -313,6 +314,56 @@ class GroupChatViewModel : BaseViewModel() {
         } catch (exception: DomainException) {
             showError(exception.message)
             return null
+        }
+    }
+
+    fun createAndSendReplyMessage(
+        repliedMessage: ForwardedRepliedMessageEntity?,
+        contentType: ContentTypes,
+        text: String? = null,
+        file: FileEntity? = null,
+    ) {
+        if (repliedMessage == null || dialog?.getDialogId().isNullOrEmpty()) {
+            return
+        }
+        val dialogId = dialog?.getDialogId()!!
+        var relatedMessage: OutgoingChatMessageEntity? = null
+
+        viewModelScope.launch {
+            relatedMessage = CreateMessageUseCase(contentType, dialogId, text, file).execute().lastOrNull()
+            val replyMessage = relatedMessage?.let {
+                CreateReplyMessageUseCase(repliedMessage, it).execute()
+            }
+
+            replyMessage as MessageEntity
+            if (isNeedAddHeaderBeforeFirst(replyMessage)) {
+                addHeaderBeforeFirst(replyMessage)
+            }
+
+            addAsFirst(replyMessage)
+            sendReplyMessage(replyMessage)
+        }
+    }
+
+    private fun sendReplyMessage(replyMessage: OutgoingChatMessageEntity) {
+        viewModelScope.launch {
+            runCatching {
+                val sentMessage =
+                    SendForwardReplyMessageUseCase(replyMessage, dialog?.getDialogId().toString()).execute()
+
+                if (isExistMessage(sentMessage)) {
+                    updatedMessage(sentMessage)
+                    return@launch
+                }
+
+                if (isNeedAddHeaderBeforeFirst(sentMessage)) {
+                    addHeaderBeforeFirst(sentMessage)
+                }
+
+                addAsFirst(sentMessage)
+            }.onFailure { error ->
+                showError(error.message)
+            }
         }
     }
 

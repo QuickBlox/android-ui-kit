@@ -80,7 +80,9 @@ object DialogMapper {
         dto.lastMessageDateSent = entity.getLastMessage()?.getTime() ?: 0
         dto.lastMessageUserId = entity.getLastMessage()?.getSenderId()
         dto.unreadMessageCount = entity.getUnreadMessagesCount()
-        dto.photo = entity.getPhoto()
+        dto.photo = entity.getPhoto()?.let {
+            getUidFom(it)
+        }
         return dto
     }
 
@@ -239,6 +241,19 @@ object DialogMapper {
         val fileMimeType = splitText?.get(3) ?: ""
 
         return MediaContentEntityImpl(fileName, fileUrl, fileMimeType)
+    }
+
+    private fun getUidFom(url: String): String {
+        if (url.contains("blobs")) {
+            return try {
+                val splitUrl = url.split("/")
+                splitUrl[4].replace(".json", "").split("?")[0]
+            } catch (e: IndexOutOfBoundsException) {
+                ""
+            }
+        } else {
+            return url
+        }
     }
 
     fun localDTOFrom(dialogId: String): LocalDialogDTO {

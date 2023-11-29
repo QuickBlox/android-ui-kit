@@ -17,7 +17,7 @@ import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEnt
 import com.quickblox.android_ui_kit.domain.exception.DomainException
 import com.quickblox.android_ui_kit.domain.usecases.CreateForwardMessageUseCase
 import com.quickblox.android_ui_kit.domain.usecases.CreateMessageUseCase
-import com.quickblox.android_ui_kit.domain.usecases.SendForwardMessageUseCase
+import com.quickblox.android_ui_kit.domain.usecases.SendForwardReplyMessageUseCase
 import com.quickblox.android_ui_kit.presentation.base.BaseViewModel
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
@@ -49,7 +49,7 @@ class RecipientSelectionActivityViewModel : BaseViewModel() {
                 val forwardMessage = CreateForwardMessageUseCase(forwardMessages, relatedMessage).execute()
 
                 forwardMessage?.let {
-                    SendForwardMessageUseCase(it, dialog?.getDialogId().toString()).execute()
+                    SendForwardReplyMessageUseCase(it, dialog?.getDialogId().toString()).execute()
                     _sentMessage.postValue(dialog?.getName())
                 }
             } catch (exception: DomainException) {

@@ -26,7 +26,7 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.R
 import com.quickblox.android_ui_kit.databinding.ContainerRecipientsActivityBinding
-import com.quickblox.android_ui_kit.databinding.SendMessageAttachmentPreviewBinding
+import com.quickblox.android_ui_kit.databinding.SendMessagePreviewBinding
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MediaContentEntity
@@ -138,16 +138,16 @@ class RecipientSelectionActivity : BaseActivity() {
         subscribeToReceivedMessage()
     }
 
-    private fun buildAttachmentPreviewBinding(): SendMessageAttachmentPreviewBinding {
+    private fun buildPreviewBinding(): SendMessagePreviewBinding {
         val inflater = LayoutInflater.from(binding.root.context)
 
-        return SendMessageAttachmentPreviewBinding.inflate(inflater)
+        return SendMessagePreviewBinding.inflate(inflater)
     }
 
     private fun showAttachmentMessage(message: ChatMessageEntity) {
-        val attachmentPreviewBinding = buildAttachmentPreviewBinding()
+        val attachmentPreviewBinding = buildPreviewBinding()
 
-        attachmentPreviewBinding.ivIcon.setImageResource(R.drawable.froward)
+        attachmentPreviewBinding.ivIcon.setImageResource(R.drawable.ic_forward)
         themeUiKit?.getSecondaryTextColor()?.let {
             attachmentPreviewBinding.ivIcon.setColorFilter(it)
             attachmentPreviewBinding.tvActionText.setTextColor(it)
@@ -164,7 +164,7 @@ class RecipientSelectionActivity : BaseActivity() {
             showMediaMessage(mediaContent, attachmentPreviewBinding)
         }
 
-        val container = binding.sendMessage.getAttachmentContainer()
+        val container = binding.sendMessage.getTopContainer()
         container?.visibility = View.VISIBLE
 
         themeUiKit?.let {
@@ -185,38 +185,38 @@ class RecipientSelectionActivity : BaseActivity() {
 
     private fun showTextMessage(
         message: ChatMessageEntity,
-        attachmentPreviewBinding: SendMessageAttachmentPreviewBinding,
+        previewBinding: SendMessagePreviewBinding,
     ) {
-        attachmentPreviewBinding.tvText.text = message.getContent()
-        attachmentPreviewBinding.tvText.textSize = 16F
+        previewBinding.tvText.text = message.getContent()
+        previewBinding.tvText.textSize = 16F
 
         themeUiKit?.getMainTextColor()?.let {
-            attachmentPreviewBinding.tvText.setTextColor(it)
+            previewBinding.tvText.setTextColor(it)
         }
     }
 
     private fun showMediaMessage(
         mediaContent: MediaContentEntity,
-        attachmentPreviewBinding: SendMessageAttachmentPreviewBinding,
+        previewBinding: SendMessagePreviewBinding,
     ) {
-        attachmentPreviewBinding.tvText.text = mediaContent.getName()
+        previewBinding.tvText.text = mediaContent.getName()
 
         val resourceId = getResourceIdByMediaContent(mediaContent.getType())
 
         val context = binding.root.context
-        attachmentPreviewBinding.ivMediaIcon.background =
+        previewBinding.ivMediaIcon.background =
             ContextCompat.getDrawable(context, R.drawable.bg_media_message)
-        attachmentPreviewBinding.ivMediaIcon.setImageResource(resourceId)
+        previewBinding.ivMediaIcon.setImageResource(resourceId)
 
         if (mediaContent.isImage()) {
-            val progressBar = attachmentPreviewBinding.progressBar
+            val progressBar = previewBinding.progressBar
 
-            val backgroundImageView = attachmentPreviewBinding.ivMediaIcon
+            val backgroundImageView = previewBinding.ivMediaIcon
             backgroundImageView.scaleType = ImageView.ScaleType.CENTER_CROP
             loadImageByUrl(mediaContent.getUrl(), backgroundImageView, progressBar)
         }
         themeUiKit?.getCaptionColor()?.let {
-            attachmentPreviewBinding.tvText.setTextColor(it)
+            previewBinding.tvText.setTextColor(it)
         }
     }
 

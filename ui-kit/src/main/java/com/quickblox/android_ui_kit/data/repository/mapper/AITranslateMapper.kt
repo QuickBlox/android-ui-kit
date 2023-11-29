@@ -38,7 +38,9 @@ object AITranslateMapper {
         translateMessage.setMediaContent(incomingMessage.getMediaContent())
         translateMessage.setSender(incomingMessage.getSender())
         translateMessage.setForwardedRepliedMessages(incomingMessage.getForwardedRepliedMessages())
-        incomingMessage.getForwardOrRepliedType()?.let { translateMessage.setForwardOrReplied(it) }
+        incomingMessage.getForwardOrRepliedType()?.let {
+            translateMessage.setForwardOrReplied(it)
+        }
 
         return translateMessage
     }

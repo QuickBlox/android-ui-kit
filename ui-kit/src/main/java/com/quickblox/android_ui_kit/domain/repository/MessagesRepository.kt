@@ -24,6 +24,12 @@ interface MessagesRepository {
     ): OutgoingChatMessageEntity
 
     @Throws(MessagesRepositoryException::class)
+    fun createReplyMessage(
+        replyMessage: ForwardedRepliedMessageEntity,
+        relateMessage: OutgoingChatMessageEntity
+    ): OutgoingChatMessageEntity
+
+    @Throws(MessagesRepositoryException::class)
     fun readMessage(entity: MessageEntity, dialog: DialogEntity)
 
     @Throws(MessagesRepositoryException::class)

@@ -56,6 +56,9 @@
     <string name="empty_messages_selected">0 messages selected</string>
     <string name="forward">Forward</string>
     <string name="forwarded_from_with_name">Forwarded from %s</string>
+    <string name="replied_to_with_name">Replied to %s</string>
+    <string name="replied_to">Replied to</string>
     <string name="forwarded_from">Forwarded from</string>
     <string name="message_forwarded_to">Message forwarded to %s</string>
+    <string name="reply">Reply</string>
 </resources>

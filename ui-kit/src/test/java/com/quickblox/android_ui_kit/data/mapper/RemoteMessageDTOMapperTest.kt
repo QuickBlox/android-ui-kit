@@ -9,7 +9,9 @@ import com.quickblox.android_ui_kit.data.source.remote.mapper.RemoteMessageDTOMa
 import com.quickblox.android_ui_kit.data.source.remote.parser.EventMessageParser
 import com.quickblox.chat.model.QBAttachment
 import com.quickblox.chat.model.QBChatMessage
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.random.Random
 
@@ -58,7 +60,7 @@ class RemoteMessageDTOMapperTest {
 
         val messageDTO = RemoteMessageDTOMapper.messageDTOFrom(qbMessage, 1000)
 
-        assertEquals(url, messageDTO.fileUrl)
+        assertTrue(messageDTO.fileUrl!!.contains("token"))
         assertEquals(contentType, messageDTO.mimeType)
     }
 

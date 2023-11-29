@@ -7,9 +7,10 @@
 package com.quickblox.android_ui_kit.presentation.components.messages
 
 import androidx.recyclerview.widget.RecyclerView
+import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder
+import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder.AIListener
 import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder.MessageListener
 import com.quickblox.android_ui_kit.presentation.components.Component
-import com.quickblox.android_ui_kit.presentation.components.messages.viewholders.TextIncomingViewHolder.AIListener
 import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponent
 
 interface MessagesComponent : Component {
@@ -27,7 +28,7 @@ interface MessagesComponent : Component {
     fun setTextIncomingListener(listener: MessageListener?)
     fun getTextIncomingListener(): MessageListener?
 
-    fun setAIListener(lisAIListener: AIListener)
+    fun setAIListener(aiListener: AIListener)
     fun getAIListener(): AIListener?
 
     fun enableAI()

@@ -74,6 +74,7 @@ class CreateMessageUseCase(
                         send(createdMessage)
                     }
                 }.onFailure { error ->
+                    val tmp = error.message
                     createdMessage?.let { message ->
                         message.setOutgoingState(OutgoingChatMessageEntity.OutgoingStates.ERROR)
                         send(message)

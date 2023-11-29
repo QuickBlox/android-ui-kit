@@ -12,15 +12,13 @@ import android.content.res.ColorStateList
 import android.graphics.drawable.GradientDrawable
 import android.view.*
 import androidx.annotation.ColorInt
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.ContextCompat
 import com.quickblox.android_ui_kit.R
 import com.quickblox.android_ui_kit.databinding.AudioIncomingMessageItemBinding
 import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
-import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder.MessageListener
-import com.quickblox.android_ui_kit.presentation.base.BaseViewHolder
+import com.quickblox.android_ui_kit.presentation.base.BaseMessageViewHolder
 import com.quickblox.android_ui_kit.presentation.components.messages.MessageAdapter
 import com.quickblox.android_ui_kit.presentation.screens.convertToStringTime
 import com.quickblox.android_ui_kit.presentation.screens.loadCircleImageFromUrl
@@ -28,9 +26,14 @@ import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 
 class AudioIncomingViewHolder(binding: AudioIncomingMessageItemBinding) :
-    BaseViewHolder<AudioIncomingMessageItemBinding>(binding), Forward {
+    BaseMessageViewHolder<AudioIncomingMessageItemBinding>(binding), Forward {
     private var theme: UiKitTheme = LightUIKitTheme()
     private var checkBoxListener: MessageAdapter.CheckBoxListener? = null
+    private var message: ForwardedRepliedMessageEntity? = null
+
+    override fun clearCachedData() {
+        binding.flForwardReplyContainer.removeAllViews()
+    }
 
     companion object {
         fun newInstance(parent: ViewGroup): AudioIncomingViewHolder {
@@ -50,6 +53,28 @@ class AudioIncomingViewHolder(binding: AudioIncomingMessageItemBinding) :
         isForwardState: Boolean,
         selectedMessages: MutableList<MessageEntity>,
     ) {
+        this.message = message
+        if (message?.isForwardedOrReplied() == true) {
+            setSelectedMessages(selectedMessages)
+            showForwardedReplyMessages(
+                message,
+                listener,
+                theme,
+                isForwardState,
+            )
+
+            val content = message.getContent()
+            if (content.isNullOrEmpty() || content.contains("[Forwarded_Message]")) {
+                binding.ivAvatar.visibility = View.GONE
+                binding.tvName.visibility = View.GONE
+                binding.clMessage.visibility = View.GONE
+                binding.tvTime.visibility = View.GONE
+                binding.checkbox.visibility = View.GONE
+                applyTheme(theme)
+                return
+            }
+        }
+
         binding.tvTime.text = message?.getTime()?.convertToStringTime()
 
         val avatarHolder = ContextCompat.getDrawable(binding.root.context, R.drawable.user_avatar_holder)
@@ -79,16 +104,39 @@ class AudioIncomingViewHolder(binding: AudioIncomingMessageItemBinding) :
                 }
             }
 
-            binding.checkbox.setOnCheckedChangeListener { buttonView, isChecked ->
+            binding.checkbox.setOnClickListener {
+                val isChecked = binding.checkbox.isChecked
                 if (isChecked) {
+                    binding.checkbox.isChecked = true
                     checkBoxListener?.onSelected(message)
                 } else {
+                    binding.checkbox.isChecked = false
                     checkBoxListener?.onUnselected(message)
                 }
             }
         }
 
         applyTheme(theme)
+    }
+
+    private fun showForwardedReplyMessages(
+        message: ForwardedRepliedMessageEntity,
+        listener: MessageListener?,
+        theme: UiKitTheme,
+        isForwardState: Boolean,
+        aiListener: AIListener? = null,
+    ) {
+        if (message.getForwardedRepliedMessages()?.isEmpty() == true) {
+            return
+        }
+        val forwardReplyView = buildIncomingMessage(
+            message as IncomingChatMessageEntity,
+            listener,
+            theme,
+            isForwardState,
+            aiListener
+        )
+        binding.flForwardReplyContainer.addView(forwardReplyView)
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -138,12 +186,24 @@ class AudioIncomingViewHolder(binding: AudioIncomingMessageItemBinding) :
         binding.tvTime.setTextColor(color)
     }
 
-    override fun setChecked(checked: Boolean, selectedMessages: MutableList<MessageEntity>) {
-        binding.checkbox.isChecked = checked
+    override fun setCheckBoxListener(checkBoxListener: MessageAdapter.CheckBoxListener) {
+        super.setCheckBoxListener(checkBoxListener)
+        this.checkBoxListener = checkBoxListener
     }
 
-    fun setCheckBoxListener(checkBoxListener: MessageAdapter.CheckBoxListener) {
-        this.checkBoxListener = checkBoxListener
+    override fun setChecked(checked: Boolean, selectedMessages: MutableList<MessageEntity>) {
+        if (message?.isForwardedOrReplied() == true) {
+            if (selectedMessages.contains(message as MessageEntity)) {
+                binding.checkbox.isChecked = checked
+            } else {
+                getCheckbox()?.isChecked = checked
+            }
+        } else {
+            binding.checkbox.isChecked = checked
+        }
+        if (!checked) {
+            checkBoxListener?.onUnselected(message)
+        }
     }
 
     inner class TouchListener(

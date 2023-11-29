@@ -303,7 +303,7 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
         return binding?.etMessage
     }
 
-    override fun getAttachmentContainer(): FrameLayout? {
+    override fun getTopContainer(): FrameLayout? {
         return binding?.flForwardReplyContainer
     }
 

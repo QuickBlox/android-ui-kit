@@ -35,6 +35,7 @@ import com.quickblox.android_ui_kit.spy.repository.DialogsRepositorySpy
 import com.quickblox.android_ui_kit.spy.repository.MessagesRepositorySpy
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -42,7 +43,40 @@ import kotlin.random.Random
 
 private const val SPY_DIALOG_ID = "spy_dialog_id"
 
-class SendForwardMessageUseCaseTest : BaseTest() {
+class SendForwardReplyMessageUseCaseTest : BaseTest() {
+    @Test
+    @ExperimentalCoroutinesApi
+    fun createMediaContentEntity_makeMessageBodyFromMediaContent_messageBodyEquals() {
+        QuickBloxUiKit.setDependency(DependencySpy())
+
+        val mediaContentEntity = MediaContentEntityImpl("dummy_file_name", "dummy_file_url", "dummy_mime_type")
+        val messageBody = buildUseCase().makeMessageBodyFromMediaContent(mediaContentEntity)
+        assertEquals("MediaContentEntity|dummy_file_name|dummy_file_url|dummy_mime_type", messageBody)
+    }
+
+    @Test
+    @ExperimentalCoroutinesApi
+    fun mediaContentEntityWithUidWithoutJson_getUidFom_correctUid() {
+        QuickBloxUiKit.setDependency(DependencySpy())
+
+        val createdUid = "d5c1422f48f24f3593be0229e0cffd4800"
+
+        val url =
+            "https://api.quickblox.com/blobs/$createdUid?token=eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NfdHlwZSI6ImFwcGxpY2F0aW9uIiwiYXBwbGljYXRpb25faWQiOjc1OTQ5LCJpYXQiOjE3MDA2NDYxMjAzOTY2ODl9.A8viDHB0_aAMfmI8n8_24WsxtIwM5yIuNcwng6a-xSyNzznqnATjt3O1TVs2WEfyD6yzM4uSyTgJGqLm03CpHg"
+        val parsedUid = buildUseCase().getUidFom(url)
+        assertEquals(createdUid, parsedUid)
+    }
+
+    @Test
+    @ExperimentalCoroutinesApi
+    fun mediaContentEntityWithWrongUid_getUidFom_correctUid() {
+        QuickBloxUiKit.setDependency(DependencySpy())
+
+        val url = "https://wrong_link/blobs"
+        val parsedUid = buildUseCase().getUidFom(url)
+        assertTrue(parsedUid!!.isEmpty())
+    }
+
     @Test
     @ExperimentalCoroutinesApi
     fun messageExistAndDialogExist_sendMessage_noErrors() = runTest {
@@ -68,15 +102,15 @@ class SendForwardMessageUseCaseTest : BaseTest() {
         buildUseCase().sendMessage(buildForwardMessageEntity(), DialogEntitySpy())
     }
 
-    private fun buildUseCase(): SendForwardMessageUseCase {
-        return SendForwardMessageUseCase(buildForwardMessageEntity(), SPY_DIALOG_ID)
+    private fun buildUseCase(): SendForwardReplyMessageUseCase {
+        return SendForwardReplyMessageUseCase(buildForwardMessageEntity(), SPY_DIALOG_ID)
     }
 
     @Test(expected = DomainException::class)
     @ExperimentalCoroutinesApi
     fun dialogIdIsEmpty_execute_receivedException() = runTest {
         QuickBloxUiKit.setDependency(DependencySpy())
-        SendForwardMessageUseCase(buildForwardMessageEntity(), "").execute()
+        SendForwardReplyMessageUseCase(buildForwardMessageEntity(), "").execute()
     }
 
     @Test(expected = DomainException::class)
@@ -94,7 +128,7 @@ class SendForwardMessageUseCaseTest : BaseTest() {
             }
         })
 
-        SendForwardMessageUseCase(buildForwardMessageEntity(), SPY_DIALOG_ID).execute()
+        SendForwardReplyMessageUseCase(buildForwardMessageEntity(), SPY_DIALOG_ID).execute()
     }
 
     @Test(expected = DomainException::class)
@@ -112,7 +146,7 @@ class SendForwardMessageUseCaseTest : BaseTest() {
             }
         })
 
-        SendForwardMessageUseCase(buildForwardMessageEntity(), SPY_DIALOG_ID).execute()
+        SendForwardReplyMessageUseCase(buildForwardMessageEntity(), SPY_DIALOG_ID).execute()
     }
 
     @Test
@@ -142,7 +176,7 @@ class SendForwardMessageUseCaseTest : BaseTest() {
             setDialogId("forward_message_dialog_id")
         }
 
-        SendForwardMessageUseCase(forwardMessage, SPY_DIALOG_ID).execute()
+        SendForwardReplyMessageUseCase(forwardMessage, SPY_DIALOG_ID).execute()
     }
 
     @Test
@@ -172,7 +206,7 @@ class SendForwardMessageUseCaseTest : BaseTest() {
             setDialogId("forward_message_dialog_id")
         }
 
-        SendForwardMessageUseCase(forwardMessage, SPY_DIALOG_ID).execute()
+        SendForwardReplyMessageUseCase(forwardMessage, SPY_DIALOG_ID).execute()
     }
 
     private fun buildForwardMessageEntity(): OutgoingChatMessageEntity {

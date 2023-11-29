@@ -39,7 +39,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:src="@drawable/froward"
+                android:src="@drawable/ic_forward"
                 app:layout_constraintBottom_toTopOf="@+id/clMessage"
                 app:layout_constraintEnd_toEndOf="@id/clMessage"
                 app:layout_constraintHorizontal_bias="0"
@@ -101,7 +101,7 @@
             app:layout_constraintHorizontal_bias="1"
             app:layout_constraintStart_toEndOf="@+id/tvTime"
             app:layout_constraintTop_toBottomOf="@+id/tvName"
-            tools:text="Message..." />
+            tools:text="Message...Message...Message...Message...Message...Message...Message...Message...Message...Message...Message..." />
 
         <androidx.constraintlayout.widget.Barrier
             android:id="@+id/barrier"
@@ -116,12 +116,12 @@
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_gravity="bottom"
-            android:layout_marginStart="8dp"
             android:fontFamily="@font/roboto_500"
             android:textSize="11sp"
             app:layout_constraintBottom_toBottomOf="@+id/tvMessage"
             app:layout_constraintEnd_toStartOf="@id/barrier"
             app:layout_constraintHorizontal_bias="1"
+            app:layout_constraintStart_toEndOf="@+id/ivStatus"
             tools:text="20:00" />
 
         <androidx.appcompat.widget.AppCompatImageView

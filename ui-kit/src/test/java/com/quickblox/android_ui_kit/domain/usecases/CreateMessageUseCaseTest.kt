@@ -129,9 +129,9 @@ class CreateMessageUseCaseTest : BaseTest() {
         val fileUrl = "https://test.com/a.mp3"
         val mimeType = "audio/mpeg"
         val mediaContent = useCase.createMediaContent(fileName, fileUrl, mimeType)
+        val loggedUserId = 0
 
         val dialogId = "dialogId"
-        val loggedUserId = 0
         val mediaMessage = useCase.createMediaMessage(dialogId, mediaContent, loggedUserId)
 
         assertEquals(dialogId, mediaMessage.getDialogId())
@@ -190,7 +190,7 @@ class CreateMessageUseCaseTest : BaseTest() {
     private fun buildCreateMessageUseCase(
         contentType: ChatMessageEntity.ContentTypes = ChatMessageEntity.ContentTypes.TEXT,
         content: String = "testContent",
-        fileEntity: FileEntity? = null
+        fileEntity: FileEntity? = null,
     ): CreateMessageUseCase {
         return CreateMessageUseCase(contentType, "testDialogId", content, fileEntity)
     }
