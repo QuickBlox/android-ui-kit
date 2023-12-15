@@ -4,8 +4,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="8dp"
-    android:paddingBottom="4dp">
+    android:layout_marginTop="8dp">
+
+    <FrameLayout
+        android:id="@+id/fl_forward_reply_container"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingBottom="2dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/clMessage"
@@ -13,7 +21,18 @@
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toStartOf="@id/guideline"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@+id/fl_forward_reply_container">
+
+        <CheckBox
+            android:id="@+id/checkbox"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:checked="false"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:visibility="visible" />
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/ivAvatar"
@@ -21,7 +40,7 @@
             android:layout_height="36dp"
             android:layout_marginStart="16dp"
             app:layout_constraintBottom_toBottomOf="@+id/tvMessage"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/checkbox"
             tools:src="@drawable/private_holder" />
 
         <androidx.appcompat.widget.AppCompatTextView
@@ -49,7 +68,7 @@
             android:autoLink="web"
             android:background="@drawable/bg_ingoing_message"
             android:gravity="center_vertical"
-            android:minWidth="100dp"
+            android:minWidth="148dp"
             android:minHeight="36dp"
             android:paddingHorizontal="14dp"
             android:paddingVertical="4dp"
@@ -81,17 +100,37 @@
             app:barrierDirection="right"
             app:constraint_referenced_ids="tvMessage" />
 
-        <androidx.appcompat.widget.AppCompatImageView
-            android:id="@+id/ivAI"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_marginStart="12dp"
-            android:src="@drawable/ic_ai_robot"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="@+id/clMessage"
+        <FrameLayout
+            android:id="@+id/flAi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="@+id/tvMessage"
             app:layout_constraintStart_toEndOf="@+id/barrier"
-            app:layout_constraintTop_toTopOf="@+id/clMessage"
-            tools:visibility="visible" />
+            app:layout_constraintTop_toTopOf="@+id/tvMessage">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivAI"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:padding="8dp"
+                android:src="@drawable/ic_ai_robot"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="@+id/clMessage"
+                app:layout_constraintStart_toEndOf="@+id/barrier"
+                app:layout_constraintTop_toTopOf="@+id/clMessage"
+                tools:visibility="visible" />
+
+            <ProgressBar
+                android:id="@+id/progressAI"
+                android:layout_width="23dp"
+                android:layout_height="28dp"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="@+id/clMessage"
+                app:layout_constraintStart_toEndOf="@+id/barrier"
+                app:layout_constraintTop_toTopOf="@+id/clMessage"
+                tools:visibility="visible" />
+        </FrameLayout>
 
         <androidx.appcompat.widget.AppCompatTextView
             android:id="@+id/tvTime"
@@ -99,13 +138,12 @@
             android:layout_height="wrap_content"
             android:layout_alignParentEnd="true"
             android:layout_gravity="bottom"
-            android:layout_marginStart="8dp"
             android:fontFamily="@font/roboto_500"
             android:textSize="11sp"
             app:layout_constraintBottom_toBottomOf="@+id/tvMessage"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0"
-            app:layout_constraintStart_toEndOf="@+id/ivAI"
+            app:layout_constraintStart_toEndOf="@+id/flAi"
             tools:text="20:00" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -114,5 +152,5 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.75" />
+        app:layout_constraintGuide_percent="0.9" />
 </androidx.constraintlayout.widget.ConstraintLayout>

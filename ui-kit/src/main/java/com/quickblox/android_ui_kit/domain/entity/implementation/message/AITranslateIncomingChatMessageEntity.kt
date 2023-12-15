@@ -10,22 +10,22 @@ import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
 
 class AITranslateIncomingChatMessageEntity(contentType: ChatMessageEntity.ContentTypes) :
     IncomingChatMessageEntityImpl(contentType) {
-    private var translations: List<String>? = null
-    private var isTranslated: Boolean? = false
+    private var translation: String? = null
+    private var isTranslated: Boolean = false
 
-    fun getTranslations(): List<String>? {
-        return translations
+    fun getTranslation(): String? {
+        return translation
     }
 
-    fun setTranslations(translations: List<String>?) {
-        this.translations = translations
+    fun setTranslation(translation: String?) {
+        this.translation = translation
     }
 
     fun setTranslated(isTranslated: Boolean) {
         this.isTranslated = isTranslated
     }
 
-    fun isTranslated(): Boolean? {
+    fun isTranslated(): Boolean {
         return isTranslated
     }
 

@@ -5,9 +5,10 @@
 package com.quickblox.android_ui_kit.spy.entity.message
 
 import com.quickblox.android_ui_kit.domain.entity.UserEntity
+import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.stub.entity.message.IncomingChatMessageEntityStub
-import java.util.*
+import java.util.UUID
 import kotlin.random.Random
 
 open class IncomingChatMessageEntitySpy : IncomingChatMessageEntityStub() {
@@ -93,6 +94,14 @@ open class IncomingChatMessageEntitySpy : IncomingChatMessageEntityStub() {
 
     override fun getTime(): Long? {
         return time
+    }
+
+    override fun isForwardedOrReplied(): Boolean {
+        return false
+    }
+
+    override fun getForwardedRepliedMessages(): List<ForwardedRepliedMessageEntity>? {
+        return listOf()
     }
 
     override fun equals(other: Any?): Boolean {

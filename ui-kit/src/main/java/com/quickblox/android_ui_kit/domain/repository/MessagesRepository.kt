@@ -7,7 +7,7 @@ package com.quickblox.android_ui_kit.domain.repository
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.entity.PaginationEntity
 import com.quickblox.android_ui_kit.domain.entity.message.EventMessageEntity
-import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.exception.repository.MessagesRepositoryException
@@ -16,6 +16,18 @@ import kotlinx.coroutines.flow.Flow
 interface MessagesRepository {
     @Throws(MessagesRepositoryException::class)
     fun createMessage(entity: OutgoingChatMessageEntity): OutgoingChatMessageEntity
+
+    @Throws(MessagesRepositoryException::class)
+    fun createForwardMessage(
+        forwardMessages: List<ForwardedRepliedMessageEntity>,
+        relateMessage: OutgoingChatMessageEntity
+    ): OutgoingChatMessageEntity
+
+    @Throws(MessagesRepositoryException::class)
+    fun createReplyMessage(
+        replyMessage: ForwardedRepliedMessageEntity,
+        relateMessage: OutgoingChatMessageEntity
+    ): OutgoingChatMessageEntity
 
     @Throws(MessagesRepositoryException::class)
     fun readMessage(entity: MessageEntity, dialog: DialogEntity)

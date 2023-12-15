@@ -9,15 +9,16 @@ package com.quickblox.android_ui_kit.presentation.dialogs
 import android.content.Context
 import android.view.View
 import com.quickblox.android_ui_kit.R
+import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
 import com.quickblox.android_ui_kit.presentation.base.BaseDialog
 import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 
 class AIMenuDialog private constructor(
-    context: Context, private val message: IncomingChatMessageEntity, theme: UiKitTheme?, val listener: IncomingMessageMenuListener
+    context: Context, private val message: ForwardedRepliedMessageEntity, theme: UiKitTheme?, val listener: IncomingMessageMenuListener
 ) : BaseDialog(context, null, theme) {
     companion object {
-        fun show(context: Context, message: IncomingChatMessageEntity, theme: UiKitTheme?, listener: IncomingMessageMenuListener) {
+        fun show(context: Context, message: ForwardedRepliedMessageEntity, theme: UiKitTheme?, listener: IncomingMessageMenuListener) {
             AIMenuDialog(context, message, theme, listener).show()
         }
     }
@@ -49,6 +50,6 @@ class AIMenuDialog private constructor(
     }
 
     interface IncomingMessageMenuListener {
-        fun onAiAnswerAssistantClicked(message: IncomingChatMessageEntity?)
+        fun onAiAnswerAssistantClicked(message: ForwardedRepliedMessageEntity?)
     }
 }

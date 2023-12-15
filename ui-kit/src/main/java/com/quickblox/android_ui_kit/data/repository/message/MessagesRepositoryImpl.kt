@@ -12,17 +12,25 @@ import com.quickblox.android_ui_kit.data.source.exception.RemoteDataSourceExcept
 import com.quickblox.android_ui_kit.data.source.remote.RemoteDataSource
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.entity.PaginationEntity
-import com.quickblox.android_ui_kit.domain.entity.message.*
+import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.EventMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.exception.repository.MappingException
 import com.quickblox.android_ui_kit.domain.repository.MessagesRepository
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
 
 class MessagesRepositoryImpl(private val remoteDataSource: RemoteDataSource) : MessagesRepository {
     private val exceptionFactory: MessagesRepositoryExceptionFactory = MessagesRepositoryExceptionFactoryImpl()
 
     override fun getMessagesFromRemote(
         dialogId: String,
-        paginationEntity: PaginationEntity
+        paginationEntity: PaginationEntity,
     ): Flow<Result<Pair<MessageEntity?, PaginationEntity>>> {
         val paginationDTO = MessagePaginationMapper.dtoFrom(paginationEntity)
 
@@ -30,28 +38,32 @@ class MessagesRepositoryImpl(private val remoteDataSource: RemoteDataSource) : M
         remoteMessageDTO.dialogId = dialogId
 
         return channelFlow {
-            remoteDataSource.getAllMessages(remoteMessageDTO, paginationDTO).onEach { result ->
-                if (result.isSuccess) {
-                    val receivedMessageDTO = result.getOrThrow().first
+            try {
+                remoteDataSource.getAllMessages(remoteMessageDTO, paginationDTO).onEach { result ->
+                    if (result.isSuccess) {
+                        val receivedMessageDTO = result.getOrThrow().first
 
-                    val isRemoteMessageExist = receivedMessageDTO != null
-                    val isNotExistType = receivedMessageDTO?.type == null
-                    if (isRemoteMessageExist && isNotExistType) {
-                        throw exceptionFactory.makeIncorrectData("The remoteMessageDTO contains null value for \"type\" field")
+                        val isRemoteMessageExist = receivedMessageDTO != null
+                        val isNotExistType = receivedMessageDTO?.type == null
+                        if (isRemoteMessageExist && isNotExistType) {
+                            throw exceptionFactory.makeIncorrectData("The remoteMessageDTO contains null value for \"type\" field")
+                        }
+
+                        val mappedMessageEntity = parseMessageEntityFrom(receivedMessageDTO)
+
+                        val receivedPaginationDTO = result.getOrThrow().second
+                        val mappedPaginationEntity = MessagePaginationMapper.entityFrom(receivedPaginationDTO)
+
+                        send(Result.success(Pair(mappedMessageEntity, mappedPaginationEntity)))
                     }
-
-                    val mappedMessageEntity = parseMessageEntityFrom(receivedMessageDTO)
-
-                    val receivedPaginationDTO = result.getOrThrow().second
-                    val mappedPaginationEntity = MessagePaginationMapper.entityFrom(receivedPaginationDTO)
-
-                    send(Result.success(Pair(mappedMessageEntity, mappedPaginationEntity)))
-                }
-                if (result.isFailure) {
-                    val exception = result.getOrThrow() as Exception
-                    send(Result.failure(exception))
-                }
-            }.collect()
+                    if (result.isFailure) {
+                        val exception = result.getOrThrow() as Exception
+                        send(Result.failure(exception))
+                    }
+                }.collect()
+            } catch (exception: RemoteDataSourceException) {
+                throw exceptionFactory.makeUnexpected(exception.message.toString())
+            }
         }.buffer(1)
     }
 
@@ -101,11 +113,52 @@ class MessagesRepositoryImpl(private val remoteDataSource: RemoteDataSource) : M
 
     override fun createMessage(entity: OutgoingChatMessageEntity): OutgoingChatMessageEntity {
         try {
-            val remoteMessageDTO = MessageMapper.remoteDTOFromOutgoingChatMessage(entity)
+            val remoteMessageDTO = MessageMapper.remoteDTOFromChatMessage(entity)
             val createdMessage = remoteDataSource.createMessage(remoteMessageDTO)
 
+            // TODO: Need to move this logic to UseCase. The logic for changing status should be inside use case.
             createdMessage.outgoingState = RemoteMessageDTO.OutgoingMessageStates.SENDING
+
             return MessageMapper.outgoingChatEntityFrom(createdMessage)
+        } catch (exception: RemoteDataSourceException) {
+            throw exceptionFactory.makeBy(exception.code, exception.description)
+        } catch (exception: MappingException) {
+            throw exceptionFactory.makeIncorrectData(exception.message.toString())
+        }
+    }
+
+    override fun createForwardMessage(
+        forwardMessages: List<ForwardedRepliedMessageEntity>,
+        relateMessage: OutgoingChatMessageEntity
+    ): OutgoingChatMessageEntity {
+        try {
+            val remoteMessageDTO = MessageMapper.remoteDTOFromForwardChatMessage(forwardMessages, relateMessage)
+            val createdMessageDTO = remoteDataSource.createMessage(remoteMessageDTO)
+
+            // TODO: Need to move this logic to UseCase. The logic for changing status should be inside use case.
+            createdMessageDTO.outgoingState = RemoteMessageDTO.OutgoingMessageStates.SENDING
+
+            return MessageMapper.outgoingChatEntityFrom(createdMessageDTO)
+        } catch (exception: RemoteDataSourceException) {
+            throw exceptionFactory.makeBy(exception.code, exception.description)
+        } catch (exception: MappingException) {
+            throw exceptionFactory.makeIncorrectData(exception.message.toString())
+        }
+    }
+
+    override fun createReplyMessage(
+        replyMessage: ForwardedRepliedMessageEntity,
+        relateMessage: OutgoingChatMessageEntity
+    ): OutgoingChatMessageEntity {
+        try {
+            val remoteMessageDTO = MessageMapper.remoteDTOFromReplyChatMessage(replyMessage, relateMessage)
+            val createdMessageDTO = remoteDataSource.createMessage(remoteMessageDTO)
+
+            // TODO: Need to move this logic to UseCase. The logic for changing status should be inside use case.
+            createdMessageDTO.outgoingState = RemoteMessageDTO.OutgoingMessageStates.SENDING
+
+            val outgoingMessage = MessageMapper.outgoingChatEntityFrom(createdMessageDTO)
+            return outgoingMessage
         } catch (exception: RemoteDataSourceException) {
             throw exceptionFactory.makeBy(exception.code, exception.description)
         } catch (exception: MappingException) {

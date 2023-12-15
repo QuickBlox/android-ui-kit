@@ -6,6 +6,8 @@ package com.quickblox.android_ui_kit.presentation.factory
 
 import androidx.fragment.app.Fragment
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
+import com.quickblox.android_ui_kit.domain.entity.PaginationEntity
+import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.presentation.screens.chat.group.GroupChatFragment
 import com.quickblox.android_ui_kit.presentation.screens.chat.group.GroupChatScreenSettings
 import com.quickblox.android_ui_kit.presentation.screens.chat.individual.PrivateChatFragment
@@ -16,6 +18,7 @@ import com.quickblox.android_ui_kit.presentation.screens.create.users.UsersFragm
 import com.quickblox.android_ui_kit.presentation.screens.create.users.UsersScreenSettings
 import com.quickblox.android_ui_kit.presentation.screens.dialogs.DialogsFragment
 import com.quickblox.android_ui_kit.presentation.screens.dialogs.DialogsScreenSettings
+import com.quickblox.android_ui_kit.presentation.screens.features.forwarding.messages.MessagesSelectionFragment
 import com.quickblox.android_ui_kit.presentation.screens.info.add.AddMembersFragment
 import com.quickblox.android_ui_kit.presentation.screens.info.add.AddMembersScreenSettings
 import com.quickblox.android_ui_kit.presentation.screens.info.group.GroupChatInfoFragment
@@ -24,6 +27,7 @@ import com.quickblox.android_ui_kit.presentation.screens.info.individual.Private
 import com.quickblox.android_ui_kit.presentation.screens.info.individual.PrivateChatInfoScreenSettings
 import com.quickblox.android_ui_kit.presentation.screens.info.members.MembersFragment
 import com.quickblox.android_ui_kit.presentation.screens.info.members.MembersScreenSettings
+import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 
 open class DefaultScreenFactory : ScreenFactory {
     override fun createDialogs(screenSettings: DialogsScreenSettings?): Fragment {
@@ -60,5 +64,23 @@ open class DefaultScreenFactory : ScreenFactory {
 
     override fun createAddMembers(dialogId: String?, screenSettings: AddMembersScreenSettings?): Fragment {
         return AddMembersFragment.newInstance(dialogId, screenSettings)
+    }
+
+    override fun createMessagesSelection(
+        dialogId: String?,
+        theme: UiKitTheme?,
+        messages: List<MessageEntity>?,
+        forwardedMessage: MessageEntity?,
+        paginationEntity: PaginationEntity?,
+        position: Int?,
+    ): Fragment {
+        return MessagesSelectionFragment.newInstance(
+            dialogId,
+            theme,
+            messages,
+            forwardedMessage,
+            paginationEntity,
+            position
+        )
     }
 }

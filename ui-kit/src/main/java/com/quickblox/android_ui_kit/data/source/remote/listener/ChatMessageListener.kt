@@ -14,6 +14,7 @@ import com.quickblox.chat.QBChatService
 import com.quickblox.chat.exception.QBChatException
 import com.quickblox.chat.listeners.QBChatDialogMessageListener
 import com.quickblox.chat.model.QBChatMessage
+import com.quickblox.content.model.QBFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -34,7 +35,9 @@ class ChatMessageListener(
 
             if (isEventFromLoggedUser(qbChatMessage)) {
                 val remoteMessageDTO = buildRemoteMessageDTO(qbChatMessage)
+                val remoteDialogDTO = buildRemoteDialogDTOFrom(qbChatMessage)
                 messagesEventFlow.emit(remoteMessageDTO)
+                dialogsEventFlow.emit(remoteDialogDTO)
             }
 
             if (EventMessageParser.isNotEventFrom(qbChatMessage)) {
@@ -77,8 +80,15 @@ class ChatMessageListener(
 
         if (isExistAttachmentIn(qbChatMessage)) {
             val attachment = qbChatMessage.attachments.toList()[0]
-            remoteMessageDTO.fileUrl = attachment?.url
-            remoteMessageDTO.mimeType = attachment?.contentType
+
+            try {
+                val splitUrl = qbChatMessage.body?.split("|")
+                val uid = splitUrl?.get(2)
+                remoteMessageDTO.fileUrl = QBFile.getPrivateUrlForUID(uid)
+            } catch (e: IndexOutOfBoundsException) {
+                // empty
+            }
+            remoteMessageDTO.mimeType = attachment?.contentType?: attachment.type
         }
         return remoteMessageDTO
     }

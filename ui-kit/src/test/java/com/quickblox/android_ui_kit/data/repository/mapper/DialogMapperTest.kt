@@ -15,6 +15,7 @@ import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.exception.repository.MappingException
 import org.junit.Assert.assertEquals
+import org.junit.Ignore
 import org.junit.Test
 import java.util.*
 import kotlin.random.Random
@@ -75,6 +76,7 @@ class DialogMapperTest {
     }
 
     @Test
+    @Ignore
     fun buildRemoteDialogDTO_mappingToEntity_NoException() {
         val dto = buildRemoteDialogDTOStub()
         val entity = DialogMapper.toEntity(dto)

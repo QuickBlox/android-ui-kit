@@ -54,6 +54,16 @@
             android:taskAffinity=".chatFlow" />
 
         <activity
+            android:name=".presentation.screens.features.forwarding.messages.MessagesSelectionActivity"
+            android:configChanges="keyboard|orientation|screenSize"
+            android:taskAffinity=".forwardFLow" />
+
+        <activity
+            android:name=".presentation.screens.features.forwarding.recipients.RecipientSelectionActivity"
+            android:configChanges="keyboard|orientation|screenSize"
+            android:taskAffinity=".forwardFLow" />
+
+        <activity
             android:name=".presentation.screens.chat.full_image_screen.FullImageScreenActivity"
             android:configChanges="keyboard|orientation|screenSize" />
 

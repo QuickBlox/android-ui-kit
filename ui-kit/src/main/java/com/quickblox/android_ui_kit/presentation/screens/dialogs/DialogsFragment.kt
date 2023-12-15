@@ -10,6 +10,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.RecyclerView
 import com.quickblox.android_ui_kit.R
 import com.quickblox.android_ui_kit.databinding.ContainerFragmentBinding
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
@@ -126,24 +127,24 @@ open class DialogsFragment : BaseFragment() {
     }
 
     private fun subscribeToUpdateDialog() {
-        viewModel.updatedDialogs.observe(viewLifecycleOwner) { result ->
-            val adapter = screenSettings?.getDialogsComponent()?.getAdapter()
+        val adapter = screenSettings?.getDialogsComponent()?.getAdapter() as RecyclerView.Adapter<*>
 
+        viewModel.updatedDialogs.observe(viewLifecycleOwner) { result ->
             val changeType = result.first
             val index = result.second
 
             when (changeType) {
                 DialogsViewModel.DialogChangeType.UPDATED_RANGE -> {
-                    adapter?.notifyItemRangeChanged(0, index)
+                    adapter.notifyItemRangeChanged(0, index)
                 }
                 DialogsViewModel.DialogChangeType.UPDATED -> {
-                    adapter?.notifyItemChanged(index)
+                    adapter.notifyItemChanged(index)
                 }
                 DialogsViewModel.DialogChangeType.ADDED -> {
-                    adapter?.notifyItemInserted(index)
+                    adapter.notifyItemInserted(index)
                 }
                 DialogsViewModel.DialogChangeType.DELETED -> {
-                    adapter?.notifyItemRemoved(index)
+                    adapter.notifyItemRemoved(index)
                 }
             }
         }

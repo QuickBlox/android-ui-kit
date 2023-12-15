@@ -54,6 +54,10 @@ interface UiKitTheme {
     fun setTertiaryElementsColor(colorString: String)
 
     @Throws(ParseColorException::class)
+    fun getCaptionColor(): Int
+    fun setCaptionColor(colorString: String)
+
+    @Throws(ParseColorException::class)
     fun getErrorColor(): Int
     fun setErrorColor(colorString: String)
 

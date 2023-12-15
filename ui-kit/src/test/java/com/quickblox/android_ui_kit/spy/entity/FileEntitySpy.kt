@@ -42,6 +42,14 @@ class FileEntitySpy(private var file: File? = null) : FileEntityStub() {
         return ""
     }
 
+    override fun setUid(uid: String?) {
+
+    }
+
+    override fun getUid(): String? {
+       return ""
+    }
+
     override fun getId(): Int? {
         return Random.nextInt(1000, 10000)
     }

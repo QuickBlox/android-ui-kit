@@ -17,6 +17,7 @@ import com.quickblox.android_ui_kit.data.repository.event.EventsRepositoryImpl
 import com.quickblox.android_ui_kit.data.repository.file.FilesRepositoryImpl
 import com.quickblox.android_ui_kit.data.repository.message.MessagesRepositoryImpl
 import com.quickblox.android_ui_kit.data.repository.user.UsersRepositoryImpl
+import com.quickblox.android_ui_kit.data.source.ai.AIDataSourceImpl
 import com.quickblox.android_ui_kit.data.source.local.LocalDataSourceImpl
 import com.quickblox.android_ui_kit.data.source.local.LocalFileDataSourceImpl
 import com.quickblox.android_ui_kit.data.source.remote.RemoteDataSource
@@ -107,6 +108,7 @@ class DialogsEventUseCaseIntegrationTest : BaseTest() {
 
         val localDataSource = LocalDataSourceImpl()
         val remoteDataSource = buildRemoteDataSource(1)
+        val aiDataSource = AIDataSourceImpl()
 
         val connectionRepository = ConnectionRepositoryImpl(remoteDataSource)
         val dialogsRepository = DialogsRepositoryImpl(remoteDataSource, localDataSource)

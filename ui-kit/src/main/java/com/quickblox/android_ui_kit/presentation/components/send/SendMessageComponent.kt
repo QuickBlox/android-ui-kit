@@ -6,15 +6,16 @@
 package com.quickblox.android_ui_kit.presentation.components.send
 
 import android.text.TextWatcher
+import android.widget.FrameLayout
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.appcompat.widget.AppCompatEditText
-import com.quickblox.android_ui_kit.domain.entity.AIRephraseToneEntity
+import com.quickblox.android_ui_kit.domain.entity.AIRephraseEntity
 import com.quickblox.android_ui_kit.presentation.components.Component
 import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponentImpl.SendMessageComponentListener
 
 interface SendMessageComponent : Component {
-    enum class MessageComponentStates { VOICE_MESSAGE, CHAT_MESSAGE }
+    enum class MessageComponentStates { VOICE_MESSAGE, CHAT_MESSAGE , FORWARDING_MESSAGE}
 
     fun getComponentMessageState(): MessageComponentStates
     fun setComponentMessageState(state: MessageComponentStates)
@@ -46,9 +47,14 @@ interface SendMessageComponent : Component {
     fun showStartedTyping(text: String)
     fun showStoppedTyping()
 
+    fun isShowButtonAttachment(show:Boolean)
+
     fun setBackground(@ColorInt color: Int)
     fun getMessageEditText(): AppCompatEditText?
 
-    fun setRephraseTones(tones: List<AIRephraseToneEntity>)
+    fun getTopContainer(): FrameLayout?
+
+    fun enableRephrase(enable: Boolean)
+    fun setRephraseTones(tones: List<AIRephraseEntity>)
     fun showRephraseTones(show: Boolean)
 }

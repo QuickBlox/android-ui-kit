@@ -4,11 +4,14 @@
  */
 package com.quickblox.android_ui_kit.data.source.remote.mapper
 
+import android.text.TextUtils
 import androidx.annotation.VisibleForTesting
 import com.quickblox.android_ui_kit.data.dto.remote.message.RemoteMessageDTO
 import com.quickblox.android_ui_kit.data.source.remote.parser.EventMessageParser
+import com.quickblox.android_ui_kit.data.source.remote.parser.ForwardReplyMessageParser
 import com.quickblox.chat.model.QBAttachment
 import com.quickblox.chat.model.QBChatMessage
+import com.quickblox.content.model.QBFile
 
 object RemoteMessageDTOMapper {
     fun messageDTOFrom(qbChatMessage: QBChatMessage, loggedUserId: Int): RemoteMessageDTO {
@@ -29,31 +32,55 @@ object RemoteMessageDTOMapper {
         if (messageHasAttachment) {
             val attachment = qbChatMessage.attachments.toList()[0]
             dto.fileName = attachment.name
-            dto.fileUrl = attachment.url
-            dto.mimeType = attachment.contentType
+
+            if (TextUtils.isEmpty(qbChatMessage.body)) {
+                dto.fileUrl = attachment.url
+            } else {
+                dto.fileUrl = parseFileUrl(qbChatMessage.body)
+            }
+
+            dto.mimeType = attachment.contentType ?: attachment.type
         }
 
         if (dto.outgoing == true) {
             dto.outgoingState = parseOutgoingState(qbChatMessage, loggedUserId)
         }
 
+        if (ForwardReplyMessageParser.isForwardedOrRepliedIn(qbChatMessage)) {
+            dto.isForwardedOrReplied = true
+            dto.properties = ForwardReplyMessageParser.parsePropertiesFrom(qbChatMessage)
+        }
+
         return dto
     }
 
-    private fun parseOutgoingState(qbChatMessage: QBChatMessage, loggedUserId: Int): RemoteMessageDTO.OutgoingMessageStates {
+    private fun parseFileUrl(body: String?): String? {
+        return try {
+            val splitUrl = body?.split("|")
+            val uid = splitUrl?.get(2)
+            QBFile.getPrivateUrlForUID(uid)
+        } catch (e: IndexOutOfBoundsException) {
+            ""
+        }
+    }
+
+    private fun parseOutgoingState(
+        qbChatMessage: QBChatMessage,
+        loggedUserId: Int,
+    ): RemoteMessageDTO.OutgoingMessageStates {
         val readIds = qbChatMessage.readIds
         val deliveredIds = qbChatMessage.deliveredIds
 
-        readIds.remove(loggedUserId)
-        deliveredIds.remove(loggedUserId)
+        readIds?.remove(loggedUserId)
+        deliveredIds?.remove(loggedUserId)
 
-        val isAlreadyRead = readIds.isNotEmpty()
-        if (isAlreadyRead) {
+        val isAlreadyRead = readIds?.isNotEmpty()
+        if (isAlreadyRead == true) {
             return RemoteMessageDTO.OutgoingMessageStates.READ
         }
 
-        val isAlreadyDelivered = deliveredIds.isNotEmpty()
-        if (isAlreadyDelivered) {
+        val isAlreadyDelivered = deliveredIds?.isNotEmpty()
+        if (isAlreadyDelivered == true) {
             return RemoteMessageDTO.OutgoingMessageStates.DELIVERED
         }
 
@@ -124,19 +151,28 @@ object RemoteMessageDTOMapper {
             qbChatMessage.dateSent = time
         }
 
+        if (dto.isForwardedOrReplied == true) {
+            addProperties(qbChatMessage, dto.properties as MutableMap)
+        }
+
         return qbChatMessage
+    }
+
+    private fun addProperties(qbChatMessage: QBChatMessage, properties: MutableMap<String?, String?>) {
+        for ((key, value) in properties) {
+            qbChatMessage.setProperty(key, value)
+        }
     }
 
     private fun isAvailableAttachmentIn(dto: RemoteMessageDTO): Boolean {
         val availableContentType = dto.mimeType?.isNotEmpty() == true
         val availableUrl = dto.fileUrl?.isNotEmpty() == true
-
+// TODO: Need to add checking dto file name 
         return availableContentType && availableUrl
     }
 
     fun qbSystemMessageFrom(dto: RemoteMessageDTO): QBChatMessage {
         var qbChatMessage = QBChatMessage()
-        qbChatMessage.id = dto.id
         qbChatMessage.dialogId = dto.dialogId
         qbChatMessage.body = dto.text
         qbChatMessage.senderId = dto.senderId
@@ -160,15 +196,19 @@ object RemoteMessageDTOMapper {
             RemoteMessageDTO.MessageTypes.EVENT_CREATED_DIALOG -> {
                 return EventMessageParser.addCreatedDialogPropertyTo(qbChatMessage)
             }
+
             RemoteMessageDTO.MessageTypes.EVENT_ADDED_USER -> {
                 return EventMessageParser.addAddedUsersPropertyTo(qbChatMessage)
             }
+
             RemoteMessageDTO.MessageTypes.EVENT_REMOVED_USER -> {
                 return EventMessageParser.addRemovedUsersPropertyTo(qbChatMessage)
             }
+
             RemoteMessageDTO.MessageTypes.EVENT_LEFT_USER -> {
                 return EventMessageParser.addLeftUsersPropertyTo(qbChatMessage)
             }
+
             else -> {}
         }
 

@@ -8,5 +8,5 @@ package com.quickblox.android_ui_kit.data.dto.ai
 
 class AITranslateDTO {
     var content: String? = null
-    var translations: List<String>? = null
+    var translation: String? = null
 }

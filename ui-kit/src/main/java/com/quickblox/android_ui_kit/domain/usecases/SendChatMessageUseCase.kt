@@ -65,10 +65,23 @@ class SendChatMessageUseCase(private val message: OutgoingChatMessageEntity) :
     @VisibleForTesting
     fun makeMessageBodyFromMediaContent(mediaContentEntity: MediaContentEntity): String {
         val fileName = mediaContentEntity.getName()
-        val fileUrl = mediaContentEntity.getUrl()
+        val uid = getUidFom(mediaContentEntity)
         val fileMimeType = mediaContentEntity.getMimeType()
 
-        val messageBody = "${MediaContentEntity::class.java.simpleName}|$fileName|$fileUrl|$fileMimeType"
+        val messageBody = "${MediaContentEntity::class.java.simpleName}|$fileName|$uid|$fileMimeType"
         return messageBody
+    }
+
+    private fun getUidFom(mediaContentEntity: MediaContentEntity): String {
+        if (mediaContentEntity.getUrl().contains("blobs")) {
+            return try {
+                val splitUrl = mediaContentEntity.getUrl().split("/")
+                splitUrl[4].replace(".json", "").split("?")[0]
+            } catch (e: IndexOutOfBoundsException) {
+                ""
+            }
+        } else {
+            return mediaContentEntity.getUrl()
+        }
     }
 }

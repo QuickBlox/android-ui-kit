@@ -7,12 +7,18 @@ package com.quickblox.android_ui_kit.data.repository.mapper
 
 import androidx.annotation.VisibleForTesting
 import com.quickblox.android_ui_kit.data.dto.remote.message.RemoteMessageDTO
+import com.quickblox.android_ui_kit.data.source.remote.parser.ForwardReplyMessageParser
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.EventMessageEntityImpl
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.IncomingChatMessageEntityImpl
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.MediaContentEntityImpl
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.OutgoingChatMessageEntityImpl
-import com.quickblox.android_ui_kit.domain.entity.message.*
+import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.EventMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.EventMessageEntity.EventTypes
+import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.MediaContentEntity
+import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.exception.repository.MappingException
 
 object MessageMapper {
@@ -35,6 +41,14 @@ object MessageMapper {
             entity.setMediaContent(mediaContent)
         }
 
+        if (dto.isForwardedOrReplied == true) {
+            val parsedForwardedRepliedType = ForwardReplyMessageParser.parseForwardRepliedTypeFrom(dto)
+            entity.setForwardOrReplied(parsedForwardedRepliedType)
+
+            val parsedMessages = ForwardReplyMessageParser.parseIncomingMessagesFrom(dto)
+            entity.setForwardedRepliedMessages(parsedMessages)
+        }
+
         return entity
     }
 
@@ -55,6 +69,20 @@ object MessageMapper {
             entity.setMediaContent(mediaContent)
         }
 
+        if (dto.isForwardedOrReplied == true) {
+            val parsedForwardedRepliedType = ForwardReplyMessageParser.parseForwardRepliedTypeFrom(dto)
+            entity.setForwardOrReplied(parsedForwardedRepliedType)
+
+            val parsedMessages = ForwardReplyMessageParser.parseOutgoingMessagesFrom(dto)
+            entity.setForwardedRepliedMessages(parsedMessages)
+
+            var content = dto.text
+            if (entity.isForwarded() && content.isNullOrBlank()) {
+                content = "[Forwarded_Message]"
+                entity.setContent(content)
+            }
+        }
+
         return entity
     }
 
@@ -63,15 +91,19 @@ object MessageMapper {
             RemoteMessageDTO.OutgoingMessageStates.DELIVERED -> {
                 return OutgoingChatMessageEntity.OutgoingStates.DELIVERED
             }
+
             RemoteMessageDTO.OutgoingMessageStates.READ -> {
                 return OutgoingChatMessageEntity.OutgoingStates.READ
             }
+
             RemoteMessageDTO.OutgoingMessageStates.SENDING -> {
                 return OutgoingChatMessageEntity.OutgoingStates.SENDING
             }
+
             RemoteMessageDTO.OutgoingMessageStates.SENT -> {
                 return OutgoingChatMessageEntity.OutgoingStates.SENT
             }
+
             else -> {
                 return null
             }
@@ -128,22 +160,69 @@ object MessageMapper {
             RemoteMessageDTO.MessageTypes.EVENT_CREATED_DIALOG -> {
                 parsedEntityType = EventTypes.CREATED_DIALOG
             }
+
             RemoteMessageDTO.MessageTypes.EVENT_ADDED_USER -> {
                 parsedEntityType = EventTypes.ADDED_USER_TO_DIALOG
             }
+
             RemoteMessageDTO.MessageTypes.EVENT_LEFT_USER -> {
                 parsedEntityType = EventTypes.LEFT_USER_FROM_DIALOG
             }
+
             RemoteMessageDTO.MessageTypes.EVENT_REMOVED_USER -> {
                 parsedEntityType = EventTypes.REMOVED_USER_FROM_DIALOG
             }
+
             else -> {}
         }
 
         return parsedEntityType
     }
 
+    fun remoteDTOFromReplyChatMessage(
+        replyMessages: ChatMessageEntity, relateMessage: OutgoingChatMessageEntity
+    ): RemoteMessageDTO {
+        val dto = remoteDTOFromChatMessage(relateMessage)
+
+        dto.properties = ForwardReplyMessageParser.parseReplyPropertiesFrom(replyMessages)
+        dto.isForwardedOrReplied = true
+
+        return dto
+    }
+
+    fun remoteDTOFromForwardChatMessage(
+        forwardMessages: List<ChatMessageEntity>, relateMessage: OutgoingChatMessageEntity
+    ): RemoteMessageDTO {
+        val dto = remoteDTOFromChatMessage(relateMessage)
+
+        dto.properties = ForwardReplyMessageParser.parseForwardPropertiesFrom(forwardMessages)
+        dto.isForwardedOrReplied = true
+
+        return dto
+    }
+
     fun remoteDTOFromChatMessage(entity: ChatMessageEntity): RemoteMessageDTO {
+        val dto = RemoteMessageDTO()
+        dto.id = entity.getMessageId()
+        dto.dialogId = entity.getDialogId()
+        dto.text = entity.getContent()
+        dto.outgoing = true
+        dto.time = entity.getTime()
+        dto.participantId = entity.getParticipantId()
+        dto.senderId = entity.getSenderId()
+
+        val isMediaContentType = entity.getContentType() == ChatMessageEntity.ContentTypes.MEDIA
+        val isAvailableFileUrl = entity.getMediaContent()?.getUrl()?.isNotEmpty() == true
+        if (isMediaContentType && isAvailableFileUrl) {
+            dto.fileName = entity.getMediaContent()?.getName()
+            dto.mimeType = entity.getMediaContent()?.getMimeType()
+            dto.fileUrl = entity.getMediaContent()?.getUrl()
+        }
+
+        return dto
+    }
+
+    fun remoteDTOFromOutgoingChatMessage(entity: OutgoingChatMessageEntity): RemoteMessageDTO {
         val dto = RemoteMessageDTO()
         dto.id = entity.getMessageId()
         dto.dialogId = entity.getDialogId()
@@ -160,17 +239,20 @@ object MessageMapper {
             dto.fileUrl = entity.getMediaContent()?.getUrl()
         }
 
-        return dto
-    }
+        if (entity.isForwardedOrReplied()) {
+            val forwardedMessages = entity.getForwardedRepliedMessages()
+            forwardedMessages?.let {
+                if (entity.isForwarded()) {
+                    dto.properties = ForwardReplyMessageParser.parseForwardPropertiesFrom(forwardedMessages)
+                }
+                if (entity.isReplied()) {
+                    val replyMessage = forwardedMessages[0]
+                    dto.properties = ForwardReplyMessageParser.parseReplyPropertiesFrom(replyMessage)
+                }
+                dto.isForwardedOrReplied = true
+            }
+        }
 
-    fun remoteDTOFromOutgoingChatMessage(entity: OutgoingChatMessageEntity): RemoteMessageDTO {
-        val dto = remoteDTOFromChatMessage(entity)
-        return dto
-    }
-
-    fun remoteDTOFromIncomingChatMessage(entity: IncomingChatMessageEntity): RemoteMessageDTO {
-        val dto = remoteDTOFromChatMessage(entity)
-        dto.senderId = entity.getSenderId()
         return dto
     }
 
@@ -218,18 +300,22 @@ object MessageMapper {
             EventTypes.CREATED_DIALOG -> {
                 parsedMessageType = RemoteMessageDTO.MessageTypes.EVENT_CREATED_DIALOG
             }
+
             EventTypes.ADDED_USER_TO_DIALOG -> {
                 parsedMessageType = RemoteMessageDTO.MessageTypes.EVENT_ADDED_USER
             }
+
             EventTypes.LEFT_USER_FROM_DIALOG -> {
                 parsedMessageType = RemoteMessageDTO.MessageTypes.EVENT_LEFT_USER
             }
+
             EventTypes.REMOVED_USER_FROM_DIALOG -> {
                 parsedMessageType = RemoteMessageDTO.MessageTypes.EVENT_REMOVED_USER
             }
-            EventTypes.STARTED_TYPING,
-            EventTypes.STOPPED_TYPING -> {
+
+            EventTypes.STARTED_TYPING, EventTypes.STOPPED_TYPING -> {
             }
+
             else -> {
                 return null
             }

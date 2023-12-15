@@ -10,6 +10,7 @@ import java.io.File
 
 class FileEntityImpl : FileEntity {
     private var uri: Uri? = null
+    private var uid: String? = null
     private var file: File? = null
     private var url: String? = null
     private var mimeType: String? = null
@@ -64,6 +65,14 @@ class FileEntityImpl : FileEntity {
 
     override fun getUrl(): String? {
         return url
+    }
+
+    override fun setUid(uid: String?) {
+        this.uid = uid
+    }
+
+    override fun getUid(): String? {
+      return uid
     }
 
     override fun getMimeType(): String? {

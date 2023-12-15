@@ -1,5 +1,5 @@
 /*
- * Created by Injoit on 26.4.2023.
+ * Created by Injoit on 7.11.2023.
  * Copyright © 2023 Quickblox. All rights reserved.
  *
  */
@@ -11,8 +11,8 @@ import android.view.ViewGroup
 import com.quickblox.android_ui_kit.databinding.EventMessageItemBinding
 import com.quickblox.android_ui_kit.domain.entity.message.EventMessageEntity
 import com.quickblox.android_ui_kit.presentation.base.BaseViewHolder
-import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
+import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 
 class EventViewHolder(binding: EventMessageItemBinding) :
     BaseViewHolder<EventMessageItemBinding>(binding) {

@@ -19,15 +19,15 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
+import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.google.android.material.chip.Chip
 import com.quickblox.android_ui_kit.R
 import com.quickblox.android_ui_kit.databinding.SendMessageComponentBinding
-import com.quickblox.android_ui_kit.domain.entity.AIRephraseToneEntity
+import com.quickblox.android_ui_kit.domain.entity.AIRephraseEntity
 import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponent.MessageComponentStates
-import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponent.MessageComponentStates.CHAT_MESSAGE
-import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponent.MessageComponentStates.VOICE_MESSAGE
+import com.quickblox.android_ui_kit.presentation.components.send.SendMessageComponent.MessageComponentStates.*
 import com.quickblox.android_ui_kit.presentation.dialogs.AttachmentsDialog
 import com.quickblox.android_ui_kit.presentation.makeClickableBackground
 import com.quickblox.android_ui_kit.presentation.screens.SimpleTextWatcher
@@ -42,6 +42,7 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
     private var listener: SendMessageComponentListener? = null
     private var textWatcher: TextWatcher? = null
     private var typingTimer = TypingTimer()
+    private var enabledAIRephrase: Boolean = true
 
     constructor(context: Context) : super(context) {
         init(context)
@@ -67,12 +68,19 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
     private fun setListeners(context: Context) {
         binding?.ivSend?.setOnClick {
             val textMessage = binding?.etMessage?.text.toString()
-            if (textMessage.isNotEmpty()) {
+            if (componentState == FORWARDING_MESSAGE) {
                 listener?.onSendTextMessageClickListener(textMessage)
-                binding?.etMessage?.text?.clear()
+                if (textMessage.isNotEmpty()) {
+                    binding?.etMessage?.text?.clear()
+                }
+            } else {
+                if (textMessage.isNotEmpty()) {
+                    listener?.onSendTextMessageClickListener(textMessage)
+                    binding?.etMessage?.text?.clear()
 
-                typingTimer.stop()
-                listener?.onStoppedTyping()
+                    typingTimer.stop()
+                    listener?.onStoppedTyping()
+                }
             }
         }
 
@@ -136,10 +144,15 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
         return object : SimpleTextWatcher() {
             override fun onTextChanged(charSequence: CharSequence?, start: Int, before: Int, count: Int) {
                 val text = charSequence.toString()
+                listener?.onChangedRephraseText()
                 if (text.isEmpty()) {
                     setVoiceState()
+                    showRephraseTones(false)
+                    listener?.onClearRephraseOriginalText()
                     return
                 }
+
+                showRephraseTones(true)
                 setChatState()
             }
 
@@ -169,12 +182,17 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
     }
 
     private fun setChatState() {
-        componentState = CHAT_MESSAGE
+        if (componentState != FORWARDING_MESSAGE) {
+            componentState = CHAT_MESSAGE
+        }
         binding?.ivSendVoice?.visibility = View.GONE
         binding?.ivSend?.visibility = View.VISIBLE
     }
 
     private fun setVoiceState() {
+        if (componentState == FORWARDING_MESSAGE) {
+            return
+        }
         componentState = VOICE_MESSAGE
         binding?.ivSendVoice?.visibility = View.VISIBLE
         binding?.ivSend?.visibility = View.GONE
@@ -217,6 +235,7 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
         binding?.ivSendVoice?.makeClickableBackground(theme.getMainElementsColor())
         binding?.ivSend?.makeClickableBackground(theme.getMainElementsColor())
         binding?.ivAttachment?.makeClickableBackground(theme.getMainElementsColor())
+        binding?.vDivider?.setBackgroundColor(theme.getDividerColor())
     }
 
     private fun setTimerTextColor(color: Int) {
@@ -236,6 +255,9 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
 
             VOICE_MESSAGE -> {
                 setVoiceState()
+            }
+            FORWARDING_MESSAGE -> {
+                setChatState()
             }
         }
     }
@@ -279,6 +301,14 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
 
     override fun getMessageEditText(): AppCompatEditText? {
         return binding?.etMessage
+    }
+
+    override fun getTopContainer(): FrameLayout? {
+        return binding?.flForwardReplyContainer
+    }
+
+    override fun enableRephrase(enable: Boolean) {
+        enabledAIRephrase = enable
     }
 
     override fun setSendMessageComponentListener(listener: SendMessageComponentListener?) {
@@ -327,11 +357,19 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
         binding?.tvTyping?.text = ""
     }
 
+    override fun isShowButtonAttachment(show: Boolean) {
+        if (show) {
+            binding?.ivAttachment?.visibility = View.VISIBLE
+        } else {
+            binding?.ivAttachment?.visibility = View.GONE
+        }
+    }
+
     override fun setBackground(color: Int) {
         binding?.root?.setBackgroundColor(color)
     }
 
-    override fun setRephraseTones(tones: List<AIRephraseToneEntity>) {
+    override fun setRephraseTones(tones: List<AIRephraseEntity>) {
         tones.forEach { tone ->
             val chip = Chip(context)
             chip.text = buildChipText(tone)
@@ -345,23 +383,30 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
         }
     }
 
-    private fun buildChipText(tone: AIRephraseToneEntity): String {
+    private fun buildChipText(rephraseEntity: AIRephraseEntity): String {
         val stringBuilder = StringBuilder()
 
-        val smileCode = tone.getSmileCode()
-        if (smileCode.isNotBlank()) {
-            stringBuilder.append(smileCode)
+        val icon = rephraseEntity.getRephraseTone().getIcon()
+        if (icon.isNotBlank()) {
+            stringBuilder.append(icon)
             stringBuilder.append(" ")
         }
 
-        stringBuilder.append(tone.getName())
-        stringBuilder.append(" ")
-        stringBuilder.append(resources.getString(R.string.tone))
+        stringBuilder.append(rephraseEntity.getRephraseTone().getName())
+        val isNeedAddTone = !rephraseEntity.getRephraseTone().getName().contains("Back to original text")
+        if (isNeedAddTone) {
+            stringBuilder.append(" ")
+            stringBuilder.append(resources.getString(R.string.tone))
+        }
 
         return stringBuilder.toString()
     }
 
     override fun showRephraseTones(show: Boolean) {
+        val isNotEnabledAIRephrase = !enabledAIRephrase
+        if (isNotEnabledAIRephrase) {
+            return
+        }
         if (show) {
             binding?.horizontalScrollView?.visibility = View.VISIBLE
         } else {
@@ -391,7 +436,9 @@ class SendMessageComponentImpl : ConstraintLayout, SendMessageComponent {
         fun onStartedTyping()
         fun onStoppedTyping()
 
-        fun onClickedTone(tone: AIRephraseToneEntity)
+        fun onClickedTone(rephraseEntity: AIRephraseEntity)
+        fun onClearRephraseOriginalText()
+        fun onChangedRephraseText()
     }
 
     private inner class AttachmentsDialogListenerImpl : AttachmentsDialog.AttachmentsDialogListener {

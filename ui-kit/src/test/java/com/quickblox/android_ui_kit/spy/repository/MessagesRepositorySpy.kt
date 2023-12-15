@@ -9,7 +9,12 @@ import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.entity.PaginationEntity
 import com.quickblox.android_ui_kit.domain.entity.implementation.PaginationEntityImpl
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.OutgoingChatMessageEntityImpl
-import com.quickblox.android_ui_kit.domain.entity.message.*
+import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.EventMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.repository.MessagesRepository
 import com.quickblox.android_ui_kit.spy.entity.message.IncomingChatMessageEntitySpy
 import kotlinx.coroutines.flow.Flow
@@ -30,6 +35,27 @@ open class MessagesRepositorySpy(private val remoteMessagesCount: Int = 10) : Me
         return OutgoingChatMessageEntityImpl(outgoingState, contentType)
     }
 
+    override fun createForwardMessage(
+        forwardMessages: List<ForwardedRepliedMessageEntity>, relateMessage: OutgoingChatMessageEntity
+    ): OutgoingChatMessageEntity {
+        val outgoingState = OutgoingChatMessageEntity.OutgoingStates.SENDING
+        val contentType = ChatMessageEntity.ContentTypes.TEXT
+        return OutgoingChatMessageEntityImpl(outgoingState, contentType).apply {
+            setForwardOrReplied(ForwardedRepliedMessageEntity.Types.FORWARDED)
+        }
+    }
+
+    override fun createReplyMessage(
+        replyMessage: ForwardedRepliedMessageEntity,
+        relateMessage: OutgoingChatMessageEntity
+    ): OutgoingChatMessageEntity {
+        val outgoingState = OutgoingChatMessageEntity.OutgoingStates.SENDING
+        val contentType = ChatMessageEntity.ContentTypes.TEXT
+        return OutgoingChatMessageEntityImpl(outgoingState, contentType).apply {
+            setForwardOrReplied(ForwardedRepliedMessageEntity.Types.REPLIED)
+        }
+    }
+
     override fun readMessage(entity: MessageEntity, dialog: DialogEntity) {
 
     }
@@ -47,8 +73,7 @@ open class MessagesRepositorySpy(private val remoteMessagesCount: Int = 10) : Me
     }
 
     override fun getMessagesFromRemote(
-        dialogId: String,
-        paginationEntity: PaginationEntity
+        dialogId: String, paginationEntity: PaginationEntity
     ): Flow<Result<Pair<MessageEntity, PaginationEntity>>> {
         return channelFlow {
             messages.forEach { message ->

@@ -29,10 +29,12 @@ class CreateMessageUseCase(
     private val contentType: ChatMessageEntity.ContentTypes,
     private val dialogId: String,
     private val content: String? = null,
-    private val fileEntity: FileEntity? = null
+    private val fileEntity: FileEntity? = null,
 ) : FlowUseCase<OutgoingChatMessageEntity?>() {
     private val messagesRepository = QuickBloxUiKit.getDependency().getMessagesRepository()
     private val filesRepository = QuickBloxUiKit.getDependency().getFilesRepository()
+    private val usersRepository = QuickBloxUiKit.getDependency().getUsersRepository()
+
     override suspend fun execute(): Flow<OutgoingChatMessageEntity?> {
         if (isTextMessage(contentType) && content?.isBlank() == true) {
             throw DomainException("The content parameter should not be empty for Text message")
@@ -52,11 +54,13 @@ class CreateMessageUseCase(
             withContext(Dispatchers.IO) {
                 runCatching {
                     val localMessage: OutgoingChatMessageEntity
+                    val loggedUserId = usersRepository.getLoggedUserId()
+
                     if (contentType == ChatMessageEntity.ContentTypes.MEDIA) {
                         val mediaContent = createMediaContentWithoutUploadFileFrom(fileEntity!!)
-                        localMessage = createMediaMessage(dialogId, mediaContent)
+                        localMessage = createMediaMessage(dialogId, mediaContent, loggedUserId)
                     } else {
-                        localMessage = createTextMessage(dialogId, content!!)
+                        localMessage = createTextMessage(dialogId, content!!, loggedUserId)
                     }
 
                     createdMessage = messagesRepository.createMessage(localMessage)
@@ -70,6 +74,7 @@ class CreateMessageUseCase(
                         send(createdMessage)
                     }
                 }.onFailure { error ->
+                    val tmp = error.message
                     createdMessage?.let { message ->
                         message.setOutgoingState(OutgoingChatMessageEntity.OutgoingStates.ERROR)
                         send(message)
@@ -112,8 +117,8 @@ class CreateMessageUseCase(
     }
 
     @VisibleForTesting
-    fun createTextMessage(dialogId: String, content: String): OutgoingChatMessageEntity {
-        val message = createMessage(dialogId, content, ChatMessageEntity.ContentTypes.TEXT)
+    fun createTextMessage(dialogId: String, content: String, loggedUserId: Int): OutgoingChatMessageEntity {
+        val message = createMessage(dialogId, content, ChatMessageEntity.ContentTypes.TEXT, loggedUserId)
         return message
     }
 
@@ -159,8 +164,12 @@ class CreateMessageUseCase(
     }
 
     @VisibleForTesting
-    fun createMediaMessage(dialogId: String, mediaContentEntity: MediaContentEntity): OutgoingChatMessageEntity {
-        val message = createMessage(dialogId, null, ChatMessageEntity.ContentTypes.MEDIA)
+    fun createMediaMessage(
+        dialogId: String,
+        mediaContentEntity: MediaContentEntity,
+        loggedUserId: Int,
+    ): OutgoingChatMessageEntity {
+        val message = createMessage(dialogId, null, ChatMessageEntity.ContentTypes.MEDIA, loggedUserId)
         message.setMediaContent(mediaContentEntity)
 
         return message
@@ -170,12 +179,14 @@ class CreateMessageUseCase(
     fun createMessage(
         dialogId: String,
         content: String?,
-        type: ChatMessageEntity.ContentTypes
+        type: ChatMessageEntity.ContentTypes,
+        loggedUserId: Int,
     ): OutgoingChatMessageEntity {
         val message = OutgoingChatMessageEntityImpl(OutgoingChatMessageEntity.OutgoingStates.SENDING, type)
         message.setTime(System.currentTimeMillis() / 1000)
         message.setDialogId(dialogId)
         message.setContent(content)
+        message.setSenderId(loggedUserId)
 
         return message
     }
