@@ -21,7 +21,10 @@ import com.quickblox.android_ui_kit.presentation.factory.DefaultScreenFactory
 import com.quickblox.android_ui_kit.presentation.factory.ScreenFactory
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
-import java.util.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.util.Locale
 
 @ExcludeFromCoverage
 object QuickBloxUiKit {
@@ -85,6 +88,17 @@ object QuickBloxUiKit {
 
         val defaultLanguage = getDefaultLanguage()
         setupLanguageToAITranslate(defaultLanguage)
+    }
+
+    fun release(errorCallback: (t: String) -> Unit = {}) {
+        CoroutineScope(Dispatchers.Main).runCatching {
+            launch {
+                dependency?.getConnectionRepository()?.disconnect()
+                dependency?.getDialogsRepository()?.clearAllDialogsInLocal()
+            }
+        }.onFailure {
+            errorCallback.invoke(it.message ?: "Error release QuickBloxUiKit")
+        }
     }
 
     private fun getDefaultLanguage(): Languages {
