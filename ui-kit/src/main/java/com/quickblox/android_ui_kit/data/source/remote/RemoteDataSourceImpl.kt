@@ -28,6 +28,7 @@ import com.quickblox.android_ui_kit.data.source.remote.mapper.RemotePaginationDT
 import com.quickblox.android_ui_kit.data.source.remote.mapper.RemoteUserDTOMapper
 import com.quickblox.android_ui_kit.data.source.remote.parser.EventMessageParser
 import com.quickblox.android_ui_kit.domain.exception.repository.MappingException
+import com.quickblox.auth.model.QBProvider
 import com.quickblox.auth.session.QBSessionManager
 import com.quickblox.auth.session.Query
 import com.quickblox.chat.JIDHelper
@@ -353,14 +354,14 @@ open class RemoteDataSourceImpl : RemoteDataSource {
 
     @VisibleForTesting
     open fun getLoggedUserIdOrThrowException(): Int {
-        val loggedUserId = getLoggedUserIdFromSession()
+        val loggedUserId = getLoggedUserIdFromSessionOrChat()
         if (loggedUserId == null) {
             throw RuntimeException("The logged userId is null")
         }
         return loggedUserId
     }
 
-    private fun getLoggedUserIdFromSession(): Int? {
+    private fun getLoggedUserIdFromSessionOrChat(): Int? {
         val userIdFromSession = QBSessionManager.getInstance().activeSession?.userId ?: 0
         if (userIdFromSession > 0) {
             return userIdFromSession
@@ -370,6 +371,12 @@ open class RemoteDataSourceImpl : RemoteDataSource {
         if (userIdFromSessionParameters > 0) {
             return userIdFromSessionParameters
         }
+
+        val userIdFromChatService = QBChatService.getInstance().user?.id ?: 0
+        if (userIdFromChatService > 0) {
+            return userIdFromChatService
+        }
+
         return null
     }
 
@@ -601,7 +608,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
         blobId?.let { id ->
             try {
                 val file = QBContent.getFile(id).perform()
-                return file.publicUrl
+                return file.privateUrl
             } catch (exception: QBResponseException) {
                 Log.e(TAG, exception.message.toString())
             }
@@ -965,9 +972,18 @@ open class RemoteDataSourceImpl : RemoteDataSource {
             throw exceptionFactory.makeUnexpected("You have already logged to chat")
         }
 
-        val login = QBSessionManager.getInstance().sessionParameters?.userLogin
-        val password = QBSessionManager.getInstance().sessionParameters?.userPassword
+        val login: String?
+        val password: String?
         val userId = getLoggedUserId()
+
+        if (isSessionCreatedBySocialProvider()) {
+            val user = loadUserById(userId)
+            login = user?.login
+            password = QBSessionManager.getInstance().token
+        } else {
+            login = QBSessionManager.getInstance().sessionParameters?.userLogin
+            password = QBSessionManager.getInstance().sessionParameters?.userPassword
+        }
 
         val isNotValidLogin = login.isNullOrEmpty()
         val isNotValidPassword = password.isNullOrEmpty()
@@ -992,6 +1008,16 @@ open class RemoteDataSourceImpl : RemoteDataSource {
         } catch (exception: SmackException) {
             throw exceptionFactory.makeUnauthorised(exception.message ?: buildUnauthorizedDefaultMessage())
         }
+    }
+
+    private fun isSessionCreatedBySocialProvider(): Boolean {
+        val socialProvider = QBSessionManager.getInstance().sessionParameters?.socialProvider
+
+        val isFacebookProvider = socialProvider == QBProvider.FACEBOOK
+        val isFirebaseProvider = socialProvider == QBProvider.FIREBASE_PHONE
+        val isTwitterProvider = socialProvider == QBProvider.TWITTER
+
+        return isFacebookProvider || isFirebaseProvider || isTwitterProvider
     }
 
     private fun removeMessageListeners() {

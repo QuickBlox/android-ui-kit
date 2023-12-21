@@ -10,10 +10,12 @@ ext {
     qbSdkVersion = '4.1.1'
 
     uiKitVersionCode = 1
-    uiKitVersionName = "0.7.0"
+    uiKitVersionName = "0.8.0"
 }
 
 android {
+    namespace = "com.quickblox.android_ui_kit"
+
     compileSdk 33
 
     defaultConfig {
@@ -46,6 +48,7 @@ android {
 
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 
     compileOptions {

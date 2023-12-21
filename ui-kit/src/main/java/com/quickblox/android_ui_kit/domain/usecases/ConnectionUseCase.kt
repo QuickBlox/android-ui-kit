@@ -16,7 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-class ConnectionUseCase : BaseUseCase<Unit>() {
+class ConnectionUseCase(private val errorCallback: () -> Unit = {}) : BaseUseCase<Unit>() {
     private val TAG = ConnectionUseCase::javaClass.name
     private var connectionRepository = QuickBloxUiKit.getDependency().getConnectionRepository()
 
@@ -28,7 +28,7 @@ class ConnectionUseCase : BaseUseCase<Unit>() {
         }
 
         scope.launch {
-            connect()
+            connect(errorCallback)
         }
     }
 

@@ -22,7 +22,8 @@ class PositiveNegativeDialog private constructor(
     private val negativeText: String,
     private val themeDialog: UiKitTheme?,
     private val positiveListener: (() -> Unit)? = null,
-    private val negativeListener: (() -> Unit)? = null
+    private val negativeListener: (() -> Unit)? = null,
+    private val canceledOnTouchOutside: Boolean = true,
 ) : Dialog(context, R.style.RoundedCornersDialog) {
     companion object {
         fun show(
@@ -32,10 +33,18 @@ class PositiveNegativeDialog private constructor(
             negativeText: String,
             themeDialog: UiKitTheme?,
             positiveListener: (() -> Unit)? = null,
-            negativeListener: (() -> Unit)? = null
+            negativeListener: (() -> Unit)? = null,
+            canceledOnTouchOutside: Boolean = true,
         ) {
             PositiveNegativeDialog(
-                context, text, positiveText, negativeText, themeDialog, positiveListener, negativeListener
+                context,
+                text,
+                positiveText,
+                negativeText,
+                themeDialog,
+                positiveListener,
+                negativeListener,
+                canceledOnTouchOutside
             ).show()
         }
     }
@@ -57,6 +66,7 @@ class PositiveNegativeDialog private constructor(
         binding.tvNegative.text = negativeText
 
         setClickListeners(binding)
+        setCanceledOnTouchOutside(canceledOnTouchOutside)
     }
 
     private fun applyParams() {
