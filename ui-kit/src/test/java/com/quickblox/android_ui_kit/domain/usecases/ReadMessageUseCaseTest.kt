@@ -280,8 +280,10 @@ class ReadMessageUseCaseTest : BaseTest() {
                     return dialogsRepository
                 }
             })
+            val message = IncomingChatMessageEntitySpy()
+            message.setReadIds(listOf(77777))
 
-            ReadMessageUseCase(IncomingChatMessageEntitySpy()).execute()
+            ReadMessageUseCase(message).execute()
 
             assertEquals(0, receivedUnreadMessageCount)
         }

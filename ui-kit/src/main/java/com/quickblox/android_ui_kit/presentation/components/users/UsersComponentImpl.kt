@@ -15,10 +15,9 @@ import com.quickblox.android_ui_kit.databinding.UsersComponentBinding
 import com.quickblox.android_ui_kit.domain.entity.UserEntity
 import com.quickblox.android_ui_kit.presentation.base.BaseUsersAdapter
 import com.quickblox.android_ui_kit.presentation.components.search.SearchComponent
-import com.quickblox.android_ui_kit.presentation.components.users.members.MembersAdapter
 import com.quickblox.android_ui_kit.presentation.setVisibility
-import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
+import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 
 class UsersComponentImpl : CoordinatorLayout, UsersComponent {
     private var theme: UiKitTheme = LightUIKitTheme()
@@ -50,7 +49,6 @@ class UsersComponentImpl : CoordinatorLayout, UsersComponent {
         val mainColor = theme.getMainBackgroundColor()
         binding?.rvUsers?.setBackgroundColor(mainColor)
         binding?.searchComponent?.setTheme(theme)
-        binding?.rvUsers?.adapter = adapter ?: MembersAdapter()
         binding?.progressBar?.indeterminateTintList = ColorStateList.valueOf(theme.getMainElementsColor())
         binding?.searchComponent?.setSearchButtonNotClickableState()
         binding?.searchComponent?.setMinCharactersLengthForSearch(3)

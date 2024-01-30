@@ -386,7 +386,9 @@ open class RemoteDataSourceImpl : RemoteDataSource {
             val user = userId?.let {
                 QBUsers.getUser(it).perform()
             }
-            return RemoteUserDTOMapper.toDTOFrom(user)
+            val userDTO = RemoteUserDTOMapper.toDTOFrom(user)
+            userDTO.avatarUrl = loadUserAvatarUrl(userDTO.blobId)
+            return userDTO
         } catch (exception: QBResponseException) {
             throw exceptionFactory.makeBy(exception.httpStatusCode, exception.message.toString())
         } catch (exception: MappingException) {
@@ -977,8 +979,7 @@ open class RemoteDataSourceImpl : RemoteDataSource {
         val userId = getLoggedUserId()
 
         if (isSessionCreatedBySocialProvider()) {
-            val user = loadUserById(userId)
-            login = user?.login
+            login = loadUserByIdAndGetLogin(userId)
             password = QBSessionManager.getInstance().token
         } else {
             login = QBSessionManager.getInstance().sessionParameters?.userLogin
@@ -1007,6 +1008,15 @@ open class RemoteDataSourceImpl : RemoteDataSource {
             throw exceptionFactory.makeUnauthorised(exception.message ?: buildUnauthorizedDefaultMessage())
         } catch (exception: SmackException) {
             throw exceptionFactory.makeUnauthorised(exception.message ?: buildUnauthorizedDefaultMessage())
+        }
+    }
+
+    private fun loadUserByIdAndGetLogin(userId: Int?): String? {
+        try {
+            val user = loadUserById(userId)
+            return user?.login
+        } catch (exception: RuntimeException) {
+            throw exceptionFactory.makeIncorrectData(exception.message ?: "Error")
         }
     }
 

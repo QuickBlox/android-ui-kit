@@ -103,7 +103,7 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
 
         if (message.isReplied()) {
             showReplyHeader(textMessageBinding.ivIcon, textMessageBinding.tvActionText)
-            textMessageBinding.tvTime.visibility = View.GONE
+            textMessageBinding.tvTime.visibility = View.INVISIBLE
         }
 
         textMessageBinding.tvMessage.background =

@@ -23,6 +23,7 @@ interface EventMessageEntity : MessageEntity {
 
     fun setLoggedUserId(id: Int?)
 
+    fun getReadIds(): Collection<Int>?
     fun setReadIds(ids: Collection<Int>?)
 
     fun setDeliveredIds(ids: Collection<Int>?)

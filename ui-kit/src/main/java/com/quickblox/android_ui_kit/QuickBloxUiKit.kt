@@ -64,6 +64,8 @@ object QuickBloxUiKit {
     private var translateTemperature: Float = 0.5f
     private var translateLanguage: Languages = Languages.ENGLISH
 
+    private var regexUserName: String? = null
+
     @Volatile
     private var dependency: Dependency? = null
 
@@ -487,5 +489,13 @@ object QuickBloxUiKit {
 
     fun isEnabledReply(): Boolean {
         return enabledReply
+    }
+
+    fun setRegexUserName(regex: String) {
+        regexUserName = regex
+    }
+
+    fun getRegexUserName(): String? {
+        return regexUserName
     }
 }

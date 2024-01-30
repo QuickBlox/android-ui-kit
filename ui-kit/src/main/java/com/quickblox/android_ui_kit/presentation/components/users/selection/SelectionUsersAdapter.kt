@@ -9,8 +9,8 @@ import androidx.collection.ArraySet
 import com.quickblox.android_ui_kit.domain.entity.UserEntity
 import com.quickblox.android_ui_kit.presentation.base.BaseUsersAdapter
 import com.quickblox.android_ui_kit.presentation.components.users.selection.SelectionUsersAdapter.SelectionStrategy.SINGLE
-import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
+import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 
 class SelectionUsersAdapter : BaseUsersAdapter<SelectionUserViewHolder>() {
     enum class SelectionStrategy { MULTIPLE, SINGLE }

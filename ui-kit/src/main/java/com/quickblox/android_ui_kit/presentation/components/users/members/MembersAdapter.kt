@@ -8,8 +8,8 @@ package com.quickblox.android_ui_kit.presentation.components.users.members
 import android.view.ViewGroup
 import com.quickblox.android_ui_kit.domain.entity.UserEntity
 import com.quickblox.android_ui_kit.presentation.base.BaseUsersAdapter
-import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
+import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 
 class MembersAdapter : BaseUsersAdapter<MemberViewHolder>() {
     private var items: List<UserEntity>? = null
@@ -67,8 +67,6 @@ class MembersAdapter : BaseUsersAdapter<MemberViewHolder>() {
 
         holder.setTheme(theme)
 
-        val isLoggedUser = userEntity?.getUserId() == loggedUserId
-        val isOwner = loggedUserId == ownerId
         holder.bind(userEntity, loggedUserId, ownerId) { user ->
             removeClickListener?.invoke(user)
         }

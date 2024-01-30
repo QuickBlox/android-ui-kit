@@ -165,10 +165,8 @@ object RemoteMessageDTOMapper {
     }
 
     private fun isAvailableAttachmentIn(dto: RemoteMessageDTO): Boolean {
-        val availableContentType = dto.mimeType?.isNotEmpty() == true
-        val availableUrl = dto.fileUrl?.isNotEmpty() == true
-// TODO: Need to add checking dto file name 
-        return availableContentType && availableUrl
+        // TODO: Need to add checking dto file name
+        return dto.mimeType?.isNotEmpty() == true
     }
 
     fun qbSystemMessageFrom(dto: RemoteMessageDTO): QBChatMessage {

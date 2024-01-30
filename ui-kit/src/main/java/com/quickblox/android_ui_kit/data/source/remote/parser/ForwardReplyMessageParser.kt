@@ -50,7 +50,10 @@ object ForwardReplyMessageParser {
     private const val FORWARD_TYPE = "forward"
 
     fun isForwardedOrRepliedIn(qbChatMessage: QBChatMessage): Boolean {
-        return qbChatMessage.getProperty(QB_MESSAGE_ACTION_KEY) != null
+        val qbMessageActionKey = qbChatMessage.getProperty(QB_MESSAGE_ACTION_KEY)
+        val isNotNull = qbMessageActionKey != null
+        val isNotUndefined = qbMessageActionKey != "undefined"
+        return isNotUndefined && isNotNull
     }
 
     fun parseForwardRepliedTypeFrom(dto: RemoteMessageDTO): ForwardedRepliedMessageEntity.Types {

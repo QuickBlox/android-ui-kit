@@ -77,6 +77,10 @@ open class EventMessageEntityImpl : EventMessageEntity {
         loggedUserId = id
     }
 
+    override fun getReadIds(): Collection<Int>? {
+        return readIds
+    }
+
     override fun setReadIds(ids: Collection<Int>?) {
         readIds = ids
     }

@@ -34,9 +34,18 @@ class LocalDataSourceImpl : LocalDataSource {
     private val dialogs = Collections.synchronizedSet(HashSet<LocalDialogDTO>())
 
     override fun saveDialog(dto: LocalDialogDTO) {
-        if (dialogs.contains(dto)) {
-            throw exceptionFactory.makeAlreadyExist("Dialog already exist")
+        val foundDto = dialogs.find {
+            it.id == dto.id
         }
+
+        val lastMessageDateSentOfFoundDto = foundDto?.lastMessageDateSent ?: 0
+        val lastMessageDateSentOfDto = dto.lastMessageDateSent ?: 0
+
+        val isDtoRelevantThanInCache = lastMessageDateSentOfDto > lastMessageDateSentOfFoundDto
+        if (isDtoRelevantThanInCache) {
+            dialogs.remove(foundDto)
+        }
+
         val isNotAdded = !dialogs.add(dto)
         if (isNotAdded) {
             throw exceptionFactory.makeUnexpected("Dialog not saved")
