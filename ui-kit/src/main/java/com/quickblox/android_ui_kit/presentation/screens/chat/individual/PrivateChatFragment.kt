@@ -63,6 +63,7 @@ import com.quickblox.android_ui_kit.presentation.screens.features.forwarding.mes
 import com.quickblox.android_ui_kit.presentation.screens.info.individual.PrivateChatInfoActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.IOException
 
 private const val CAMERA_PERMISSION = "android.permission.CAMERA"
 private const val RECORD_AUDIO_PERMISSION = "android.permission.RECORD_AUDIO"
@@ -780,10 +781,15 @@ open class PrivateChatFragment : BaseFragment() {
 
     private fun stopAudiRecording() {
         lifecycleScope.launch(Dispatchers.Main) {
-            Recorder.stopRecording()
-            val uri = Recorder.uri
-            uri?.let {
-                createAndSendMessage(it)
+            try {
+                Recorder.stopRecording()
+
+                val uri = Recorder.uri
+                uri?.let {
+                    createAndSendMessage(it)
+                }
+            } catch (exception: IllegalStateException) {
+                showToast(exception.message ?: "Unexpected Exception")
             }
         }
     }
@@ -793,7 +799,13 @@ open class PrivateChatFragment : BaseFragment() {
             val fileEntity = viewModel.createFileWith("aac")
             val file = fileEntity?.getFile()
 
-            Recorder.startRecording(requireContext(), file)
+            try {
+                Recorder.startRecording(requireContext(), file)
+            } catch (exception: IllegalStateException) {
+                showToast(exception.message ?: "Unexpected Exception")
+            } catch (exception: IOException) {
+                showToast(exception.message ?: "Unexpected Exception")
+            }
         }
     }
 
@@ -1012,9 +1024,8 @@ open class PrivateChatFragment : BaseFragment() {
 
     private fun registerAudioRecordPermissionLauncher(): ActivityResultLauncher<String> {
         return registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-            if (isGranted) {
-                startAudiRecording()
-            } else {
+            val isNotGranted = !isGranted
+            if (isNotGranted) {
                 showToast(getString(R.string.permission_denied))
             }
         }

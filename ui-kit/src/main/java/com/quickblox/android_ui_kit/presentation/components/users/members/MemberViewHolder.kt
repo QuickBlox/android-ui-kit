@@ -16,8 +16,8 @@ import com.quickblox.android_ui_kit.presentation.base.BaseViewHolder
 import com.quickblox.android_ui_kit.presentation.makeClickableBackground
 import com.quickblox.android_ui_kit.presentation.screens.loadCircleImageFromUrl
 import com.quickblox.android_ui_kit.presentation.setVisibility
-import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
+import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 
 class MemberViewHolder(binding: MemberItemBinding) : BaseViewHolder<MemberItemBinding>(binding) {
     private var theme: UiKitTheme = LightUIKitTheme()
@@ -42,7 +42,7 @@ class MemberViewHolder(binding: MemberItemBinding) : BaseViewHolder<MemberItemBi
         user: UserEntity?,
         loggedUserId: Int?,
         ownerId: Int?,
-        removeClickListener: ((result: UserEntity?) -> Unit)? = null
+        removeClickListener: ((result: UserEntity?) -> Unit)? = null,
     ) {
         var name = user?.getName() ?: user?.getLogin()
 

@@ -8,6 +8,7 @@ import androidx.collection.arraySetOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.quickblox.android_ui_kit.QuickBloxUiKit
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity.Types.PRIVATE
 import com.quickblox.android_ui_kit.domain.entity.PaginationEntity
@@ -18,6 +19,7 @@ import com.quickblox.android_ui_kit.domain.usecases.CreatePrivateDialogUseCase
 import com.quickblox.android_ui_kit.domain.usecases.LoadUsersByNameUseCase
 import com.quickblox.android_ui_kit.domain.usecases.LoadUsersUseCase
 import com.quickblox.android_ui_kit.presentation.base.BaseViewModel
+import com.quickblox.android_ui_kit.presentation.checkStringByRegex
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
@@ -61,12 +63,25 @@ class UsersViewModel : BaseViewModel() {
                 hideLoading()
             }.collect { result ->
                 if (result.isSuccess) {
-                    loadedUsers.add(result.getOrThrow().first)
+                    val userEntity = result.getOrThrow().first
+                    val regexUserName = QuickBloxUiKit.getRegexUserName()
+                    if (regexUserName != null) {
+                        val isNotValid = isUserNameNotValidByRegex(userEntity.getName(), regexUserName)
+                        if (isNotValid) {
+                            return@collect
+                        }
+                    }
+
+                    loadedUsers.add(userEntity)
                     pagination = result.getOrThrow().second
                     _addedUser.value = Unit
                 }
             }
         }
+    }
+
+    private fun isUserNameNotValidByRegex(userName: String?, regex: String): Boolean {
+        return userName == null || !userName.checkStringByRegex(regex)
     }
 
     private fun loadUsersByName(name: String) {
@@ -78,6 +93,15 @@ class UsersViewModel : BaseViewModel() {
             }.onCompletion {
                 hideLoading()
             }.collect { result ->
+                val userEntity = result.getOrThrow().first
+                val regexUserName = QuickBloxUiKit.getRegexUserName()
+                if (regexUserName != null) {
+                    val isNotValid = isUserNameNotValidByRegex(userEntity.getName(), regexUserName)
+                    if (isNotValid) {
+                        return@collect
+                    }
+                }
+
                 loadedUsers.add(result.getOrThrow().first)
                 pagination = result.getOrThrow().second
                 _addedUser.value = Unit
@@ -148,6 +172,15 @@ class UsersViewModel : BaseViewModel() {
     }
 
     fun cleanAndLoadUsersBy(name: String) {
+        val regexUserName = QuickBloxUiKit.getRegexUserName()
+        if (regexUserName != null) {
+            val isNotValid = isUserNameNotValidByRegex(name, regexUserName)
+            if (isNotValid) {
+                showError("Invalid search name entered!")
+                return
+            }
+        }
+
         isSearchingEvent = true
         resetPaginationAndCleanUsers()
         loadUsersByName(name)

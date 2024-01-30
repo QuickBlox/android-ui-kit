@@ -44,6 +44,10 @@ open class IncomingChatMessageEntitySpy : IncomingChatMessageEntityStub() {
         this.dialogId = dialogId
     }
 
+    override fun getReadIds(): Collection<Int>? {
+        return readIds
+    }
+
     override fun isNotDelivered(): Boolean {
         return deliveredIds?.contains(loggedUserId) == true
     }

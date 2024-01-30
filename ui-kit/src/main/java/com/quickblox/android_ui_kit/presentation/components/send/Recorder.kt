@@ -21,6 +21,8 @@ object Recorder {
 
     suspend fun startRecording(context: Context, file: File?) {
         withContext(Dispatchers.IO) {
+            stopRecording()
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 mediaRecorder = MediaRecorder(context)
             } else {

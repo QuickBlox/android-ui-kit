@@ -14,8 +14,8 @@ import com.quickblox.android_ui_kit.presentation.components.messages.MessagesCom
 import com.quickblox.android_ui_kit.presentation.components.messages.MessagesComponentImpl
 import com.quickblox.android_ui_kit.presentation.screens.ScreenSettings
 import com.quickblox.android_ui_kit.presentation.screens.ScreenSettingsBuilder
-import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 import com.quickblox.android_ui_kit.presentation.theme.LightUIKitTheme
+import com.quickblox.android_ui_kit.presentation.theme.UiKitTheme
 
 class PrivateChatScreenSettings private constructor() : ScreenSettings {
     private var theme: UiKitTheme = LightUIKitTheme()

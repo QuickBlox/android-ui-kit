@@ -15,6 +15,7 @@ import com.quickblox.android_ui_kit.domain.entity.AIRephraseEntity
 import com.quickblox.android_ui_kit.domain.entity.DialogEntity
 import com.quickblox.android_ui_kit.domain.entity.FileEntity
 import com.quickblox.android_ui_kit.domain.entity.PaginationEntity
+import com.quickblox.android_ui_kit.domain.entity.UserEntity
 import com.quickblox.android_ui_kit.domain.entity.implementation.PaginationEntityImpl
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.AITranslateIncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity.ContentTypes
@@ -23,8 +24,29 @@ import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEnt
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.exception.DomainException
-import com.quickblox.android_ui_kit.domain.usecases.*
+import com.quickblox.android_ui_kit.domain.usecases.CreateLocalFileUseCase
+import com.quickblox.android_ui_kit.domain.usecases.CreateMessageUseCase
+import com.quickblox.android_ui_kit.domain.usecases.CreateReplyMessageUseCase
+import com.quickblox.android_ui_kit.domain.usecases.DeliverMessageUseCase
+import com.quickblox.android_ui_kit.domain.usecases.GetAllMessagesUseCase
+import com.quickblox.android_ui_kit.domain.usecases.GetDialogByIdUseCase
+import com.quickblox.android_ui_kit.domain.usecases.GetLocalFileByUriUseCase
+import com.quickblox.android_ui_kit.domain.usecases.LoadAIAnswerAssistantWithApiKeyUseCase
+import com.quickblox.android_ui_kit.domain.usecases.LoadAIAnswerAssistantWithProxyServerUseCase
+import com.quickblox.android_ui_kit.domain.usecases.LoadAIRephraseWithApiKeyUseCase
+import com.quickblox.android_ui_kit.domain.usecases.LoadAIRephraseWithProxyServerUseCase
+import com.quickblox.android_ui_kit.domain.usecases.LoadAIRephrasesUseCase
+import com.quickblox.android_ui_kit.domain.usecases.LoadAITranslateWithApiKeyUseCase
+import com.quickblox.android_ui_kit.domain.usecases.LoadAITranslateWithProxyServerUseCase
+import com.quickblox.android_ui_kit.domain.usecases.MessagesEventUseCase
+import com.quickblox.android_ui_kit.domain.usecases.ReadMessageUseCase
+import com.quickblox.android_ui_kit.domain.usecases.SendChatMessageUseCase
+import com.quickblox.android_ui_kit.domain.usecases.SendForwardReplyMessageUseCase
+import com.quickblox.android_ui_kit.domain.usecases.StartTypingEventUseCase
+import com.quickblox.android_ui_kit.domain.usecases.StopTypingEventUseCase
+import com.quickblox.android_ui_kit.domain.usecases.TypingEventUseCase
 import com.quickblox.android_ui_kit.presentation.base.BaseViewModel
+import com.quickblox.android_ui_kit.presentation.checkStringByRegex
 import com.quickblox.android_ui_kit.presentation.components.messages.DateHeaderMessageEntity
 import com.quickblox.android_ui_kit.presentation.screens.modifyChatDateStringFrom
 import kotlinx.coroutines.Job
@@ -33,7 +55,8 @@ import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 class GroupChatViewModel : BaseViewModel() {
     enum class TypingEvents {
@@ -138,6 +161,7 @@ class GroupChatViewModel : BaseViewModel() {
             getMessagesUseCase = GetAllMessagesUseCase(dialog!!, pagination)
             getMessagesUseCase?.execute()?.onCompletion {
                 hideLoading()
+                messages.sortByDescending { it.getTime() }
 
                 val isHasNotNextPage = !pagination.hasNextPage()
                 if (messages.isNotEmpty() && isHasNotNextPage) {
@@ -154,6 +178,14 @@ class GroupChatViewModel : BaseViewModel() {
                         sendDelivered(message)
                     }
 
+                    if (message is IncomingChatMessageEntity) {
+                        val regexUserName = QuickBloxUiKit.getRegexUserName()
+                        if (regexUserName != null) {
+                            val sender = message.getSender()
+                            checkSenderNameByRegex(sender, regexUserName)
+                        }
+                    }
+
                     if (messages.isNotEmpty()) {
                         val previousMessage = messages[messages.size - 1]
                         if (isNeedAddHeaderBetweenMessages(message, previousMessage)) {
@@ -168,6 +200,13 @@ class GroupChatViewModel : BaseViewModel() {
                 }
                 pagination = result.getOrThrow().second
             }
+        }
+    }
+
+    private fun checkSenderNameByRegex(sender: UserEntity?, regexUserName: String) {
+        val isUserNameValid = sender?.getName()?.checkStringByRegex(regexUserName)
+        if (isUserNameValid == false) {
+            sender.setName("Unknown")
         }
     }
 
@@ -232,6 +271,14 @@ class GroupChatViewModel : BaseViewModel() {
             subscribeMessagesEventUseCase = MessagesEventUseCase(dialog!!)
             subscribeMessagesEventUseCase?.execute()?.collect { messageEntity ->
                 messageEntity?.let { message ->
+                    if (message is IncomingChatMessageEntity) {
+                        val regexUserName = QuickBloxUiKit.getRegexUserName()
+                        if (regexUserName != null) {
+                            val sender = message.getSender()
+                            checkSenderNameByRegex(sender, regexUserName)
+                        }
+                    }
+
                     if (isExistMessage(message)) {
                         updatedMessage(message)
                         return@let

@@ -14,6 +14,7 @@ import android.widget.CheckBox
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import com.quickblox.android_ui_kit.R
+import java.util.regex.Pattern
 
 fun View.makeClickableBackground(@ColorInt pressedColor: Int? = null) {
     val res = StateListDrawable()
@@ -48,4 +49,10 @@ fun View.showKeyboard() {
         val imm = this.context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
     }
+}
+
+fun String.checkStringByRegex(regex:String):Boolean{
+    val pattern = Pattern.compile(regex)
+    val matcher = pattern.matcher(this)
+    return matcher.find()
 }

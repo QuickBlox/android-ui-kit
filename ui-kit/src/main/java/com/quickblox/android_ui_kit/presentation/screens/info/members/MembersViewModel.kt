@@ -17,6 +17,7 @@ import com.quickblox.android_ui_kit.domain.usecases.GetDialogByIdUseCase
 import com.quickblox.android_ui_kit.domain.usecases.GetUsersFromDialogUseCase
 import com.quickblox.android_ui_kit.domain.usecases.RemoveUsersFromDialogUseCase
 import com.quickblox.android_ui_kit.presentation.base.BaseViewModel
+import com.quickblox.android_ui_kit.presentation.checkStringByRegex
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
@@ -63,6 +64,12 @@ class MembersViewModel : BaseViewModel() {
                 dialogEntity?.let {
                     val users = GetUsersFromDialogUseCase(it).execute()
                     loadedUsers.clear()
+
+                    val regexUserName = QuickBloxUiKit.getRegexUserName()
+                    if (regexUserName != null) {
+                        checkUserNamesByRegex(users, regexUserName)
+                    }
+
                     loadedUsers.addAll(users)
                     _loadedMembers.postValue(Unit)
 
@@ -72,6 +79,15 @@ class MembersViewModel : BaseViewModel() {
             }.onFailure { error ->
                 hideLoading()
                 showError(error.message)
+            }
+        }
+    }
+
+    private fun checkUserNamesByRegex(users: List<UserEntity>, regex: String) {
+        for (user in users) {
+            val isUserNameValid = user.getName()?.checkStringByRegex(regex)
+            if (user.getName() == null || isUserNameValid == false) {
+                user.setName("Unknown")
             }
         }
     }

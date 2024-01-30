@@ -123,9 +123,8 @@ object MessageMapper {
     @VisibleForTesting
     fun isExistFileIn(dto: RemoteMessageDTO): Boolean {
         val isAvailableFileName = dto.fileName?.isNotEmpty() == true
-        val isAvailableFileUrl = dto.fileUrl?.isNotEmpty() == true
         val isAvailableContentType = dto.mimeType?.isNotEmpty() == true
-        return isAvailableFileName && isAvailableFileUrl && isAvailableContentType
+        return isAvailableFileName && isAvailableContentType
     }
 
     @VisibleForTesting
@@ -212,8 +211,7 @@ object MessageMapper {
         dto.senderId = entity.getSenderId()
 
         val isMediaContentType = entity.getContentType() == ChatMessageEntity.ContentTypes.MEDIA
-        val isAvailableFileUrl = entity.getMediaContent()?.getUrl()?.isNotEmpty() == true
-        if (isMediaContentType && isAvailableFileUrl) {
+        if (isMediaContentType ) {
             dto.fileName = entity.getMediaContent()?.getName()
             dto.mimeType = entity.getMediaContent()?.getMimeType()
             dto.fileUrl = entity.getMediaContent()?.getUrl()
@@ -232,11 +230,9 @@ object MessageMapper {
         dto.participantId = entity.getParticipantId()
 
         val isMediaContentType = entity.getContentType() == ChatMessageEntity.ContentTypes.MEDIA
-        val isAvailableFileUrl = entity.getMediaContent()?.getUrl()?.isNotEmpty() == true
-        if (isMediaContentType && isAvailableFileUrl) {
+        if (isMediaContentType) {
             dto.fileName = entity.getMediaContent()?.getName()
             dto.mimeType = entity.getMediaContent()?.getMimeType()
-            dto.fileUrl = entity.getMediaContent()?.getUrl()
         }
 
         if (entity.isForwardedOrReplied()) {

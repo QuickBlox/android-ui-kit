@@ -67,6 +67,7 @@ import com.quickblox.android_ui_kit.presentation.screens.features.forwarding.mes
 import com.quickblox.android_ui_kit.presentation.screens.info.group.GroupChatInfoActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.IOException
 
 private const val CAMERA_PERMISSION = "android.permission.CAMERA"
 private const val RECORD_AUDIO_PERMISSION = "android.permission.RECORD_AUDIO"
@@ -346,15 +347,19 @@ open class GroupChatFragment : BaseFragment() {
             Types.IMAGE -> {
                 return R.drawable.ic_image_placeholder
             }
+
             Types.VIDEO -> {
                 return R.drawable.ic_video_file
             }
+
             Types.AUDIO -> {
                 return R.drawable.ic_audio_file
             }
+
             Types.FILE -> {
                 return R.drawable.ic_application_file
             }
+
             else -> {
                 throw IllegalArgumentException("$contentType - type does not exist for media content")
             }
@@ -788,10 +793,15 @@ open class GroupChatFragment : BaseFragment() {
 
     private fun stopAudiRecording() {
         lifecycleScope.launch(Dispatchers.Main) {
-            Recorder.stopRecording()
-            val uri = Recorder.uri
-            uri?.let {
-                createAndSendMessage(it)
+            try {
+                Recorder.stopRecording()
+
+                val uri = Recorder.uri
+                uri?.let {
+                    createAndSendMessage(it)
+                }
+            } catch (exception: IllegalStateException) {
+                showToast(exception.message ?: "Unexpected Exception")
             }
         }
     }
@@ -801,7 +811,13 @@ open class GroupChatFragment : BaseFragment() {
             val fileEntity = viewModel.createFileWith("aac")
             val file = fileEntity?.getFile()
 
-            Recorder.startRecording(requireContext(), file)
+            try {
+                Recorder.startRecording(requireContext(), file)
+            } catch (exception: IllegalStateException) {
+                showToast(exception.message ?: "Unexpected Exception")
+            } catch (exception: IOException) {
+                showToast(exception.message ?: "Unexpected Exception")
+            }
         }
     }
 
@@ -898,6 +914,7 @@ open class GroupChatFragment : BaseFragment() {
                 TypingEvents.STARTED -> {
                     sendMessageComponent?.showStartedTyping(text)
                 }
+
                 TypingEvents.STOPPED -> {
                     sendMessageComponent?.showStoppedTyping()
                 }
@@ -1016,9 +1033,8 @@ open class GroupChatFragment : BaseFragment() {
 
     private fun registerAudioRecordPermissionLauncher(): ActivityResultLauncher<String> {
         return registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
-            if (isGranted) {
-                startAudiRecording()
-            } else {
+            val isNotGranted = !isGranted
+            if (isNotGranted) {
                 showToast(getString(R.string.permission_denied))
             }
         }
