@@ -168,6 +168,7 @@ abstract class BaseMessageViewHolder<VB : ViewBinding>(viewBinding: VB) : BaseVi
         } else {
             setAIListener(message, aiListener, textMessageBinding)
             setTranslateListener(textMessage!!, aiListener, textMessageBinding)
+
         }
 
         if (QuickBloxUiKit.isEnabledAITranslate()) {

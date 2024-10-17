@@ -33,11 +33,13 @@ import com.quickblox.android_ui_kit.domain.usecases.GetDialogByIdUseCase
 import com.quickblox.android_ui_kit.domain.usecases.GetLocalFileByUriUseCase
 import com.quickblox.android_ui_kit.domain.usecases.LoadAIAnswerAssistantWithApiKeyUseCase
 import com.quickblox.android_ui_kit.domain.usecases.LoadAIAnswerAssistantWithProxyServerUseCase
+import com.quickblox.android_ui_kit.domain.usecases.LoadAIAnswerAssistantWithSmartChatAssistantIdUseCase
 import com.quickblox.android_ui_kit.domain.usecases.LoadAIRephraseWithApiKeyUseCase
 import com.quickblox.android_ui_kit.domain.usecases.LoadAIRephraseWithProxyServerUseCase
 import com.quickblox.android_ui_kit.domain.usecases.LoadAIRephrasesUseCase
 import com.quickblox.android_ui_kit.domain.usecases.LoadAITranslateWithApiKeyUseCase
 import com.quickblox.android_ui_kit.domain.usecases.LoadAITranslateWithProxyServerUseCase
+import com.quickblox.android_ui_kit.domain.usecases.LoadAITranslateWithSmartChatAssistantIdUseCase
 import com.quickblox.android_ui_kit.domain.usecases.MessagesEventUseCase
 import com.quickblox.android_ui_kit.domain.usecases.ReadMessageUseCase
 import com.quickblox.android_ui_kit.domain.usecases.SendChatMessageUseCase
@@ -377,18 +379,22 @@ class GroupChatViewModel : BaseViewModel() {
         var relatedMessage: OutgoingChatMessageEntity? = null
 
         viewModelScope.launch {
-            relatedMessage = CreateMessageUseCase(contentType, dialogId, text, file).execute().lastOrNull()
-            val replyMessage = relatedMessage?.let {
-                CreateReplyMessageUseCase(repliedMessage, it).execute()
-            }
+            try {
+                relatedMessage = CreateMessageUseCase(contentType, dialogId, text, file).execute().lastOrNull()
+                val replyMessage = relatedMessage?.let {
+                    CreateReplyMessageUseCase(repliedMessage, it).execute()
+                }
 
-            replyMessage as MessageEntity
-            if (isNeedAddHeaderBeforeFirst(replyMessage)) {
-                addHeaderBeforeFirst(replyMessage)
-            }
+                replyMessage as MessageEntity
+                if (isNeedAddHeaderBeforeFirst(replyMessage)) {
+                    addHeaderBeforeFirst(replyMessage)
+                }
 
-            addAsFirst(replyMessage)
-            sendReplyMessage(replyMessage)
+                addAsFirst(replyMessage)
+                sendReplyMessage(replyMessage)
+            } catch (exception: DomainException) {
+                showError(exception.message)
+            }
         }
     }
 
@@ -543,6 +549,22 @@ class GroupChatViewModel : BaseViewModel() {
     }
 
     fun executeAIAnswerAssistant(dialogId: String, message: ForwardedRepliedMessageEntity) {
+        if (QuickBloxUiKit.isAIAnswerAssistantEnabledWithSmartChatAssistantId()) {
+            viewModelScope.launch {
+                try {
+                    showLoading()
+                    val answer = LoadAIAnswerAssistantWithSmartChatAssistantIdUseCase(dialogId, message).execute()
+                    if (answer.isNotEmpty()) {
+                        _aiAnswer.postValue(answer)
+                    }
+                } catch (exception: DomainException) {
+                    showError(exception.message)
+                } finally {
+                    hideLoading()
+                }
+            }
+        }
+
         if (QuickBloxUiKit.isAIAnswerAssistantEnabledWithOpenAIToken()) {
             viewModelScope.launch {
                 try {
@@ -587,6 +609,31 @@ class GroupChatViewModel : BaseViewModel() {
                 updateMessage = findMessageBy(message.getRelatedMessageId())
             }
             addOrUpdateMessage(updateMessage)
+            return
+        }
+
+        if (QuickBloxUiKit.isAITranslateEnabledWithSmartChatAssistantId()) {
+            viewModelScope.launch {
+                try {
+                    var updateMessage: MessageEntity
+                    val entity =
+                        LoadAITranslateWithSmartChatAssistantIdUseCase(dialog?.getDialogId(), message).execute()!!
+                    entity.setTranslated(true)
+                    updateMessage = entity
+
+                    val isInternalMessage = !message.getRelatedMessageId().isNullOrEmpty()
+                    if (isInternalMessage) {
+                        val foundMessage = findMessageBy(entity.getRelatedMessageId())
+                        foundMessage.setForwardedRepliedMessages(listOf(entity as ForwardedRepliedMessageEntity))
+                        updateMessage = foundMessage
+                    }
+
+                    addOrUpdateMessage(updateMessage)
+                } catch (exception: DomainException) {
+                    showError(exception.message)
+                    addOrUpdateMessage(message)
+                }
+            }
         }
 
         if (QuickBloxUiKit.isAITranslateEnabledWithOpenAIToken()) {

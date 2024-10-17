@@ -37,8 +37,8 @@ interface UserEntity {
     fun getAvatarUrl(): String?
     fun setAvatarUrl(url: String?)
 
-    fun getTags(): ArrayList<String>?
-    fun setTags(tags: ArrayList<String>?)
+    fun getTags(): String?
+    fun setTags(tags: String?)
 
     fun getCustomData(): String?
     fun setCustomData(customData: String?)

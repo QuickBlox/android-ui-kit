@@ -17,9 +17,35 @@ import com.quickblox.android_ui_kit.domain.entity.PaginationEntity
 import com.quickblox.android_ui_kit.domain.entity.UserEntity
 import com.quickblox.android_ui_kit.domain.entity.implementation.PaginationEntityImpl
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.AITranslateIncomingChatMessageEntity
-import com.quickblox.android_ui_kit.domain.entity.message.*
+import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
+import com.quickblox.android_ui_kit.domain.entity.message.OutgoingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.exception.DomainException
-import com.quickblox.android_ui_kit.domain.usecases.*
+import com.quickblox.android_ui_kit.domain.usecases.CreateLocalFileUseCase
+import com.quickblox.android_ui_kit.domain.usecases.CreateMessageUseCase
+import com.quickblox.android_ui_kit.domain.usecases.CreateReplyMessageUseCase
+import com.quickblox.android_ui_kit.domain.usecases.DeliverMessageUseCase
+import com.quickblox.android_ui_kit.domain.usecases.GetAllMessagesUseCase
+import com.quickblox.android_ui_kit.domain.usecases.GetDialogByIdUseCase
+import com.quickblox.android_ui_kit.domain.usecases.GetLocalFileByUriUseCase
+import com.quickblox.android_ui_kit.domain.usecases.LoadAIAnswerAssistantWithApiKeyUseCase
+import com.quickblox.android_ui_kit.domain.usecases.LoadAIAnswerAssistantWithProxyServerUseCase
+import com.quickblox.android_ui_kit.domain.usecases.LoadAIAnswerAssistantWithSmartChatAssistantIdUseCase
+import com.quickblox.android_ui_kit.domain.usecases.LoadAIRephraseWithApiKeyUseCase
+import com.quickblox.android_ui_kit.domain.usecases.LoadAIRephraseWithProxyServerUseCase
+import com.quickblox.android_ui_kit.domain.usecases.LoadAIRephrasesUseCase
+import com.quickblox.android_ui_kit.domain.usecases.LoadAITranslateWithApiKeyUseCase
+import com.quickblox.android_ui_kit.domain.usecases.LoadAITranslateWithProxyServerUseCase
+import com.quickblox.android_ui_kit.domain.usecases.LoadAITranslateWithSmartChatAssistantIdUseCase
+import com.quickblox.android_ui_kit.domain.usecases.MessagesEventUseCase
+import com.quickblox.android_ui_kit.domain.usecases.ReadMessageUseCase
+import com.quickblox.android_ui_kit.domain.usecases.SendChatMessageUseCase
+import com.quickblox.android_ui_kit.domain.usecases.SendForwardReplyMessageUseCase
+import com.quickblox.android_ui_kit.domain.usecases.StartTypingEventUseCase
+import com.quickblox.android_ui_kit.domain.usecases.StopTypingEventUseCase
+import com.quickblox.android_ui_kit.domain.usecases.TypingEventUseCase
 import com.quickblox.android_ui_kit.presentation.base.BaseViewModel
 import com.quickblox.android_ui_kit.presentation.checkStringByRegex
 import com.quickblox.android_ui_kit.presentation.components.messages.DateHeaderMessageEntity
@@ -30,7 +56,8 @@ import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 class PrivateChatViewModel : BaseViewModel() {
     enum class TypingEvents {
@@ -353,25 +380,30 @@ class PrivateChatViewModel : BaseViewModel() {
         var relatedMessage: OutgoingChatMessageEntity? = null
 
         viewModelScope.launch {
-            relatedMessage = CreateMessageUseCase(contentType, dialogId, text, file).execute().lastOrNull()
-            val replyMessage = relatedMessage?.let {
-                CreateReplyMessageUseCase(repliedMessage, it).execute()
-            }
+            try {
+                relatedMessage = CreateMessageUseCase(contentType, dialogId, text, file).execute().lastOrNull()
+                val replyMessage = relatedMessage?.let {
+                    CreateReplyMessageUseCase(repliedMessage, it).execute()
+                }
 
-            replyMessage as MessageEntity
-            if (isNeedAddHeaderBeforeFirst(replyMessage)) {
-                addHeaderBeforeFirst(replyMessage)
-            }
+                replyMessage as MessageEntity
+                if (isNeedAddHeaderBeforeFirst(replyMessage)) {
+                    addHeaderBeforeFirst(replyMessage)
+                }
 
-            addAsFirst(replyMessage)
-            sendReplyMessage(replyMessage)
+                addAsFirst(replyMessage)
+                sendReplyMessage(replyMessage)
+            } catch (exception: DomainException) {
+                showError(exception.message)
+            }
         }
     }
 
     private fun sendReplyMessage(replyMessage: OutgoingChatMessageEntity) {
         viewModelScope.launch {
             runCatching {
-                val sentMessage = SendForwardReplyMessageUseCase(replyMessage, dialog?.getDialogId().toString()).execute()
+                val sentMessage =
+                    SendForwardReplyMessageUseCase(replyMessage, dialog?.getDialogId().toString()).execute()
 
                 if (isExistMessage(sentMessage)) {
                     updatedMessage(sentMessage)
@@ -524,6 +556,22 @@ class PrivateChatViewModel : BaseViewModel() {
     }
 
     fun executeAIAnswerAssistant(dialogId: String, message: ForwardedRepliedMessageEntity) {
+        if (QuickBloxUiKit.isAIAnswerAssistantEnabledWithSmartChatAssistantId()) {
+            viewModelScope.launch {
+                try {
+                    showLoading()
+                    val answer = LoadAIAnswerAssistantWithSmartChatAssistantIdUseCase(dialogId, message).execute()
+                    if (answer.isNotEmpty()) {
+                        _aiAnswer.postValue(answer)
+                    }
+                } catch (exception: DomainException) {
+                    showError(exception.message)
+                } finally {
+                    hideLoading()
+                }
+            }
+        }
+
         if (QuickBloxUiKit.isAIAnswerAssistantEnabledWithOpenAIToken()) {
             viewModelScope.launch {
                 try {
@@ -568,6 +616,31 @@ class PrivateChatViewModel : BaseViewModel() {
                 updateMessage = findMessageBy(message.getRelatedMessageId())
             }
             addOrUpdateMessage(updateMessage)
+            return
+        }
+
+        if (QuickBloxUiKit.isAITranslateEnabledWithSmartChatAssistantId()) {
+            viewModelScope.launch {
+                try {
+                    var updateMessage: MessageEntity
+                    val entity =
+                        LoadAITranslateWithSmartChatAssistantIdUseCase(dialog?.getDialogId(), message).execute()!!
+                    entity.setTranslated(true)
+                    updateMessage = entity
+
+                    val isInternalMessage = !message.getRelatedMessageId().isNullOrEmpty()
+                    if (isInternalMessage) {
+                        val foundMessage = findMessageBy(entity.getRelatedMessageId())
+                        foundMessage.setForwardedRepliedMessages(listOf(entity as ForwardedRepliedMessageEntity))
+                        updateMessage = foundMessage
+                    }
+
+                    addOrUpdateMessage(updateMessage)
+                } catch (exception: DomainException) {
+                    showError(exception.message)
+                    addOrUpdateMessage(message)
+                }
+            }
         }
 
         if (QuickBloxUiKit.isAITranslateEnabledWithOpenAIToken()) {

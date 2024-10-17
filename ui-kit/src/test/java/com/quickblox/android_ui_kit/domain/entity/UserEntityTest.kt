@@ -55,7 +55,7 @@ class UserEntityTest {
         entity.setExternalId("test_external_id")
         entity.setFacebookId("test_facebook_id")
         entity.setAvatarUrl("https://avatart.com/avatar.png")
-        entity.setTags(arrayListOf("test_tag"))
+        entity.setTags("test_tag")
         entity.setCustomData("test_custom_data")
 
         return entity
@@ -83,7 +83,7 @@ class UserEntityTest {
         entity.setExternalId("test_external_id ${Random.nextInt(600, 700)}")
         entity.setFacebookId("test_facebook_id ${Random.nextInt(700, 800)}")
         entity.setAvatarUrl("")
-        entity.setTags(arrayListOf("test ${Random.nextInt(800, 900)}"))
+        entity.setTags("test ${Random.nextInt(800, 900)}")
         entity.setCustomData("test_custom_data ${Random.nextInt(900, 1000)}")
 
         return entity

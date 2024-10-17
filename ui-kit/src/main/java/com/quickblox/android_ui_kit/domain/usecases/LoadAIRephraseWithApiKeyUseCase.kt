@@ -34,7 +34,7 @@ class LoadAIRephraseWithApiKeyUseCase(private val dialogId: String?, private val
                     messagesFromUIKit = loadMessages(it)
                 }
 
-                resultEntity = aiRepository.rephraseWithApiKE(toneEntity, messagesFromUIKit)
+                resultEntity = aiRepository.rephraseWithApiKey(toneEntity, messagesFromUIKit)
             } catch (exception: AIRepositoryException) {
                 throw DomainException(exception.message ?: "Unexpected Exception")
             } catch (exception: MessagesRepositoryException) {

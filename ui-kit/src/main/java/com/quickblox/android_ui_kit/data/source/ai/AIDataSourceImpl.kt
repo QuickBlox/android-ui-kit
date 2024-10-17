@@ -6,6 +6,11 @@
 
 package com.quickblox.android_ui_kit.data.source.ai
 
+import com.quickblox.ai.QB
+import com.quickblox.ai.answer_assist.models.message.QBAIAnswerAssistHistoryMessage
+import com.quickblox.ai.answer_assist.models.message.QBAIAnswerAssistHistoryMessageImpl
+import com.quickblox.ai.answer_assist.models.result.QBAIAnswerAssistResult
+import com.quickblox.ai.translate.models.QBAITranslateResult
 import com.quickblox.android_ai_answer_assistant.QBAIAnswerAssistant
 import com.quickblox.android_ai_answer_assistant.settings.AnswerAssistantSettingsImpl
 import com.quickblox.android_ai_editing_assistant.QBAIRephrase
@@ -17,15 +22,39 @@ import com.quickblox.android_ai_translate.QBAITranslate
 import com.quickblox.android_ai_translate.exception.QBAITranslateException
 import com.quickblox.android_ai_translate.settings.TranslateSettingsImpl
 import com.quickblox.android_ui_kit.QuickBloxUiKit
-import com.quickblox.android_ui_kit.data.dto.ai.*
+import com.quickblox.android_ui_kit.data.dto.ai.AIAnswerAssistantMessageDTO
+import com.quickblox.android_ui_kit.data.dto.ai.AIRephraseDTO
+import com.quickblox.android_ui_kit.data.dto.ai.AIRephraseMessageDTO
+import com.quickblox.android_ui_kit.data.dto.ai.AIRephraseToneDTO
+import com.quickblox.android_ui_kit.data.dto.ai.AITranslateDTO
+import com.quickblox.android_ui_kit.data.dto.ai.AITranslateMessageDTO
 import com.quickblox.android_ui_kit.data.source.ai.mapper.AIAnswerAssistantDTOMapper
 import com.quickblox.android_ui_kit.data.source.ai.mapper.AIRephraseDTOMapper
 import com.quickblox.android_ui_kit.data.source.ai.mapper.AITranslateDTOMapper
 import com.quickblox.android_ui_kit.data.source.exception.AIDataSourceException
 import com.quickblox.android_ui_kit.domain.exception.repository.MappingException
+import com.quickblox.core.exception.QBResponseException
 
 class AIDataSourceImpl : AIDataSource {
     val tones: MutableList<Tone> = crateDefaultTones()
+
+    override fun translateIncomingMessageWithSmartChatAssistantId(
+        translateDTO: AITranslateDTO,
+        messagesDTO: List<AITranslateMessageDTO>,
+        languageCode: String,
+    ): AITranslateDTO {
+        val text = translateDTO.content
+
+        val smartChatAssistantId = QuickBloxUiKit.getTranslateSmartChatAssistantId()
+        try {
+            val result: QBAITranslateResult = QB.ai.translate(smartChatAssistantId, text, languageCode).perform()
+            translateDTO.translation = result.message
+        } catch (exception: QBResponseException) {
+            throw AIDataSourceException(exception.message)
+        }
+
+        return translateDTO
+    }
 
     override fun translateIncomingMessageWithApiKey(
         translateDTO: AITranslateDTO,
@@ -107,6 +136,41 @@ class AIDataSourceImpl : AIDataSource {
         } catch (exception: MappingException) {
             throw AIDataSourceException(exception.message)
         }
+    }
+
+    override fun createAnswerWithSmartChatAssistantId(
+        messageToAssist: String,
+        historyMessagesDTO: List<AIAnswerAssistantMessageDTO>,
+    ): String {
+        val smartChatAssistantId = QuickBloxUiKit.getAnswerAssistantSmartChatAssistantId()
+
+
+        val historyMessages: List<QBAIAnswerAssistHistoryMessage> = mapAnswerAssistHistoryMessagesFrom(historyMessagesDTO)
+        try {
+            val result: QBAIAnswerAssistResult =
+                QB.ai.answerAssist(smartChatAssistantId, messageToAssist, historyMessages).perform()
+            return result.message
+        } catch (exception: QBResponseException) {
+            throw AIDataSourceException(exception.message)
+        }
+    }
+
+    private fun mapAnswerAssistHistoryMessagesFrom(messagesDTO: List<AIAnswerAssistantMessageDTO>): List<QBAIAnswerAssistHistoryMessage> {
+        val historyMessages = mutableListOf<QBAIAnswerAssistHistoryMessage>()
+
+        messagesDTO.forEach { dto ->
+            val role: QBAIAnswerAssistHistoryMessage.Role?
+
+            if (dto.isIncomeMessage) {
+                role = QBAIAnswerAssistHistoryMessage.Role.ASSISTANT
+            } else {
+                role = QBAIAnswerAssistHistoryMessage.Role.USER
+            }
+
+            val message = QBAIAnswerAssistHistoryMessageImpl(role, dto.text)
+            historyMessages.add(message)
+        }
+        return historyMessages;
     }
 
     override fun createAnswerWithApiKey(messagesDTO: List<AIAnswerAssistantMessageDTO>): String {

@@ -18,6 +18,6 @@ class RemoteUserDTO {
     var facebookId: String? = null
     var blobId: Int? = null
     var avatarUrl: String? = null
-    var tags: ArrayList<String>? = null
+    var tags: String? = null
     var customData: String? = null
 }

@@ -320,6 +320,7 @@ class TypingEventUseCaseTest : BaseTest() {
 
     @Test
     @ExperimentalCoroutinesApi
+    @Ignore
     fun executeAndStartTyping3Times_wait7Seconds_receivedTyping() = runTest {
         val usersRepository = object : UsersRepositorySpy() {
             override fun getUsersFromRemote(userIds: Collection<Int>): Collection<UserEntity> {

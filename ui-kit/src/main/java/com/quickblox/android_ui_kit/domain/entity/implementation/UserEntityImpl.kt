@@ -19,7 +19,7 @@ class UserEntityImpl : UserEntity {
     private var externalId: String? = null
     private var facebookId: String? = null
     private var avatarUrl: String? = null
-    private var tags: ArrayList<String>? = null
+    private var tags: String? = null
     private var customData: String? = null
 
     override fun getUserId(): Int? {
@@ -102,11 +102,11 @@ class UserEntityImpl : UserEntity {
         this.avatarUrl = url
     }
 
-    override fun getTags(): ArrayList<String>? {
+    override fun getTags(): String? {
         return tags
     }
 
-    override fun setTags(tags: ArrayList<String>?) {
+    override fun setTags(tags: String?) {
         this.tags = tags
     }
 
