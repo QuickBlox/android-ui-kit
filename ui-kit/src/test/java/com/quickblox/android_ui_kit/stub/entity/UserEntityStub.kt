@@ -88,11 +88,11 @@ open class UserEntityStub : UserEntity {
         throw RuntimeException()
     }
 
-    override fun getTags(): ArrayList<String>? {
+    override fun getTags(): String? {
         throw RuntimeException()
     }
 
-    override fun setTags(tags: ArrayList<String>?) {
+    override fun setTags(tags: String?) {
         throw RuntimeException()
     }
 

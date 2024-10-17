@@ -14,14 +14,29 @@ import com.quickblox.android_ui_kit.data.source.exception.AIDataSourceException
 import com.quickblox.android_ui_kit.domain.entity.AIRephraseEntity
 import com.quickblox.android_ui_kit.domain.entity.AIRephraseToneEntity
 import com.quickblox.android_ui_kit.domain.entity.implementation.message.AITranslateIncomingChatMessageEntity
-import com.quickblox.android_ui_kit.domain.entity.message.ChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.ForwardedRepliedMessageEntity
-import com.quickblox.android_ui_kit.domain.entity.message.IncomingChatMessageEntity
 import com.quickblox.android_ui_kit.domain.entity.message.MessageEntity
 import com.quickblox.android_ui_kit.domain.exception.repository.AIRepositoryException
 import com.quickblox.android_ui_kit.domain.repository.AIRepository
 
 class AIRepositoryImpl(private val aiDataSource: AIDataSource) : AIRepository {
+    override fun translateIncomingMessageWithSmartChatAssistantId(
+        messageEntity: ForwardedRepliedMessageEntity,
+        messagesFromUIKit: List<MessageEntity>,
+        langguageCode: String,
+    ): AITranslateIncomingChatMessageEntity {
+        try {
+            val translateDTO = AITranslateMapper.DTOFrom(messageEntity)
+            val messagesDTO = AITranslateMapper.messagesToDtos(messagesFromUIKit)
+            val responseDTO =
+                aiDataSource.translateIncomingMessageWithSmartChatAssistantId(translateDTO, messagesDTO, langguageCode)
+
+            return AITranslateMapper.entityFrom(responseDTO, messageEntity)
+        } catch (exception: AIDataSourceException) {
+            throw AIRepositoryException(exception.message ?: "Unexpected Exception")
+        }
+    }
+
     override fun translateIncomingMessageWithApiKey(
         messageEntity: ForwardedRepliedMessageEntity,
         messagesFromUIKit: List<MessageEntity>,
@@ -53,6 +68,20 @@ class AIRepositoryImpl(private val aiDataSource: AIDataSource) : AIRepository {
         }
     }
 
+    override fun createAnswerWithSmartChatAssistantId(
+        messageToAssist: String,
+        historyMessagesDTO: List<MessageEntity>,
+    ): String {
+        try {
+            val historyMessagesDTO = AIAnswerAssistantMapper.messagesToDtos(historyMessagesDTO)
+            val answer = aiDataSource.createAnswerWithSmartChatAssistantId(messageToAssist, historyMessagesDTO)
+
+            return answer
+        } catch (exception: AIDataSourceException) {
+            throw AIRepositoryException(exception.message ?: "Unexpected Exception")
+        }
+    }
+
     override fun createAnswerWithApiKey(messagesFromUIKit: List<MessageEntity>): String {
         try {
             val messagesDTO = AIAnswerAssistantMapper.messagesToDtos(messagesFromUIKit)
@@ -75,7 +104,7 @@ class AIRepositoryImpl(private val aiDataSource: AIDataSource) : AIRepository {
         }
     }
 
-    override fun rephraseWithApiKE(
+    override fun rephraseWithApiKey(
         toneEntity: AIRephraseEntity,
         messagesFromUIKit: List<MessageEntity>,
     ): AIRephraseEntity {
