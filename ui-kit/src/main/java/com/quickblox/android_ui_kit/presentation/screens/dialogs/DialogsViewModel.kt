@@ -28,7 +28,7 @@ class DialogsViewModel : BaseViewModel() {
     private val TAG: String = DialogsViewModel::class.java.simpleName
 
     enum class DialogChangeType {
-        ADDED, UPDATED, UPDATED_RANGE, DELETED
+        ADDED, UPDATED, UPDATED_RANGE, DELETED, CLEARED
     }
 
     private var connectionRepository = QuickBloxUiKit.getDependency().getConnectionRepository()
@@ -117,7 +117,9 @@ class DialogsViewModel : BaseViewModel() {
                 getDialogsJob?.cancel()
 
                 foundDialogs?.let {
+                    val lastIndex = dialogs.lastIndex
                     dialogs.clear()
+                    _updatedDialogs.postValue(Pair(DialogChangeType.CLEARED, lastIndex))
 
                     for (dialog in it) {
                         dialogs.add(dialog)
