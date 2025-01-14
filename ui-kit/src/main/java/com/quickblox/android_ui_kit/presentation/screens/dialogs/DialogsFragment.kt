@@ -137,14 +137,21 @@ open class DialogsFragment : BaseFragment() {
                 DialogsViewModel.DialogChangeType.UPDATED_RANGE -> {
                     adapter.notifyItemRangeChanged(0, index)
                 }
+
                 DialogsViewModel.DialogChangeType.UPDATED -> {
                     adapter.notifyItemChanged(index)
                 }
+
                 DialogsViewModel.DialogChangeType.ADDED -> {
                     adapter.notifyItemInserted(index)
                 }
+
                 DialogsViewModel.DialogChangeType.DELETED -> {
                     adapter.notifyItemRemoved(index)
+                }
+
+                DialogsViewModel.DialogChangeType.CLEARED -> {
+                    adapter.notifyItemRangeRemoved(0, index)
                 }
             }
         }
@@ -209,9 +216,11 @@ open class DialogsFragment : BaseFragment() {
             DialogEntity.Types.GROUP -> {
                 startGroupChatActivity(dialogEntity)
             }
+
             DialogEntity.Types.PRIVATE -> {
                 startPrivateChatActivity(dialogEntity)
             }
+
             else -> {
                 showToast(getString(R.string.wrong_dialog_type))
             }

@@ -10,7 +10,7 @@ ext {
     qbSdkVersion = '4.2.2'
 
     uiKitVersionCode = 1
-    uiKitVersionName = "0.10.0"
+    uiKitVersionName = "0.10.1"
 }
 
 android {

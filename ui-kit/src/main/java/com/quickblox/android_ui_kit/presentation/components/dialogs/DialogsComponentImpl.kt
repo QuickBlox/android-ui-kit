@@ -50,6 +50,7 @@ class DialogsComponentImpl : LinearLayoutCompat, DialogsComponent {
         binding?.rvDialogs?.background = ColorDrawable(theme.getMainBackgroundColor())
         binding?.rvDialogs?.itemAnimator = null
         binding?.rvDialogs?.adapter = adapter as Adapter<*>
+        binding?.rvDialogs?.layoutManager = LinearLayoutManagerWrapper(context)
 
         adapter?.setTheme(theme)
         adapter?.setDialogAdapterListener(DialogAdapterListenerImpl())

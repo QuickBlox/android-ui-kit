@@ -35,6 +35,7 @@ import com.quickblox.chat.JIDHelper
 import com.quickblox.chat.QBAbstractChat
 import com.quickblox.chat.QBChatService
 import com.quickblox.chat.QBGroupChat
+import com.quickblox.chat.QBGroupChatManager
 import com.quickblox.chat.QBRestChatService
 import com.quickblox.chat.model.QBChatDialog
 import com.quickblox.chat.model.QBChatMessage
@@ -1052,17 +1053,29 @@ open class RemoteDataSourceImpl : RemoteDataSource {
             val groupChatManager = QBChatService.getInstance().groupChatManager
             val fields = groupChatManager.javaClass.declaredFields
 
-            val dialogsField: Field = fields[1]
-            dialogsField.isAccessible = true
+            for (field in fields) {
+                if (isGroupChatField(groupChatManager, field)) {
+                    field.isAccessible = true
 
-            val dialogsFieldValue = dialogsField.get(groupChatManager)
+                    val dialogsFieldValue = field.get(groupChatManager)
 
-            if (dialogsFieldValue is Map<*, *>) {
-                val dialogs = dialogsFieldValue as Map<String, QBGroupChat>
-                for ((jid, groupChat) in dialogs) {
-                    joinGroupDialog(groupChat)
+                    val dialogs = dialogsFieldValue as Map<String, QBGroupChat>
+                    for ((jid, groupChat) in dialogs) {
+                        joinGroupDialog(groupChat)
+                    }
+                    break
                 }
             }
+        }
+    }
+
+    private fun isGroupChatField(groupChatManager: QBGroupChatManager, field: Field): Boolean {
+        try {
+            val dialogsFieldValue = field.get(groupChatManager) as Map<String, QBChatDialog>
+            val isFirstKeyString = dialogsFieldValue.keys.toList().get(0) is String
+            return isFirstKeyString
+        } catch (e: Exception) {
+            return false
         }
     }
 
